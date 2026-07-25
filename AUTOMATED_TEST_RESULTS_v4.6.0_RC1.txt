@@ -1,0 +1,154 @@
+# 훈노트 v4.6.0 RC1 자동검사 결과
+
+## JavaScript 문법 검사
+PASS: JavaScript and service-worker syntax
+
+## 보안·정적 회귀 검사
+TAP version 13
+# Subtest: malicious checklist identifiers are normalized and escaped
+ok 1 - malicious checklist identifiers are normalized and escaped
+  ---
+  duration_ms: 4.181155
+  type: 'test'
+  ...
+# Subtest: backup import rejects oversized or malformed content
+ok 2 - backup import rejects oversized or malformed content
+  ---
+  duration_ms: 1.74827
+  type: 'test'
+  ...
+# Subtest: cloud reads and legacy migration updates include the signed-in user id
+ok 3 - cloud reads and legacy migration updates include the signed-in user id
+  ---
+  duration_ms: 1.785436
+  type: 'test'
+  ...
+# Subtest: release and cache versions are consistently set to v4.6.0 RC1
+ok 4 - release and cache versions are consistently set to v4.6.0 RC1
+  ---
+  duration_ms: 1.12749
+  type: 'test'
+  ...
+# Subtest: v4.6.0 RC1 UI and error feedback contract is preserved
+ok 5 - v4.6.0 RC1 UI and error feedback contract is preserved
+  ---
+  duration_ms: 1.47086
+  type: 'test'
+  ...
+# Subtest: v4.6.0 RC1 PWA and Android release contract is preserved
+ok 6 - v4.6.0 RC1 PWA and Android release contract is preserved
+  ---
+  duration_ms: 0.487522
+  type: 'test'
+  ...
+# Subtest: password recovery is consumed once and reset-email requests are throttled locally
+ok 7 - password recovery is consumed once and reset-email requests are throttled locally
+  ---
+  duration_ms: 0.280105
+  type: 'test'
+  ...
+# Subtest: browser history navigation handles internal layers before app exit
+ok 8 - browser history navigation handles internal layers before app exit
+  ---
+  duration_ms: 0.473872
+  type: 'test'
+  ...
+# Subtest: local HTML and service-worker asset references exist
+ok 9 - local HTML and service-worker asset references exist
+  ---
+  duration_ms: 2.238627
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 54.410745
+
+## 서비스워커 단위 검사
+TAP version 13
+# Subtest: service worker precaches the release app shell
+ok 1 - service worker precaches the release app shell
+  ---
+  duration_ms: 17.487078
+  type: 'test'
+  ...
+# Subtest: service worker removes old HoonNote caches and claims clients
+ok 2 - service worker removes old HoonNote caches and claims clients
+  ---
+  duration_ms: 0.618877
+  type: 'test'
+  ...
+# Subtest: service worker only skips waiting after explicit update action
+ok 3 - service worker only skips waiting after explicit update action
+  ---
+  duration_ms: 0.471629
+  type: 'test'
+  ...
+# Subtest: offline navigation falls back to the cached app shell
+ok 4 - offline navigation falls back to the cached app shell
+  ---
+  duration_ms: 2.908339
+  type: 'test'
+  ...
+# Subtest: cached static assets are returned while network refresh runs
+ok 5 - cached static assets are returned while network refresh runs
+  ---
+  duration_ms: 1.514364
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 60.566456
+
+## 비밀번호 재설정 검사
+PASS password recovery single-flow and reset-email rate-limit handling
+
+## 핵심 기능 검사
+PASS 17 core regression checks
+- 로그인 초기 화면
+- 잘못된 로그인 차단
+- 회원가입 필수 동의·비밀번호 재설정 요청
+- 로그인·클라우드 초기 동기화
+- 카테고리 추가
+- 메모·중요 표시·체크리스트 저장
+- 검색·카테고리 필터·정렬
+- 메모 상세·수정
+- 할 일 완료·완료 포함
+- 휴지통 이동·복원
+- 카테고리 이름 변경·메모 연동
+- JSON 백업
+- 백업 복원·중복 제외
+- 계정 삭제 진입·확인 문구 검증
+- 로그아웃
+- 자동 초안 저장·복구·삭제
+- 320~430px 가로 넘침
+Screenshots: /mnt/data/hoonnote_v4_6_0_rc1_regression_shots
+
+## 모바일 UI 검사
+PASS /mnt/data/hoonnote_v4_6_0_rc1_testshots
+
+## PWA·Android 정적 감사
+PASS 7
+- Web App Manifest 필수 항목: standalone / 상대 경로 scope / 단일 창 실행
+- 아이콘 규격: 192/512 maskable, 180 Apple, 512 Play Store
+- Maskable·스토어 아이콘 풀블리드: 모서리 투명도 없음
+- Manifest 아이콘 연결: 모든 아이콘 자산 버전 v=468
+- 웹 의존성과 메타데이터: Supabase JS 2.110.8 고정, PWA 메타 포함
+- Service Worker 자산과 전략: 핵심 자산 24개 확인
+- Android 패키지 설정: package ID / targetSdk 36 / AAB / RC 버전
+WARN 1
+- Digital Asset Links 실서명 지문: Play 앱 서명 SHA-256 입력 전까지 TWA 주소창 제거를 확정할 수 없음
+
+## 실제 HTTP 서비스워커 브라우저 검사
+SKIP: local HTTP access is blocked by this execution environment

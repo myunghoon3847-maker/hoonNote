@@ -171,28 +171,28 @@ test("cloud reads and legacy migration updates include the signed-in user id", a
   );
 });
 
-test("release and cache versions are consistently set to v4.5.16", () => {
+test("release and cache versions are consistently set to v4.6.0 RC1", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const serviceWorker = fs.readFileSync(path.join(projectRoot, "service-worker.js"), "utf8");
   const accountSource = fs.readFileSync(path.join(projectRoot, "js/account.js"), "utf8");
   const storageSource = fs.readFileSync(path.join(projectRoot, "js/storage.js"), "utf8");
 
-  assert.match(indexHtml, /version-badge">v4\.5\.16/);
+  assert.match(indexHtml, /version-badge">v4\.6\.0 RC1/);
   assert.doesNotMatch(indexHtml, /v=458/);
-  assert.match(serviceWorker, /hoonnote-v4-5-16-cache/);
+  assert.match(serviceWorker, /hoonnote-v4-6-0-rc1-cache/);
   assert.doesNotMatch(serviceWorker, /v=458/);
-  assert.match(accountSource, /clientVersion: "4\.5\.16"/);
-  assert.match(storageSource, /backupVersion: "4\.5\.16"/);
+  assert.match(accountSource, /clientVersion: "4\.6\.0-rc\.1"/);
+  assert.match(storageSource, /backupVersion: "4\.6\.0-rc\.1"/);
 });
 
-test("v4.5.16 UI and error feedback contract is preserved", () => {
+test("v4.6.0 RC1 UI and error feedback contract is preserved", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const appSource = fs.readFileSync(path.join(projectRoot, "js/app.js"), "utf8");
   const uiSource = fs.readFileSync(path.join(projectRoot, "js/ui.js"), "utf8");
   const styleSource = fs.readFileSync(path.join(projectRoot, "css/style.css"), "utf8");
   const feedbackSource = fs.readFileSync(path.join(projectRoot, "js/feedback.js"), "utf8");
 
-  assert.match(indexHtml, /class="brand-wordmark"[^>]+brand-wordmark\.svg\?v=467/);
+  assert.match(indexHtml, /class="brand-wordmark"[^>]+brand-wordmark\.svg\?v=468/);
   assert.match(indexHtml, /<section[^>]*id="editorView"[^>]*>/);
   assert.match(indexHtml.match(/<section[^>]*id="editorView"[^>]*>/)[0], /hidden/);
   assert.doesNotMatch(indexHtml, /id="settingsView"/);
@@ -216,7 +216,7 @@ test("v4.5.16 UI and error feedback contract is preserved", () => {
   assert.match(indexHtml, /id="installAppButton"/);
   assert.doesNotMatch(indexHtml, /id="taskHubTitle"/);
   assert.doesNotMatch(indexHtml, /id="taskHubResultText"/);
-  assert.match(indexHtml, /icons\/settings-gear\.png\?v=467/);
+  assert.match(indexHtml, /icons\/settings-gear\.png\?v=468/);
   assert.doesNotMatch(indexHtml, /id="emptyTrashButton"/);
   assert.match(indexHtml, /class="data-stat-open-label">열기<\/span>/);
   assert.match(indexHtml, /id="logoutButton"/);
@@ -224,7 +224,7 @@ test("v4.5.16 UI and error feedback contract is preserved", () => {
   assert.match(indexHtml, /maximum-scale=1, user-scalable=no, viewport-fit=cover/);
 
   assert.match(indexHtml, /id="appNoticeRegion"/);
-  assert.match(indexHtml, /js\/feedback\.js\?v=467/);
+  assert.match(indexHtml, /js\/feedback\.js\?v=468/);
   assert.match(feedbackSource, /window\.HoonNoteFeedback/);
   assert.match(feedbackSource, /aria-busy/);
   assert.match(appSource, /function showAppNotice\(/);
@@ -259,6 +259,38 @@ test("v4.5.16 UI and error feedback contract is preserved", () => {
   assert.match(styleSource, /\.settings-row-button\s*\{/);
   assert.match(styleSource, /overflow-x:\s*hidden/);
   assert.match(styleSource, /font-size:\s*16px/);
+});
+
+
+test("v4.6.0 RC1 PWA and Android release contract is preserved", () => {
+  const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
+  const manifest = JSON.parse(fs.readFileSync(path.join(projectRoot, "manifest.json"), "utf8"));
+  const serviceWorker = fs.readFileSync(path.join(projectRoot, "service-worker.js"), "utf8");
+  const pwaSource = fs.readFileSync(path.join(projectRoot, "js/pwa.js"), "utf8");
+  const androidPackage = JSON.parse(
+    fs.readFileSync(path.join(projectRoot, "android/package-values.json"), "utf8")
+  );
+
+  assert.match(indexHtml, /@supabase\/supabase-js@2\.110\.8/);
+  assert.doesNotMatch(indexHtml, /@supabase\/supabase-js@2["']/);
+  assert.equal(manifest.start_url, "./");
+  assert.equal(manifest.scope, "./");
+  assert.equal(manifest.display, "standalone");
+  assert.equal(manifest.launch_handler.client_mode, "navigate-existing");
+  assert.ok(manifest.icons.some((icon) => icon.purpose === "maskable" && icon.sizes === "512x512"));
+  assert.match(serviceWorker, /const APP_SHELL_URL = "\.\/index\.html"/);
+  assert.match(serviceWorker, /function handleNavigation\(/);
+  assert.match(serviceWorker, /function handleStaticAsset\(/);
+  assert.match(serviceWorker, /event\.waitUntil\(networkPromise\)/);
+  assert.match(pwaSource, /PERIODIC_UPDATE_INTERVAL_MS = 30 \* 60 \* 1000/);
+  assert.match(pwaSource, /UPDATE_APPLY_TIMEOUT_MS = 10000/);
+  assert.equal(androidPackage.packageId, "com.hooncompany.hoonnote");
+  assert.equal(androidPackage.targetSdkVersion, 36);
+  assert.equal(androidPackage.versionName, "1.0.0-rc1");
+  assert.equal(androidPackage.buildFormat, "AAB");
+  assert.ok(
+    fs.existsSync(path.join(projectRoot, "github-pages-origin-root-template/.well-known/assetlinks.template.json"))
+  );
 });
 
 

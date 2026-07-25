@@ -1,39 +1,87 @@
-const CACHE_NAME = "hoonnote-v4-5-16-cache";
+const CACHE_NAME = "hoonnote-v4-6-0-rc1-cache";
 const APP_CACHE_PREFIXES = ["hoonnote-", "solonote-"];
+const APP_SHELL_URL = "./index.html";
 
-const STATIC_ASSETS = [
+const CORE_ASSETS = [
   "./",
-  "./index.html",
-  "./manifest.json?v=467",
-  "./css/style.css?v=467",
-  "./js/config.js?v=467",
-  "./js/feedback.js?v=467",
-  "./js/auth.js?v=467",
-  "./js/storage.js?v=467",
-  "./js/ui.js?v=467",
-  "./js/app.js?v=467",
-  "./js/account.js?v=467",
-  "./js/pwa.js?v=467",
-  "./icons/logo-mark.svg?v=467",
-  "./icons/brand-wordmark.svg?v=467",
-  "./icons/settings-gear.png?v=467",
-  "./icons/icon-192.png?v=467",
-  "./icons/icon-512.png?v=467",
-  "./icons/icon-maskable-192.png?v=467",
-  "./icons/icon-maskable-512.png?v=467",
-  "./icons/icon-monochrome-512.png?v=467",
-  "./icons/apple-touch-icon.png?v=467",
-  "./legal/legal.css?v=467",
+  APP_SHELL_URL,
+  "./manifest.json?v=468",
+  "./css/style.css?v=468",
+  "./js/config.js?v=468",
+  "./js/feedback.js?v=468",
+  "./js/auth.js?v=468",
+  "./js/storage.js?v=468",
+  "./js/ui.js?v=468",
+  "./js/app.js?v=468",
+  "./js/account.js?v=468",
+  "./js/pwa.js?v=468",
+  "./icons/logo-mark.svg?v=468",
+  "./icons/brand-wordmark.svg?v=468",
+  "./icons/settings-gear.png?v=468",
+  "./icons/icon-192.png?v=468",
+  "./icons/icon-512.png?v=468",
+  "./icons/icon-maskable-192.png?v=468",
+  "./icons/icon-maskable-512.png?v=468",
+  "./icons/icon-monochrome-512.png?v=468",
+  "./icons/apple-touch-icon.png?v=468",
+  "./legal/legal.css?v=468",
   "./legal/privacy.html",
   "./legal/terms.html",
   "./support/index.html",
   "./support/delete-account.html"
 ];
 
+function canCache(response) {
+  return Boolean(response && response.ok && (response.type === "basic" || response.type === "cors"));
+}
+
+async function cacheResponse(request, response) {
+  if (!canCache(response)) {
+    return;
+  }
+  const cache = await caches.open(CACHE_NAME);
+  await cache.put(request, response.clone());
+}
+
+async function handleNavigation(request) {
+  try {
+    const response = await fetch(request);
+    if (canCache(response)) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(APP_SHELL_URL, response.clone());
+    }
+    return response;
+  } catch (_error) {
+    return (
+      (await caches.match(request, { ignoreSearch: true })) ||
+      (await caches.match(APP_SHELL_URL)) ||
+      new Response("오프라인 상태에서는 훈노트를 처음 열 수 없습니다.", {
+        status: 503,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      })
+    );
+  }
+}
+
+async function handleStaticAsset(event) {
+  const cached = await caches.match(event.request, { ignoreSearch: false });
+  const networkPromise = fetch(event.request)
+    .then(async (response) => {
+      await cacheResponse(event.request, response);
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    event.waitUntil(networkPromise);
+    return cached;
+  }
+
+  return (await networkPromise) || new Response("", { status: 504 });
+}
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)));
 });
 
 self.addEventListener("activate", (event) => {
@@ -64,54 +112,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  const request = event.request;
-  const requestUrl = new URL(request.url);
-
+  const requestUrl = new URL(event.request.url);
   if (requestUrl.origin !== self.location.origin) {
     return;
   }
 
-  if (request.mode === "navigate" || request.destination === "document") {
-    const scopePath = new URL(self.registration.scope).pathname;
-    const isAppShellNavigation =
-      requestUrl.pathname === scopePath ||
-      requestUrl.pathname === `${scopePath}index.html`;
-
-    event.respondWith(
-      fetch(request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-          }
-          return networkResponse;
-        })
-        .catch(async () => {
-          const cachedResponse = await caches.match(request, { ignoreSearch: true });
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          if (isAppShellNavigation) {
-            return caches.match("./index.html");
-          }
-          return new Response("오프라인 상태에서는 이 페이지를 처음 열 수 없습니다.", {
-            status: 503,
-            headers: { "Content-Type": "text/plain; charset=utf-8" }
-          });
-        })
-    );
+  if (event.request.mode === "navigate" || event.request.destination === "document") {
+    event.respondWith(handleNavigation(event.request));
     return;
   }
 
-  event.respondWith(
-    fetch(request)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
-        }
-        return networkResponse;
-      })
-      .catch(() => caches.match(request))
-  );
+  event.respondWith(handleStaticAsset(event));
 });

@@ -10,12 +10,14 @@
   "backgroundColor": "#F8FAFC",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "versionName": "1.0.0",
+  "versionName": "1.0.0-rc1",
   "versionCode": 1,
   "minSdkVersion": 23,
   "targetSdkVersion": 36,
   "appStore": "Google Play",
   "releaseTrack": "Internal testing",
   "signing": "Google Play App Signing",
-  "buildFormat": "AAB"
+  "buildFormat": "AAB",
+  "webVersion": "4.6.0-rc.1",
+  "assetVersion": "468"
 }

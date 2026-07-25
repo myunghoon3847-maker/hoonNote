@@ -883,7 +883,7 @@ function getProjectOptions() {
 function createBackupData() {
   return {
     app: "SoloNote",
-    backupVersion: "4.5.16",
+    backupVersion: "4.6.0-rc.1",
     storage: "supabase",
     exportedAt: new Date().toISOString(),
     categories: getMemoCategories().map((category) => category.name),

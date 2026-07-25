@@ -14,6 +14,10 @@
   let serviceWorkerRegistration = null;
   let isApplyingUpdate = false;
   let hasReloadedForUpdate = false;
+  let updateApplyTimer = null;
+  let periodicUpdateTimer = null;
+  const UPDATE_APPLY_TIMEOUT_MS = 10000;
+  const PERIODIC_UPDATE_INTERVAL_MS = 30 * 60 * 1000;
 
   function isStandaloneMode() {
     return (
@@ -198,6 +202,29 @@
     );
 
     waitingWorker.postMessage({ type: "SKIP_WAITING" });
+
+    if (updateApplyTimer) {
+      window.clearTimeout(updateApplyTimer);
+    }
+
+    updateApplyTimer = window.setTimeout(() => {
+      if (!isApplyingUpdate || hasReloadedForUpdate) {
+        return;
+      }
+
+      isApplyingUpdate = false;
+      feedback?.setButtonBusy?.(
+        applyUpdateButton,
+        false,
+        "업데이트 적용 중...",
+        "업데이트"
+      );
+      feedback?.show?.("업데이트 적용이 지연되고 있습니다. 앱을 완전히 닫았다가 다시 실행하세요.", {
+        state: "warning",
+        title: "업데이트 대기 중",
+        duration: 8000,
+      });
+    }, UPDATE_APPLY_TIMEOUT_MS);
   }
 
   function watchRegistration(registration) {
@@ -237,7 +264,7 @@
 
     try {
       const registration = await navigator.serviceWorker.register(
-        "./service-worker.js?v=467",
+        "./service-worker.js?v=468",
         { updateViaCache: "none" }
       );
 
@@ -252,6 +279,21 @@
           registration.update().catch(() => {});
         }
       });
+
+      window.addEventListener("pageshow", (event) => {
+        if (event.persisted) {
+          registration.update().catch(() => {});
+        }
+      });
+
+      if (periodicUpdateTimer) {
+        window.clearInterval(periodicUpdateTimer);
+      }
+      periodicUpdateTimer = window.setInterval(() => {
+        if (navigator.onLine !== false) {
+          registration.update().catch(() => {});
+        }
+      }, PERIODIC_UPDATE_INTERVAL_MS);
     } catch (error) {
       console.error("Service Worker registration failed:", error);
       setPwaStatus("앱 업데이트 기능을 초기화하지 못했습니다. 새로고침 후 다시 확인하세요.");
@@ -283,6 +325,10 @@
       }
 
       hasReloadedForUpdate = true;
+      if (updateApplyTimer) {
+        window.clearTimeout(updateApplyTimer);
+        updateApplyTimer = null;
+      }
       window.location.reload();
     });
   }

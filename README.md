@@ -1,42 +1,43 @@
-# 훈노트 v4.5.16
+# 훈노트 v4.6.0 RC1
 
-훈노트 v4.5.16은 새 기능을 추가하지 않고 중복 화면, 사용하지 않는 JavaScript 연결, 과거 UI 스타일과 배포 문서 누적을 정리한 내부 구조 안정화 버전입니다.
+훈노트 v4.6.0 RC1은 v4.5.16의 기능과 UI를 동결한 상태에서 PWA 설치·업데이트·오프라인 앱 셸과 Android Trusted Web Activity 출시 준비를 최종 점검한 내부 테스트용 출시 후보입니다.
 
-## 핵심 정리
+## 이번 RC의 핵심
 
-- 사용하지 않던 별도 설정 화면 제거
-- 설정 기능을 현재 메뉴 내부 설정 화면으로 단일화
-- 웹 앱 설치 버튼을 메뉴 설정의 앱 정보 영역으로 이동
-- 존재하지 않는 버튼을 찾던 JavaScript와 이벤트 제거
-- 과거 카테고리 더보기·독립 작성 화면·옛 로고·옛 설정 메뉴 CSS 제거
-- 사용되지 않는 CSS 선택자 79개와 완전 중복 규칙 2개 제거
-- v4.5.14에서 실제 적용한 Supabase RLS 감사·보강 SQL을 프로젝트에 포함
-- 과거 버전별 변경·검수 문서 누적을 제거하고 현재 버전 문서만 유지
+- 웹 리소스 버전 `v=468`
+- 서비스워커 캐시 `hoonnote-v4-6-0-rc1-cache`
+- Supabase JS 의존성을 `2.110.8`로 고정
+- 정적 자산 캐시 우선·백그라운드 갱신 전략 적용
+- 사용자가 업데이트를 선택했을 때만 새 서비스워커 활성화
+- 30분 주기·앱 복귀 시 업데이트 확인
+- Maskable·Apple Touch·Play Store 아이콘을 풀블리드로 보정
+- Android 패키지 입력값을 `targetSdk 36`, `1.0.0-rc1`으로 정리
+- GitHub Pages 도메인 루트용 Digital Asset Links 템플릿 포함
 
-## 배포
+## 배포 확인 주소
 
-ZIP의 파일을 기존 GitHub Pages 저장소에 전체 덮어쓰기합니다.
+`https://myunghoon3847-maker.github.io/solonote/?v=468`
 
-```text
-https://myunghoon3847-maker.github.io/solonote/?v=467
-```
+메뉴 하단에서 `v4.6.0 RC1`을 확인합니다.
 
-메뉴 하단에서 `v4.5.16`을 확인합니다.
+## 자동 검수
 
-## 주요 폴더
+- 보안·정적 검사 9/9 통과
+- 핵심 기능 연속 검사 17/17 통과
+- 비밀번호 재설정 단일 흐름 통과
+- 모바일 320~430px 검사 통과
+- 서비스워커 단위 검사 5/5 통과
+- PWA·Android 정적 감사 7 PASS / 1 WARN
 
-- `css/`: 현재 UI 스타일
-- `js/`: 인증, 저장소, UI, 앱 동작, 오류 안내, PWA
-- `supabase/sql/`: 계정 삭제, 카테고리, RLS 감사·보강·검증 SQL
-- `supabase/functions/`: 계정 삭제 Edge Function
-- `tests/`: 보안·핵심 기능·비밀번호 재설정·모바일 회귀 검사
-- `legal/`, `support/`: 정책 및 고객지원 페이지
-- `android/`: Google Play/TWA 준비 자료
+WARN은 오류가 아니라 Play 앱 서명 SHA-256이 아직 확정되지 않아 실제 `assetlinks.json`을 완성할 수 없다는 의미입니다.
 
-## 검수 문서
+## RC1에서 아직 수동으로 해야 하는 작업
 
-- `CHANGES_v4.5.16.md`
-- `CLEANUP_AUDIT_v4.5.16.md`
-- `TEST_CHECKLIST_v4.5.16.md`
-- `VALIDATION_REPORT_v4.5.16.md`
-- `RELEASE_CHECKLIST_v4.5.16.md`
+1. 웹 RC1 전체 배포
+2. PWABuilder/Bubblewrap로 AAB 생성
+3. Play 내부 테스트 업로드
+4. Play 앱 서명 SHA-256 확인
+5. 도메인 루트 `/.well-known/assetlinks.json` 배포
+6. 실기기에서 주소창 없는 TWA 실행과 업데이트 검증
+
+자세한 내용은 `RELEASE_BLOCKERS_v4.6.0_RC1.md`와 `android/RC_DEVICE_TEST_CHECKLIST.md`를 확인합니다.
