@@ -1,6 +1,7 @@
 (() => {
   "use strict";
 
+  const feedback = window.HoonNoteFeedback || null;
   const installAppButton = document.querySelector("#installAppButton");
   const pwaUpdateBanner = document.querySelector("#pwaUpdateBanner");
   const applyUpdateButton = document.querySelector("#applyUpdateButton");
@@ -125,8 +126,12 @@
       return;
     }
 
-    installAppButton.disabled = true;
-    installAppButton.textContent = "설치 확인 중...";
+    feedback?.setButtonBusy?.(
+      installAppButton,
+      true,
+      "설치 확인 중...",
+      "앱 설치"
+    );
 
     try {
       await deferredInstallPrompt.prompt();
@@ -140,10 +145,19 @@
     } catch (error) {
       console.error("PWA 설치 요청 실패:", error);
       setPwaStatus("자동 설치 창을 열지 못했습니다. 설치 방법 안내를 확인하세요.");
+      feedback?.show?.("브라우저가 자동 설치 창을 열지 못했습니다. 메뉴의 설치 방법 안내를 따라 진행하세요.", {
+        state: "warning",
+        title: "앱 설치 안내",
+        duration: 6500,
+      });
     } finally {
       deferredInstallPrompt = null;
-      installAppButton.disabled = false;
-      installAppButton.textContent = "앱 설치";
+      feedback?.setButtonBusy?.(
+        installAppButton,
+        false,
+        "설치 확인 중...",
+        "앱 설치"
+      );
       refreshInstallStatus();
     }
   }
@@ -176,10 +190,12 @@
 
     isApplyingUpdate = true;
 
-    if (applyUpdateButton) {
-      applyUpdateButton.disabled = true;
-      applyUpdateButton.textContent = "업데이트 적용 중...";
-    }
+    feedback?.setButtonBusy?.(
+      applyUpdateButton,
+      true,
+      "업데이트 적용 중...",
+      "업데이트"
+    );
 
     waitingWorker.postMessage({ type: "SKIP_WAITING" });
   }
@@ -221,7 +237,7 @@
 
     try {
       const registration = await navigator.serviceWorker.register(
-        "./service-worker.js?v=465",
+        "./service-worker.js?v=466",
         { updateViaCache: "none" }
       );
 
@@ -239,6 +255,12 @@
     } catch (error) {
       console.error("Service Worker registration failed:", error);
       setPwaStatus("앱 업데이트 기능을 초기화하지 못했습니다. 새로고침 후 다시 확인하세요.");
+      feedback?.show?.("자동 업데이트 기능을 준비하지 못했습니다. 인터넷 연결을 확인하고 페이지를 새로고침하세요.", {
+        state: "warning",
+        title: "업데이트 확인 실패",
+        actionLabel: "새로고침",
+        onAction: () => window.location.reload(),
+      });
     }
   }
 

@@ -171,27 +171,28 @@ test("cloud reads and legacy migration updates include the signed-in user id", a
   );
 });
 
-test("release and cache versions are consistently set to v4.5.13.2", () => {
+test("release and cache versions are consistently set to v4.5.15", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const serviceWorker = fs.readFileSync(path.join(projectRoot, "service-worker.js"), "utf8");
   const accountSource = fs.readFileSync(path.join(projectRoot, "js/account.js"), "utf8");
   const storageSource = fs.readFileSync(path.join(projectRoot, "js/storage.js"), "utf8");
 
-  assert.match(indexHtml, /version-badge">v4\.5\.13\.2/);
+  assert.match(indexHtml, /version-badge">v4\.5\.15/);
   assert.doesNotMatch(indexHtml, /v=458/);
-  assert.match(serviceWorker, /hoonnote-v4-5-13-2-cache/);
+  assert.match(serviceWorker, /hoonnote-v4-5-15-cache/);
   assert.doesNotMatch(serviceWorker, /v=458/);
-  assert.match(accountSource, /clientVersion: "4\.5\.13\.2"/);
-  assert.match(storageSource, /backupVersion: "4\.5\.13\.2"/);
+  assert.match(accountSource, /clientVersion: "4\.5\.15"/);
+  assert.match(storageSource, /backupVersion: "4\.5\.15"/);
 });
 
-test("v4.5.13.2 logo, menu and data management UI contract is preserved", () => {
+test("v4.5.15 UI and error feedback contract is preserved", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const appSource = fs.readFileSync(path.join(projectRoot, "js/app.js"), "utf8");
   const uiSource = fs.readFileSync(path.join(projectRoot, "js/ui.js"), "utf8");
   const styleSource = fs.readFileSync(path.join(projectRoot, "css/style.css"), "utf8");
+  const feedbackSource = fs.readFileSync(path.join(projectRoot, "js/feedback.js"), "utf8");
 
-  assert.match(indexHtml, /class="brand-wordmark"[^>]+brand-wordmark\.svg\?v=465/);
+  assert.match(indexHtml, /class="brand-wordmark"[^>]+brand-wordmark\.svg\?v=466/);
   assert.match(indexHtml, /<section[^>]*id="editorView"[^>]*>/);
   assert.match(indexHtml.match(/<section[^>]*id="editorView"[^>]*>/)[0], /hidden/);
   assert.match(indexHtml, /<section[^>]*id="settingsView"[^>]*>/);
@@ -215,12 +216,21 @@ test("v4.5.13.2 logo, menu and data management UI contract is preserved", () => 
   assert.match(indexHtml, /id="installAppButton"/);
   assert.doesNotMatch(indexHtml, /id="taskHubTitle"/);
   assert.doesNotMatch(indexHtml, /id="taskHubResultText"/);
-  assert.match(indexHtml, /icons\/settings-gear\.png\?v=465/);
+  assert.match(indexHtml, /icons\/settings-gear\.png\?v=466/);
   assert.doesNotMatch(indexHtml, /id="emptyTrashButton"/);
   assert.match(indexHtml, /class="data-stat-open-label">열기<\/span>/);
   assert.match(indexHtml, /id="logoutButton"/);
   assert.doesNotMatch(indexHtml, /id="menuSettingsLogoutButton"/);
   assert.match(indexHtml, /maximum-scale=1, user-scalable=no, viewport-fit=cover/);
+
+  assert.match(indexHtml, /id="appNoticeRegion"/);
+  assert.match(indexHtml, /js\/feedback\.js\?v=466/);
+  assert.match(feedbackSource, /window\.HoonNoteFeedback/);
+  assert.match(feedbackSource, /aria-busy/);
+  assert.match(appSource, /function showAppNotice\(/);
+  assert.match(appSource, /solonote-session-expired/);
+  assert.match(styleSource, /\.app-notice-region\s*\{/);
+  assert.match(styleSource, /button\[aria-busy="true"\]/);
 
   const editorPosition = indexHtml.indexOf('id="editorView"');
   const notesPosition = indexHtml.indexOf('id="notesView"');

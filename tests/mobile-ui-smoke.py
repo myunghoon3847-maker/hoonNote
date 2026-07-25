@@ -4,7 +4,7 @@ from playwright.async_api import async_playwright
 ROOT = Path(__file__).resolve().parent.parent
 HTML=(ROOT/'index.html').read_text(encoding='utf-8')
 CSS=(ROOT/'css/style.css').read_text(encoding='utf-8')
-SCRIPTS=[(ROOT/f).read_text(encoding='utf-8') for f in ['js/config.js','js/storage.js','js/ui.js','js/app.js','js/account.js']]
+SCRIPTS=[(ROOT/f).read_text(encoding='utf-8') for f in ['js/config.js','js/feedback.js','js/storage.js','js/ui.js','js/app.js','js/account.js']]
 
 def stripped_html():
     h=HTML
@@ -29,7 +29,7 @@ async def visible_overflows(page):
     return await page.evaluate('''() => {const vw=document.documentElement.clientWidth;return [...document.body.querySelectorAll('*')].flatMap(el=>{const st=getComputedStyle(el); if(st.display==='none'||st.visibility==='hidden'||el.closest('[hidden]')) return []; const r=el.getBoundingClientRect(); if(r.width<=0||r.height<=0)return[]; if(r.right>vw+1||r.left<-1)return[{tag:el.tagName,id:el.id,cls:String(el.className),left:r.left,right:r.right,width:r.width,vw}];return[];});}''')
 
 async def run():
-  out = ROOT.parent / 'hoonnote_v4_5_13_2_testshots'; out.mkdir(exist_ok=True)
+  out = ROOT.parent / 'hoonnote_v4_5_15_testshots'; out.mkdir(exist_ok=True)
   async with async_playwright() as pw:
     browser=await pw.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox'])
     try:
@@ -43,6 +43,15 @@ async def run():
         layout=await page.evaluate('''()=>({sw:document.documentElement.scrollWidth,cw:document.documentElement.clientWidth,bw:document.body.scrollWidth})''')
         assert layout['sw']<=layout['cw'] and layout['bw']<=layout['cw'],(width,layout)
         assert not await visible_overflows(page),(width,(await visible_overflows(page))[:5])
+        # common feedback card is accessible and does not overflow
+        await page.evaluate('''()=>window.HoonNoteFeedback.show("테스트 오류 안내", {state:"error", title:"저장 실패", actionLabel:"다시 시도", onAction:()=>{window.__feedbackRetried=true}, persistent:true})''')
+        await page.wait_for_timeout(60)
+        assert await page.locator('#appNoticeRegion .app-notice').is_visible()
+        assert await page.locator('#appNoticeRegion .app-notice').get_attribute('role') == 'alert'
+        assert not await visible_overflows(page),(width,(await visible_overflows(page))[:5])
+        await page.locator('#appNoticeRegion .app-notice-action').click()
+        await page.wait_for_timeout(40)
+        assert await page.evaluate('window.__feedbackRetried===true')
         # categories wrap and never become a horizontal scroller
         await page.evaluate('''()=>{const tabs=document.querySelector('#categoryTabs'); ['장기 프로젝트','개인 공부','운동 기록','콘텐츠 제작','아이디어 보관','생활 기록'].forEach(n=>{const b=document.createElement('button');b.type='button';b.className='category-tab';b.textContent=n;tabs.append(b);});}''')
         await page.wait_for_timeout(60)
@@ -76,7 +85,7 @@ async def run():
         # menu gear -> settings subview inside the menu
         await page.locator('#appMenuButton').click(); await page.wait_for_timeout(280)
         assert await page.locator('#openSettingsButton').is_visible()
-        assert await page.locator('#openSettingsButton img').get_attribute('src') == './icons/settings-gear.png?v=465'
+        assert await page.locator('#openSettingsButton img').get_attribute('src') == './icons/settings-gear.png?v=466'
         menu=await page.locator('#appMenuPanel').bounding_box(); assert menu and abs(menu['width']-(width*0.8))<=3,(width,menu)
         assert await page.locator('#emptyTrashButton').count()==0
         assert await page.locator('#openTrashButton .data-stat-open-label').inner_text()=='열기'

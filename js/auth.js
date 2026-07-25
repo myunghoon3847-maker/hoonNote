@@ -2,6 +2,7 @@
   "use strict";
 
   const config = window.SOLONOTE_CONFIG || {};
+  const feedback = window.HoonNoteFeedback || null;
   const authScreen = document.querySelector("#authScreen");
   const authTitle = document.querySelector("#authTitle");
   const authDescription = document.querySelector("#authDescription");
@@ -281,11 +282,17 @@ function getRateLimitMessage(error) {
   }
 
   function setButtonBusy(button, isBusy, busyText, normalText) {
+    if (feedback?.setButtonBusy) {
+      feedback.setButtonBusy(button, isBusy, busyText, normalText);
+      return;
+    }
+
     if (!button) {
       return;
     }
 
     button.disabled = isBusy;
+    button.setAttribute("aria-busy", String(isBusy));
     button.textContent = isBusy ? busyText : normalText;
   }
 
@@ -537,18 +544,36 @@ function getRateLimitMessage(error) {
     }
 
     if (/session.*missing|invalid.*token|token.*expired|otp.*expired/i.test(message)) {
-      return "재설정 링크가 만료되었거나 올바르지 않습니다. 새 링크를 다시 요청하세요.";
+      return "로그인 또는 재설정 인증이 만료되었습니다. 로그인하거나 새 재설정 링크를 요청하세요.";
     }
 
-    if (/failed to fetch|network/i.test(message)) {
-      return "인터넷 연결 또는 Supabase 연결 상태를 확인하세요.";
+    if (/timeout|timed out|gateway/i.test(message)) {
+      return "서버 응답이 늦어 처리를 완료하지 못했습니다. 잠시 후 다시 시도하세요.";
     }
 
-    return message || "인증 처리 중 오류가 발생했습니다.";
+    if (/failed to fetch|network|load failed|networkerror/i.test(message)) {
+      return "인터넷 연결을 확인한 뒤 다시 시도하세요. 입력한 내용은 화면에 유지됩니다.";
+    }
+
+    if (Number(error?.status) >= 500) {
+      return "인증 서버에 일시적인 문제가 있습니다. 잠시 후 다시 시도하세요.";
+    }
+
+    return message || "인증 처리 중 오류가 발생했습니다. 잠시 후 다시 시도하세요.";
   }
 
   async function handleLogin(event) {
     event.preventDefault();
+
+    if (navigator.onLine === false) {
+      setMessage("현재 오프라인입니다. 인터넷에 연결한 뒤 로그인하세요.", "error");
+      feedback?.show?.("인터넷 연결이 끊겨 로그인할 수 없습니다.", {
+        state: "error",
+        title: "오프라인",
+        persistent: true,
+      });
+      return;
+    }
 
     if (!client) {
       showLoginScreen("Supabase 연결을 초기화하지 못했습니다.", "error");
@@ -591,6 +616,11 @@ function getRateLimitMessage(error) {
 
   async function handleSignup(event) {
     event.preventDefault();
+
+    if (navigator.onLine === false) {
+      setMessage("현재 오프라인입니다. 인터넷에 연결한 뒤 회원가입을 다시 시도하세요.", "error");
+      return;
+    }
 
     if (!client) {
       setMessage("Supabase 연결을 초기화하지 못했습니다.", "error");
@@ -668,6 +698,11 @@ function getRateLimitMessage(error) {
   async function handleResetRequest(event) {
     event.preventDefault();
 
+    if (navigator.onLine === false) {
+      setMessage("현재 오프라인입니다. 인터넷에 연결한 뒤 재설정 이메일을 요청하세요.", "error");
+      return;
+    }
+
     if (!client) {
       setMessage("Supabase 연결을 초기화하지 못했습니다.", "error");
       return;
@@ -730,6 +765,11 @@ function getRateLimitMessage(error) {
 
   async function handlePasswordUpdate(event) {
     event.preventDefault();
+
+    if (navigator.onLine === false) {
+      setMessage("현재 오프라인입니다. 인터넷에 연결한 뒤 새 비밀번호를 저장하세요.", "error");
+      return;
+    }
 
     if (!client) {
       setMessage("Supabase 연결을 초기화하지 못했습니다.", "error");
@@ -832,6 +872,28 @@ function getRateLimitMessage(error) {
     }
   }
 
+  async function handleSessionExpired(event) {
+    if (!client) {
+      return;
+    }
+
+    const message = event?.detail?.message ||
+      "로그인 시간이 만료되었습니다. 다시 로그인하면 작성 중인 초안을 이어서 사용할 수 있습니다.";
+
+    try {
+      await client.auth.signOut({ scope: "local" });
+    } catch (error) {
+      console.warn("만료된 로그인 세션 정리 중 경고가 발생했습니다.", error);
+    }
+
+    feedback?.show?.(message, {
+      state: "warning",
+      title: "다시 로그인이 필요합니다",
+      persistent: true,
+    });
+    showLoginScreen(message, "error");
+  }
+
   async function initializeAuth() {
     hideAuthForms();
     setElementVisible(authLoading, true);
@@ -863,6 +925,7 @@ function getRateLimitMessage(error) {
 
     window.solonoteSupabase = client;
 
+    window.addEventListener("solonote-session-expired", handleSessionExpired);
     loginForm?.addEventListener("submit", handleLogin);
     showSignupButton?.addEventListener("click", showSignupScreen);
     signupForm?.addEventListener("submit", handleSignup);

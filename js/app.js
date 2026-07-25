@@ -1,3 +1,5 @@
+const feedback = window.HoonNoteFeedback || null;
+
 let currentCategory = "전체";
 let currentSearch = "";
 let currentSort = "updatedDesc";
@@ -551,7 +553,7 @@ function restoreLocalEditorDraft() {
   const draft = recoverableDraft || readLocalEditorDraft();
 
   if (!draft) {
-    alert("복구할 초안이 없습니다.");
+    showAppNotice("복구할 초안이 없습니다.", "info");
     hideDraftRecoveryBanner();
     return;
   }
@@ -1040,6 +1042,52 @@ function setCloudStatus(message, state = "ready") {
   document.body.classList.toggle("is-offline", state === "offline");
 }
 
+function showAppNotice(message, state = "info", options = {}) {
+  if (feedback?.show) {
+    return feedback.show(message, {
+      state,
+      ...options,
+    });
+  }
+
+  if (state === "error") {
+    window.alert(message);
+  }
+
+  return null;
+}
+
+function setActionButtonBusy(button, isBusy, busyText, normalText = "") {
+  if (feedback?.setButtonBusy) {
+    feedback.setButtonBusy(button, isBusy, busyText, normalText);
+    return;
+  }
+
+  if (!button) {
+    return;
+  }
+
+  button.disabled = isBusy;
+  button.textContent = isBusy ? busyText : normalText;
+}
+
+function isSessionCloudError(error) {
+  const message = String(error?.message || "");
+  const code = String(error?.code || "");
+
+  return (
+    /jwt.*expired|invalid.*jwt|session.*missing|session.*expired|refresh token|not authenticated/i.test(message) ||
+    /jwt_expired|session_not_found|refresh_token_not_found/i.test(code)
+  );
+}
+
+function requestFreshLogin(message) {
+  window.dispatchEvent(
+    new CustomEvent("solonote-session-expired", {
+      detail: { message },
+    })
+  );
+}
 
 
 
@@ -1604,10 +1652,12 @@ async function getCurrentSession() {
 }
 
 async function handleCloudRefreshClick() {
-  if (cloudRefreshButton) {
-    cloudRefreshButton.disabled = true;
-    cloudRefreshButton.textContent = "새로고침 중...";
-  }
+  setActionButtonBusy(
+    cloudRefreshButton,
+    true,
+    "새로고침 중...",
+    "클라우드 새로고침"
+  );
 
   try {
     const session = await getCurrentSession();
@@ -1617,12 +1667,25 @@ async function handleCloudRefreshClick() {
     });
   } catch (error) {
     console.error(error);
-    alert(translateCloudError(error));
-  } finally {
-    if (cloudRefreshButton) {
-      cloudRefreshButton.disabled = false;
-      cloudRefreshButton.textContent = "클라우드 새로고침";
+    const message = translateCloudError(error);
+
+    if (isSessionCloudError(error)) {
+      requestFreshLogin(message);
     }
+
+    showAppNotice(message, "error", {
+      title: "클라우드 새로고침 실패",
+      actionLabel: "다시 시도",
+      onAction: () => handleCloudRefreshClick(),
+      persistent: isNetworkCloudError(error),
+    });
+  } finally {
+    setActionButtonBusy(
+      cloudRefreshButton,
+      false,
+      "새로고침 중...",
+      "클라우드 새로고침"
+    );
   }
 }
 
@@ -1631,7 +1694,7 @@ async function handleLegacyMigrationClick() {
 
   if (count === 0) {
     refreshLegacyMigrationPanel();
-    alert("이 브라우저에는 이전할 기존 메모가 없습니다.");
+    showAppNotice("이 브라우저에는 이전할 기존 메모가 없습니다.", "info");
     return;
   }
 
@@ -1644,8 +1707,12 @@ async function handleLegacyMigrationClick() {
     return;
   }
 
-  migrateLegacyButton.disabled = true;
-  migrateLegacyButton.textContent = "클라우드로 옮기는 중...";
+  setActionButtonBusy(
+    migrateLegacyButton,
+    true,
+    "클라우드로 옮기는 중...",
+    "기존 메모를 클라우드로 옮기기"
+  );
 
   const result = await runCloudAction(
     () => importLegacyMemosToCloud(),
@@ -1663,47 +1730,59 @@ async function handleLegacyMigrationClick() {
 
   updateLastSyncTime();
 
-  alert(
-    `기존 메모 이전 완료\n` +
-    `클라우드에 추가: ${result.addedCount}개\n` +
-    `이미 있어 제외: ${result.skippedCount}개\n\n` +
-    "브라우저의 기존 원본 메모는 그대로 보존되어 있습니다."
+  showAppNotice(
+    `클라우드에 ${result.addedCount}개를 추가하고 중복 ${result.skippedCount}개를 제외했습니다. 브라우저의 기존 원본은 그대로 보존됩니다.`,
+    "success",
+    { title: "기존 메모 이전 완료", duration: 6500 }
   );
 }
 
 function translateCloudError(error) {
   const message = String(error && error.message ? error.message : "");
   const code = String(error && error.code ? error.code : "");
+  const status = Number(error?.status || 0);
 
   if (isMemoConflictError(error)) {
     return "다른 기기에서 이 메모가 먼저 수정되었습니다.";
   }
 
+  if (isSessionCloudError(error) || /로그인 세션/i.test(message)) {
+    return "로그인 시간이 만료되었습니다. 다시 로그인하면 작성 중인 초안을 이어서 사용할 수 있습니다.";
+  }
+
   if (/relation .*memo_categories.* does not exist/i.test(message)) {
-    return "Supabase 카테고리 설정이 필요합니다. 05_create_memo_categories.sql을 먼저 실행하세요.";
+    return "카테고리 저장 구조를 찾지 못했습니다. Supabase 설정을 확인하세요.";
   }
 
   if (code === "42P01" || /relation .*memos.* does not exist/i.test(message)) {
-    return "Supabase에 필요한 테이블이 없습니다. v4.5 Supabase SQL 설정을 확인하세요.";
+    return "메모 저장 구조를 찾지 못했습니다. Supabase 데이터베이스 설정을 확인하세요.";
   }
 
   if (code === "42883" && /memo_category/i.test(message)) {
-    return "카테고리 변경용 Supabase 함수가 없습니다. v4.5 SQL을 다시 실행하세요.";
+    return "카테고리 처리 기능을 찾지 못했습니다. Supabase 함수 설정을 확인하세요.";
+  }
+
+  if (code === "23505" || /duplicate key|already exists/i.test(message)) {
+    return "같은 내용이 이미 저장되어 있습니다. 목록을 새로고침한 뒤 다시 확인하세요.";
   }
 
   if (code === "42501" || /row-level security|permission denied/i.test(message)) {
-    return "Supabase RLS 정책 또는 테이블 권한을 확인하세요.";
+    return "현재 계정으로 이 데이터에 접근할 수 없습니다. 다시 로그인한 뒤에도 계속되면 관리자 설정을 확인하세요.";
   }
 
-  if (/failed to fetch|network|load failed/i.test(message)) {
-    return "인터넷 연결 또는 Supabase 연결 상태를 확인하세요.";
+  if (/timeout|timed out|gateway/i.test(message)) {
+    return "서버 응답이 늦어 작업을 완료하지 못했습니다. 잠시 후 다시 시도하세요.";
   }
 
-  if (/로그인 세션/i.test(message)) {
-    return message;
+  if (/failed to fetch|network|load failed|networkerror/i.test(message)) {
+    return "인터넷 연결이 불안정해 클라우드 작업을 완료하지 못했습니다. 작성 내용은 화면과 자동 초안에 유지됩니다.";
   }
 
-  return message || "클라우드 처리 중 오류가 발생했습니다.";
+  if (status >= 500) {
+    return "클라우드 서버에 일시적인 문제가 있습니다. 잠시 후 다시 시도하세요.";
+  }
+
+  return message || "클라우드 처리 중 오류가 발생했습니다. 잠시 후 다시 시도하세요.";
 }
 
 function showMemoListLoading(message = "클라우드 메모를 불러오고 있습니다.") {
@@ -1844,11 +1923,22 @@ async function runCloudAction(action, options = {}) {
     loadingMessage = "클라우드 저장 중",
     successMessage = "클라우드에 저장됨",
     rethrowConflict = false,
+    onError = null,
+    retryAction = null,
+    retryLabel = "다시 시도",
+    notifySuccess = false,
   } = options;
 
   if (navigator.onLine === false) {
     setOfflineStatus();
-    alert("현재 오프라인입니다. 인터넷에 연결한 뒤 다시 저장해주세요.");
+    const message = "현재 오프라인입니다. 작성 내용은 자동 초안에 유지되므로 인터넷 연결 후 다시 저장하세요.";
+    showAppNotice(message, "error", {
+      title: "클라우드에 연결할 수 없습니다",
+      persistent: true,
+      actionLabel: typeof retryAction === "function" ? retryLabel : "",
+      onAction: retryAction,
+    });
+    onError?.(message, new Error("offline"));
     return null;
   }
 
@@ -1862,6 +1952,11 @@ async function runCloudAction(action, options = {}) {
     refreshLegacyMigrationPanel();
     updateLastSyncTime();
     setCloudStatus(successMessage, "ready");
+
+    if (notifySuccess) {
+      showAppNotice(successMessage, "success");
+    }
+
     return result;
   } catch (error) {
     if (rethrowConflict && isMemoConflictError(error)) {
@@ -1873,11 +1968,20 @@ async function runCloudAction(action, options = {}) {
 
     if (isNetworkCloudError(error)) {
       setOfflineStatus();
+    } else if (isSessionCloudError(error)) {
+      setCloudStatus("로그인 만료", "error");
+      requestFreshLogin(message);
     } else {
       setCloudStatus("클라우드 저장 실패", "error");
     }
 
-    alert(message);
+    onError?.(message, error);
+    showAppNotice(message, "error", {
+      title: isSessionCloudError(error) ? "다시 로그인이 필요합니다" : "작업을 완료하지 못했습니다",
+      persistent: isNetworkCloudError(error) || isSessionCloudError(error),
+      actionLabel: typeof retryAction === "function" && !isSessionCloudError(error) ? retryLabel : "",
+      onAction: retryAction,
+    });
     return null;
   }
 }
@@ -1995,7 +2099,11 @@ async function toggleTaskWithConflictHandling(
 
   if (navigator.onLine === false) {
     setOfflineStatus();
-    alert("현재 오프라인입니다. 인터넷에 연결한 뒤 체크해주세요.");
+    showAppNotice(
+      "현재 오프라인이므로 체크 상태를 클라우드에 저장할 수 없습니다. 인터넷 연결 후 다시 체크하세요.",
+      "error",
+      { title: "체크리스트 저장 불가", persistent: true }
+    );
     return null;
   }
 
@@ -2030,14 +2138,22 @@ async function toggleTaskWithConflictHandling(
       }
 
       setCloudStatus("최신 체크리스트 불러옴", "warning");
-      alert(
-        "다른 기기에서 이 메모가 먼저 변경되어 최신 체크리스트를 불러왔습니다. 다시 체크해주세요."
+      showAppNotice(
+        "다른 기기에서 이 메모가 먼저 변경되어 최신 체크리스트를 불러왔습니다. 다시 체크하세요.",
+        "warning",
+        { title: "최신 내용으로 갱신됨", duration: 6500 }
       );
       return null;
     }
 
     console.error(error);
-    alert(translateCloudError(error));
+    const message = translateCloudError(error);
+    showAppNotice(message, "error", {
+      title: "체크리스트 저장 실패",
+      actionLabel: "다시 시도",
+      onAction: () => toggleTaskWithConflictHandling(memoId, taskId, options),
+      persistent: isNetworkCloudError(error),
+    });
     return null;
   }
 }
@@ -2193,7 +2309,7 @@ async function handleEmptyTrashClick() {
   const stats = getDataStats();
 
   if (stats.trashCount === 0) {
-    alert("휴지통에 비울 메모가 없습니다.");
+    showAppNotice("휴지통에 비울 메모가 없습니다.", "info");
     return;
   }
 
@@ -2219,14 +2335,14 @@ async function handleEmptyTrashClick() {
 
   closeDetailModal();
   refreshScreen();
-  alert(`클라우드 휴지통 메모 ${deletedCount}개를 완전히 삭제했습니다.`);
+  showAppNotice(`클라우드 휴지통 메모 ${deletedCount}개를 완전히 삭제했습니다.`, "success");
 }
 
 async function handleResetAllDataClick() {
   const stats = getDataStats();
 
   if (stats.totalCount === 0) {
-    alert("삭제할 클라우드 메모가 없습니다.");
+    showAppNotice("삭제할 클라우드 메모가 없습니다.", "info");
     return;
   }
 
@@ -2267,7 +2383,7 @@ async function handleResetAllDataClick() {
   closeDetailModal();
   refreshScreen();
 
-  alert(`클라우드 메모 ${deletedCount}개를 삭제했습니다.`);
+  showAppNotice(`클라우드 메모 ${deletedCount}개를 삭제했습니다.`, "success");
 }
 
 
@@ -2327,13 +2443,13 @@ function handleAddTask() {
   const text = taskInput.value.trim();
 
   if (!text) {
-    alert("추가할 할 일을 입력해주세요.");
+    showAppNotice("추가할 할 일을 입력하세요.", "warning");
     taskInput.focus();
     return;
   }
 
   if (draftTasks.length >= MAX_MEMO_TASKS) {
-    alert(`체크리스트는 메모 하나에 ${MAX_MEMO_TASKS}개까지 추가할 수 있습니다.`);
+    showAppNotice(`체크리스트는 메모 하나에 ${MAX_MEMO_TASKS}개까지 추가할 수 있습니다.`, "warning");
     return;
   }
 
@@ -2408,6 +2524,8 @@ async function saveEditedMemoWithConflictResolution(
         loadingMessage: "메모 수정 저장 중",
         successMessage: "클라우드에 저장됨",
         rethrowConflict: true,
+        retryAction: () => memoForm?.requestSubmit(),
+        retryLabel: "저장 다시 시도",
       }
     );
 
@@ -2418,14 +2536,29 @@ async function saveEditedMemoWithConflictResolution(
   } catch (error) {
     if (!isMemoConflictError(error)) {
       console.error(error);
-      alert(translateCloudError(error));
+      const message = translateCloudError(error);
+      showAppNotice(message, "error", {
+        title: "메모 수정 저장 실패",
+        actionLabel: "저장 다시 시도",
+        onAction: () => memoForm?.requestSubmit(),
+        persistent: isNetworkCloudError(error),
+      });
       return { status: "failed", memo: null };
     }
 
     const serverMemo = error.serverMemo;
 
     if (!serverMemo) {
-      alert("최신 서버 메모를 확인하지 못했습니다. 클라우드 새로고침 후 다시 시도해주세요.");
+      showAppNotice(
+        "최신 서버 메모를 확인하지 못했습니다. 클라우드 새로고침 후 다시 시도하세요.",
+        "error",
+        {
+          title: "동시 수정 확인 실패",
+          actionLabel: "새로고침",
+          onAction: () => handleCloudRefreshClick(),
+          persistent: true,
+        }
+      );
       return { status: "failed", memo: null };
     }
 
@@ -2460,14 +2593,21 @@ async function saveEditedMemoWithConflictResolution(
     } catch (secondError) {
       if (isMemoConflictError(secondError) && secondError.serverMemo) {
         loadLatestServerMemo(secondError.serverMemo);
-        alert(
-          "덮어쓰는 동안 다른 기기에서 메모가 다시 변경되어 최신 서버 내용을 불러왔습니다."
+        showAppNotice(
+          "덮어쓰는 동안 다른 기기에서 메모가 다시 변경되어 최신 서버 내용을 불러왔습니다.",
+          "warning",
+          { title: "최신 내용으로 변경됨", duration: 7000 }
         );
         return { status: "reloaded", memo: secondError.serverMemo };
       }
 
       console.error(secondError);
-      alert(translateCloudError(secondError));
+      showAppNotice(translateCloudError(secondError), "error", {
+        title: "메모 덮어쓰기 실패",
+        actionLabel: "저장 다시 시도",
+        onAction: () => memoForm?.requestSubmit(),
+        persistent: isNetworkCloudError(secondError),
+      });
       return { status: "failed", memo: null };
     }
   }
@@ -2483,20 +2623,25 @@ async function handleFormSubmit(event) {
   const isImportant = importantInput.checked;
 
   if (!title) {
-    alert("제목을 입력해주세요.");
+    showAppNotice("메모 제목을 입력하세요.", "warning", { title: "저장 전 확인" });
     titleInput.focus();
     return;
   }
 
   if (!content && draftTasks.length === 0) {
-    alert("내용을 입력하거나 체크리스트 항목을 추가해주세요.");
+    showAppNotice("내용을 입력하거나 체크리스트 항목을 한 개 이상 추가하세요.", "warning", { title: "저장 전 확인" });
     contentInput.focus();
     return;
   }
 
   if (navigator.onLine === false) {
     setOfflineStatus();
-    alert("현재 오프라인입니다. 인터넷에 연결한 뒤 저장해주세요.");
+    saveLocalEditorDraft();
+    showAppNotice(
+      "현재 오프라인입니다. 작성 내용은 이 브라우저에 초안으로 저장했습니다. 인터넷 연결 후 다시 저장하세요.",
+      "error",
+      { title: "클라우드 저장 불가", persistent: true }
+    );
     return;
   }
 
@@ -2514,12 +2659,12 @@ async function handleFormSubmit(event) {
     tasks: draftTasks.map((task) => ({ ...task })),
   };
 
-  if (saveButton) {
-    saveButton.disabled = true;
-    saveButton.textContent = editingId
-      ? "수정 저장 중..."
-      : "클라우드 저장 중...";
-  }
+  setActionButtonBusy(
+    saveButton,
+    true,
+    editingId ? "수정 저장 중..." : "클라우드 저장 중...",
+    editingId ? "수정 완료" : "저장하기"
+  );
 
   let result;
 
@@ -2535,6 +2680,8 @@ async function handleFormSubmit(event) {
       {
         loadingMessage: "새 메모 저장 중",
         successMessage: "클라우드에 저장됨",
+        retryAction: () => memoForm?.requestSubmit(),
+        retryLabel: "저장 다시 시도",
       }
     );
 
@@ -2544,9 +2691,12 @@ async function handleFormSubmit(event) {
     };
   }
 
-  if (saveButton) {
-    saveButton.disabled = false;
-  }
+  setActionButtonBusy(
+    saveButton,
+    false,
+    "클라우드 저장 중...",
+    editingId ? "수정 완료" : "저장하기"
+  );
 
   if (result.status === "reloaded") {
     return;
@@ -2832,6 +2982,10 @@ function getTodayTextForFileName() {
 }
 
 function handleBackupClick() {
+  if (backupButton?.disabled) {
+    return;
+  }
+
   const backupData = createBackupData();
   const memoCount = backupData.memos.length;
 
@@ -2843,44 +2997,79 @@ function handleBackupClick() {
     }
   }
 
-  const jsonText = JSON.stringify(backupData, null, 2);
-  const blob = new Blob([jsonText], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const fileName = `훈노트-backup-${getTodayTextForFileName()}.json`;
+  setActionButtonBusy(backupButton, true, "백업 준비 중...", "백업");
 
-  const downloadLink = document.createElement("a");
-  downloadLink.href = url;
-  downloadLink.download = fileName;
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  downloadLink.remove();
+  try {
+    const jsonText = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([jsonText], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const fileName = `훈노트-backup-${getTodayTextForFileName()}.json`;
 
-  URL.revokeObjectURL(url);
+    const downloadLink = document.createElement("a");
+    downloadLink.href = url;
+    downloadLink.download = fileName;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+
+    showAppNotice(
+      `${memoCount}개의 메모가 포함된 백업 파일 다운로드를 시작했습니다. 브라우저의 다운로드 목록을 확인하세요.`,
+      "success",
+      { title: "백업 파일 생성 완료" }
+    );
+  } catch (error) {
+    console.error(error);
+    showAppNotice(
+      "백업 파일을 만들지 못했습니다. 브라우저의 다운로드 권한과 저장 공간을 확인한 뒤 다시 시도하세요.",
+      "error",
+      {
+        title: "백업 실패",
+        actionLabel: "다시 시도",
+        onAction: () => handleBackupClick(),
+      }
+    );
+  } finally {
+    setActionButtonBusy(backupButton, false, "백업 준비 중...", "백업");
+  }
 }
 
 function handleRestoreButtonClick() {
+  if (restoreButton?.disabled) {
+    return;
+  }
+
   const fileInput = document.createElement("input");
   fileInput.type = "file";
   fileInput.accept = ".json,application/json";
   fileInput.style.display = "none";
 
+  const finishRestore = () => {
+    setActionButtonBusy(restoreButton, false, "복원 중...", "복원");
+    fileInput.remove();
+  };
+
   fileInput.addEventListener("change", () => {
     const file = fileInput.files[0];
 
     if (!file) {
-      fileInput.remove();
+      finishRestore();
       return;
     }
 
     if (!file.name.toLowerCase().endsWith(".json")) {
-      alert("JSON 백업 파일만 복원할 수 있습니다.");
-      fileInput.remove();
+      showAppNotice("JSON 형식의 훈노트 백업 파일만 복원할 수 있습니다.", "warning", {
+        title: "지원하지 않는 파일",
+      });
+      finishRestore();
       return;
     }
 
     if (file.size > MAX_BACKUP_FILE_SIZE_BYTES) {
-      alert("백업 파일은 10MB 이하만 복원할 수 있습니다.");
-      fileInput.remove();
+      showAppNotice("백업 파일은 10MB 이하만 복원할 수 있습니다.", "warning", {
+        title: "파일이 너무 큽니다",
+      });
+      finishRestore();
       return;
     }
 
@@ -2889,21 +3078,24 @@ function handleRestoreButtonClick() {
     );
 
     if (!shouldRestore) {
-      fileInput.remove();
+      finishRestore();
       return;
     }
 
+    setActionButtonBusy(restoreButton, true, "복원 중...", "복원");
     const reader = new FileReader();
 
     reader.onload = async () => {
       try {
-        const backupData = JSON.parse(reader.result);
+        const backupData = JSON.parse(String(reader.result || ""));
 
         const result = await runCloudAction(
           () => importMemosFromBackup(backupData),
           {
             loadingMessage: "백업 메모를 클라우드로 가져오는 중",
             successMessage: "클라우드 복원 완료",
+            retryAction: () => handleRestoreButtonClick(),
+            retryLabel: "파일 다시 선택",
           }
         );
 
@@ -2917,24 +3109,38 @@ function handleRestoreButtonClick() {
         setActiveCategory(currentCategory);
         refreshScreen();
 
-        alert(
-          `클라우드 복원 완료: ${result.addedCount}개 추가, ${result.skippedCount}개 중복 제외`
+        showAppNotice(
+          `${result.addedCount}개를 추가하고 중복 ${result.skippedCount}개를 제외했습니다.`,
+          "success",
+          { title: "클라우드 복원 완료", duration: 6500 }
         );
       } catch (error) {
         console.error(error);
-        alert(
-          error instanceof SyntaxError
-            ? "JSON 파일 형식이 올바르지 않습니다."
-            : translateCloudError(error)
-        );
+        const message = error instanceof SyntaxError
+          ? "JSON 파일 구조를 읽을 수 없습니다. 손상되지 않은 훈노트 백업 파일인지 확인하세요."
+          : translateCloudError(error);
+
+        showAppNotice(message, "error", {
+          title: "백업 복원 실패",
+          actionLabel: "파일 다시 선택",
+          onAction: () => handleRestoreButtonClick(),
+        });
       } finally {
-        fileInput.remove();
+        finishRestore();
       }
     };
 
     reader.onerror = () => {
-      alert("파일을 읽는 중 문제가 발생했습니다.");
-      fileInput.remove();
+      showAppNotice(
+        "파일을 읽지 못했습니다. 파일 접근 권한과 파일 상태를 확인한 뒤 다시 시도하세요.",
+        "error",
+        {
+          title: "파일 읽기 실패",
+          actionLabel: "파일 다시 선택",
+          onAction: () => handleRestoreButtonClick(),
+        }
+      );
+      finishRestore();
     };
 
     reader.readAsText(file, "utf-8");
@@ -3060,6 +3266,11 @@ function bindEvents() {
 
   window.addEventListener("online", () => {
     setCloudStatus("인터넷 재연결 · 동기화 준비", "loading");
+    showAppNotice(
+      "인터넷 연결이 복구되었습니다. 클라우드 데이터를 다시 확인합니다.",
+      "success",
+      { title: "온라인 상태" }
+    );
     scheduleAutomaticSync("인터넷 재연결", {
       force: true,
       delay: 100,
@@ -3073,6 +3284,12 @@ function bindEvents() {
     }
 
     setOfflineStatus();
+    saveLocalEditorDraft();
+    showAppNotice(
+      "인터넷 연결이 끊겼습니다. 작성 중인 내용은 브라우저 초안에 유지되며 클라우드 작업은 연결 후 다시 시도해야 합니다.",
+      "error",
+      { title: "오프라인", persistent: true }
+    );
   });
 
   window.addEventListener("focus", () => {

@@ -6,7 +6,7 @@ from pathlib import Path
 from playwright.async_api import async_playwright, expect
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT.parent / "hoonnote_v4_5_13_2_regression_shots"
+OUT = ROOT.parent / "hoonnote_v4_5_15_regression_shots"
 OUT.mkdir(exist_ok=True)
 
 HTML = (ROOT / "index.html").read_text(encoding="utf-8")

@@ -2,6 +2,7 @@
   "use strict";
 
   const config = window.SOLONOTE_CONFIG || {};
+  const feedback = window.HoonNoteFeedback || null;
   const REQUIRED_CONFIRMATION = "계정 삭제";
   const POST_AUTH_MESSAGE_KEY = "solonote_post_auth_message_v1";
   const DELETE_REQUEST_TIMEOUT_MS = 45000;
@@ -117,6 +118,7 @@
     }
 
     if (confirmButton) {
+      confirmButton.setAttribute("aria-busy", String(active));
       confirmButton.textContent = active
         ? "계정 삭제 중..."
         : "계정과 데이터 영구 삭제";
@@ -282,12 +284,12 @@
             Authorization: `Bearer ${session.access_token}`,
             apikey: config.supabasePublishableKey,
             "Content-Type": "application/json",
-            "X-Client-Info": "hoonnote-v4.5.13.2",
+            "X-Client-Info": "hoonnote-v4.5.15",
             "X-Request-Id": requestId,
           },
           body: JSON.stringify({
             confirmation: REQUIRED_CONFIRMATION,
-            clientVersion: "4.5.13.2",
+            clientVersion: "4.5.15",
           }),
           cache: "no-store",
           signal: controller.signal,
@@ -361,6 +363,16 @@
     const client = window.solonoteSupabase;
     const password = passwordInput?.value || "";
     const confirmation = confirmationInput?.value || "";
+
+    if (navigator.onLine === false) {
+      setStatus("현재 오프라인입니다. 인터넷 연결 후 계정 삭제를 다시 시도하세요.", "error");
+      feedback?.show?.("계정 삭제는 서버 확인이 필요하므로 오프라인에서 진행할 수 없습니다.", {
+        state: "error",
+        title: "인터넷 연결 필요",
+        persistent: true,
+      });
+      return;
+    }
 
     if (!client) {
       setStatus("Supabase 연결이 준비되지 않았습니다.", "error");
@@ -449,7 +461,13 @@
         }
       }
 
-      setStatus(translateDeletionError(error), "error");
+      const message = translateDeletionError(error);
+      setStatus(message, "error");
+      feedback?.show?.(message, {
+        state: "error",
+        title: "계정을 삭제하지 못했습니다",
+        duration: 8000,
+      });
       setDeletingState(false);
       passwordInput?.focus();
     }
