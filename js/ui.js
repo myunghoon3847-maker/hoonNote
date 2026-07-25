@@ -389,7 +389,6 @@ function openEditor(options = {}) {
     mobileNewMemoButton.hidden = true;
   }
 
-  document.body.classList.remove("editor-view-open");
 
   if (!options.skipHistory) {
     window.solonoteNavigation?.openLayer("editor");
@@ -426,7 +425,6 @@ function closeEditor(options = {}) {
     toggleButton.classList.add("primary-button");
   }
 
-  document.body.classList.remove("editor-view-open");
 
   if (mobileNewMemoButton) {
     mobileNewMemoButton.hidden = document.body.dataset.appView !== "notes";

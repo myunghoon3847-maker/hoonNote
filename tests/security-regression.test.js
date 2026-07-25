@@ -171,34 +171,33 @@ test("cloud reads and legacy migration updates include the signed-in user id", a
   );
 });
 
-test("release and cache versions are consistently set to v4.5.15", () => {
+test("release and cache versions are consistently set to v4.5.16", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const serviceWorker = fs.readFileSync(path.join(projectRoot, "service-worker.js"), "utf8");
   const accountSource = fs.readFileSync(path.join(projectRoot, "js/account.js"), "utf8");
   const storageSource = fs.readFileSync(path.join(projectRoot, "js/storage.js"), "utf8");
 
-  assert.match(indexHtml, /version-badge">v4\.5\.15/);
+  assert.match(indexHtml, /version-badge">v4\.5\.16/);
   assert.doesNotMatch(indexHtml, /v=458/);
-  assert.match(serviceWorker, /hoonnote-v4-5-15-cache/);
+  assert.match(serviceWorker, /hoonnote-v4-5-16-cache/);
   assert.doesNotMatch(serviceWorker, /v=458/);
-  assert.match(accountSource, /clientVersion: "4\.5\.15"/);
-  assert.match(storageSource, /backupVersion: "4\.5\.15"/);
+  assert.match(accountSource, /clientVersion: "4\.5\.16"/);
+  assert.match(storageSource, /backupVersion: "4\.5\.16"/);
 });
 
-test("v4.5.15 UI and error feedback contract is preserved", () => {
+test("v4.5.16 UI and error feedback contract is preserved", () => {
   const indexHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
   const appSource = fs.readFileSync(path.join(projectRoot, "js/app.js"), "utf8");
   const uiSource = fs.readFileSync(path.join(projectRoot, "js/ui.js"), "utf8");
   const styleSource = fs.readFileSync(path.join(projectRoot, "css/style.css"), "utf8");
   const feedbackSource = fs.readFileSync(path.join(projectRoot, "js/feedback.js"), "utf8");
 
-  assert.match(indexHtml, /class="brand-wordmark"[^>]+brand-wordmark\.svg\?v=466/);
+  assert.match(indexHtml, /class="brand-wordmark"[^>]+brand-wordmark\.svg\?v=467/);
   assert.match(indexHtml, /<section[^>]*id="editorView"[^>]*>/);
   assert.match(indexHtml.match(/<section[^>]*id="editorView"[^>]*>/)[0], /hidden/);
-  assert.match(indexHtml, /<section[^>]*id="settingsView"[^>]*>/);
-  assert.match(indexHtml.match(/<section[^>]*id="settingsView"[^>]*>/)[0], /hidden/);
+  assert.doesNotMatch(indexHtml, /id="settingsView"/);
   assert.doesNotMatch(indexHtml, /id="editorBackButton"/);
-  assert.match(indexHtml, /id="settingsBackButton"/);
+  assert.doesNotMatch(indexHtml, /id="settingsBackButton"/);
   assert.match(indexHtml, /id="openSettingsButton"/);
   assert.match(indexHtml, /id="categoryPickerButton"/);
   assert.match(indexHtml, /id="categoryPickerMenu"/);
@@ -210,13 +209,14 @@ test("v4.5.15 UI and error feedback contract is preserved", () => {
   assert.doesNotMatch(indexHtml, /id="menuCategorySettingsButton"/);
   assert.doesNotMatch(indexHtml, /id="openCategoryManagerButton"/);
   assert.match(indexHtml, /id="editorCategoryManagerButton"/);
-  assert.match(indexHtml, /id="accountManagementToggleButton"/);
-  assert.match(indexHtml, /<div[^>]*id="accountManagementContent"[^>]*>/);
-  assert.match(indexHtml.match(/<div[^>]*id="accountManagementContent"[^>]*>/)[0], /hidden/);
+  assert.doesNotMatch(indexHtml, /id="accountManagementToggleButton"/);
+  assert.doesNotMatch(indexHtml, /id="accountManagementContent"/);
+  assert.match(indexHtml, /id="menuAccountManagementToggleButton"/);
+  assert.match(indexHtml, /id="menuAccountManagementContent"/);
   assert.match(indexHtml, /id="installAppButton"/);
   assert.doesNotMatch(indexHtml, /id="taskHubTitle"/);
   assert.doesNotMatch(indexHtml, /id="taskHubResultText"/);
-  assert.match(indexHtml, /icons\/settings-gear\.png\?v=466/);
+  assert.match(indexHtml, /icons\/settings-gear\.png\?v=467/);
   assert.doesNotMatch(indexHtml, /id="emptyTrashButton"/);
   assert.match(indexHtml, /class="data-stat-open-label">열기<\/span>/);
   assert.match(indexHtml, /id="logoutButton"/);
@@ -224,7 +224,7 @@ test("v4.5.15 UI and error feedback contract is preserved", () => {
   assert.match(indexHtml, /maximum-scale=1, user-scalable=no, viewport-fit=cover/);
 
   assert.match(indexHtml, /id="appNoticeRegion"/);
-  assert.match(indexHtml, /js\/feedback\.js\?v=466/);
+  assert.match(indexHtml, /js\/feedback\.js\?v=467/);
   assert.match(feedbackSource, /window\.HoonNoteFeedback/);
   assert.match(feedbackSource, /aria-busy/);
   assert.match(appSource, /function showAppNotice\(/);
@@ -238,9 +238,9 @@ test("v4.5.15 UI and error feedback contract is preserved", () => {
   assert.ok(editorPosition > notesPosition && editorPosition < tasksPosition);
   assert.ok(indexHtml.indexOf('id="editorView"') < indexHtml.indexOf('class="search-toolbar"'));
 
-  assert.match(appSource, /const allowedViews = \["notes", "tasks", "trash", "settings"\]/);
+  assert.match(appSource, /const allowedViews = \["notes", "tasks", "trash"\]/);
   assert.match(appSource, /function handleOpenSettingsClick\(\)/);
-  assert.match(appSource, /function handleSettingsBackClick\(\)/);
+  assert.doesNotMatch(appSource, /function handleSettingsBackClick\(\)/);
   assert.match(appSource, /openSettingsButton\?\.addEventListener/);
   assert.doesNotMatch(appSource, /function handleSettingsToggle\(\)/);
   assert.match(uiSource, /document\.querySelector\("#editorView"\)/);
@@ -249,7 +249,12 @@ test("v4.5.15 UI and error feedback contract is preserved", () => {
   assert.match(styleSource, /\.main-category-tabs\s*\{[\s\S]*?flex-wrap:\s*wrap/);
   assert.match(styleSource, /\.main-category-tabs\s*\{[\s\S]*?overflow:\s*visible/);
   assert.match(styleSource, /\.inline-editor-view/);
-  assert.match(styleSource, /body\[data-app-view="settings"\] \.primary-view-tabs/);
+  assert.doesNotMatch(styleSource, /\.category-more-button/);
+  assert.doesNotMatch(styleSource, /\.settings-view-heading/);
+  assert.doesNotMatch(styleSource, /\.editor-page-heading/);
+  assert.doesNotMatch(appSource, /taskHubToggleButton/);
+  assert.doesNotMatch(appSource, /openCategoryManagerButton/);
+  assert.doesNotMatch(styleSource, /body\[data-app-view="settings"\]/);
   assert.match(styleSource, /\.menu-header-back-button\s*\{/);
   assert.match(styleSource, /\.settings-row-button\s*\{/);
   assert.match(styleSource, /overflow-x:\s*hidden/);

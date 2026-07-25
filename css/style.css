@@ -260,8 +260,7 @@ button:disabled {
 .login-form input,
 .memo-form input,
 .memo-form textarea,
-.memo-form select,
-.filter-panel select {
+.memo-form select {
   width: 100%;
   min-height: 42px;
   padding: 9px 12px;
@@ -283,8 +282,7 @@ button:disabled {
 .login-form input:focus,
 .memo-form input:focus,
 .memo-form textarea:focus,
-.memo-form select:focus,
-.filter-panel select:focus {
+.memo-form select:focus {
   border-color: #93c5fd;
 }
 
@@ -371,27 +369,6 @@ button:disabled {
   transform: translateY(1px);
 }
 
-.brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 31px;
-  height: 31px;
-  border-radius: 9px;
-  background: var(--primary);
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  box-shadow: 0 3px 9px rgba(37, 99, 235, 0.2);
-}
-
-.brand-name {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.045em;
-  white-space: nowrap;
-}
 
 .header-actions {
   display: flex;
@@ -631,25 +608,6 @@ button:disabled {
   gap: 7px;
 }
 
-.category-field-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.category-inline-manage-button {
-  min-height: 30px;
-  padding: 0 7px;
-  color: var(--primary);
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.category-inline-manage-button:hover {
-  background: var(--primary-soft);
-  color: #1d4ed8;
-}
 
 .checklist-editor {
   display: grid;
@@ -784,20 +742,6 @@ button:disabled {
   margin-top: 12px;
 }
 
-.category-filter-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 34px;
-  margin-bottom: 6px;
-}
-
-.category-filter-label {
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 800;
-}
 
 .main-category-tabs {
   padding: 0 0 2px;
@@ -838,21 +782,6 @@ button:disabled {
   color: #ffffff;
 }
 
-.category-manage-button {
-  flex: 0 0 auto;
-  min-height: 34px;
-  padding: 0 8px;
-  background: transparent;
-  color: #1d4ed8;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.category-manage-button:hover {
-  background: var(--primary-soft);
-  color: #1d4ed8;
-}
 
 .sort-options {
   display: flex;
@@ -1389,35 +1318,6 @@ button:disabled {
   background: var(--primary-soft);
 }
 
-.trash-menu-section {
-  padding-top: 2px;
-}
-
-.menu-trash-button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  min-height: 44px;
-  background: var(--surface);
-}
-
-.menu-item-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 26px;
-  min-height: 24px;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: var(--surface-soft);
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.account-management {
-  padding-top: 10px;
-}
 
 .danger-text {
   color: var(--danger);
@@ -1841,8 +1741,7 @@ button:disabled {
     width: min(100% - 20px, 420px);
   }
 
-  .form-grid,
-  .filter-select-grid {
+  .form-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1876,16 +1775,9 @@ button:disabled {
     --header-height: 58px;
   }
 
-  .brand-name {
-    font-size: 18px;
-  }
+  
 
-  .brand-mark {
-    width: 29px;
-    height: 29px;
-    border-radius: 8px;
-    font-size: 13px;
-  }
+  
 
   .cloud-sync-status {
     max-width: 118px;
@@ -2012,17 +1904,7 @@ button:disabled {
 
 
 /* 계정 삭제 */
-.account-delete-menu-button {
-  width: 100%;
-  margin-top: 10px;
-  background: var(--danger-soft);
-  border-color: #fecaca;
-}
 
-.account-delete-menu-button:hover {
-  border-color: #fca5a5;
-  background: #fee2e2;
-}
 
 .account-deletion-card {
   width: min(100%, 560px);
@@ -2278,13 +2160,12 @@ body[data-app-view="trash"] .primary-view-tabs {
 /* v4.5.5 모바일 확대 방지 및 입력 안정화 */
 @media (max-width: 720px) {
   .login-form input,
-  .login-form textarea,
-  .memo-form input,
-  .memo-form textarea,
-  .memo-form select,
-  .filter-panel select,
-  .search-box input,
-  .category-create-row input {
+.login-form textarea,
+.memo-form input,
+.memo-form textarea,
+.memo-form select,
+.search-box input,
+.category-create-row input {
     font-size: 16px;
   }
 }
@@ -2380,9 +2261,7 @@ select {
     padding-right: 3px;
   }
 
-  .brand-name {
-    font-size: 17px;
-  }
+  
 
   .cloud-sync-status {
     max-width: 92px;
@@ -2454,11 +2333,6 @@ body {
   background: #dbeafe;
 }
 
-.category-filter-header {
-  justify-content: flex-start;
-  min-height: 24px;
-  margin-bottom: 7px;
-}
 
 .category-tabs-shell {
   display: grid;
@@ -2479,57 +2353,6 @@ body {
   overflow: hidden;
 }
 
-.category-tabs-shell.is-expanded .main-category-tabs {
-  max-height: none;
-  overflow: visible;
-}
-
-.category-more-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-width: 68px;
-  min-height: 34px;
-  padding: 0 9px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: var(--surface-soft);
-  color: #475569;
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.category-more-button:hover {
-  border-color: var(--primary-line);
-  background: var(--primary-soft);
-  color: #1d4ed8;
-}
-
-.category-more-arrow {
-  display: inline-block;
-  font-size: 13px;
-  line-height: 1;
-  transition: transform 0.16s ease;
-}
-
-.category-tabs-shell.is-expanded .category-more-arrow {
-  transform: rotate(180deg);
-}
-
-.category-filter-actions {
-  display: flex;
-  justify-content: flex-end;
-  min-width: 0;
-  margin-top: 7px;
-}
-
-.category-manage-button {
-  min-height: 32px;
-  padding: 0 9px;
-}
 
 .app-menu-backdrop {
   cursor: pointer;
@@ -2588,9 +2411,6 @@ body {
   display: none !important;
 }
 
-.account-delete-menu-button {
-  margin-top: 0;
-}
 
 .menu-action-button,
 .legal-menu-link {
@@ -2609,15 +2429,9 @@ body {
     max-height: 34px;
   }
 
-  .category-tabs-shell.is-expanded .main-category-tabs {
-    max-height: none;
-    overflow: visible;
-  }
+  
 
-  .category-more-button {
-    min-width: 64px;
-    padding-inline: 8px;
-  }
+  
 
   .app-menu-panel {
     width: min(338px, 84vw);
@@ -2641,10 +2455,7 @@ body {
     padding-inline: 9px;
   }
 
-  .category-more-button {
-    min-width: 60px;
-    padding-inline: 7px;
-  }
+  
 
   .app-menu-panel {
     width: 82vw;
@@ -2652,15 +2463,7 @@ body {
 }
 
 /* v4.5.8 category line, settings entry and shared app icon */
-.brand-mark {
-  display: block;
-  width: 31px;
-  height: 31px;
-  border-radius: 9px;
-  background: transparent;
-  object-fit: contain;
-  box-shadow: 0 3px 9px rgba(37, 99, 235, 0.2);
-}
+
 
 .notes-view-heading {
   justify-content: flex-end;
@@ -2705,116 +2508,6 @@ body {
   flex: 0 0 auto;
 }
 
-.category-manage-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  min-width: 48px;
-  min-height: 32px;
-  margin: 0;
-  padding: 0 9px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: var(--surface);
-  color: #475569;
-  font-size: 11px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.category-more-button,
-.category-more-label,
-.category-more-arrow,
-.category-filter-header,
-.category-filter-actions {
-  display: none !important;
-}
-
-.settings-management {
-  padding-top: 5px;
-}
-
-.settings-menu-button {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 52px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface-soft);
-  color: var(--text);
-  cursor: pointer;
-  text-align: left;
-}
-
-.settings-menu-button:hover,
-.settings-menu-button.is-open {
-  border-color: var(--primary-line);
-  background: var(--primary-soft);
-}
-
-.settings-menu-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: #ffffff;
-  color: var(--primary);
-  font-size: 18px;
-  line-height: 1;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
-}
-
-.settings-menu-copy {
-  display: grid;
-  min-width: 0;
-  gap: 2px;
-}
-
-.settings-menu-copy strong {
-  font-size: 13px;
-}
-
-.settings-menu-copy small {
-  overflow: hidden;
-  color: var(--muted);
-  font-size: 10px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.settings-menu-chevron {
-  color: var(--muted);
-  font-size: 22px;
-  line-height: 1;
-  transition: transform 0.18s ease;
-}
-
-.settings-menu-button.is-open .settings-menu-chevron {
-  transform: rotate(90deg);
-}
-
-.settings-content {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px;
-  min-width: 0;
-  margin-top: 8px;
-}
-
-.settings-content[hidden] {
-  display: none !important;
-}
-
-.settings-content .menu-action-button {
-  text-align: center;
-}
 
 @media (max-width: 520px) {
   .main-category-tabs {
@@ -2824,10 +2517,7 @@ body {
     overflow-y: hidden;
   }
 
-  .category-manage-button {
-    min-width: 46px;
-    padding-inline: 8px;
-  }
+  
 }
 
 @media (max-width: 360px) {
@@ -2835,10 +2525,7 @@ body {
     gap: 5px;
   }
 
-  .category-manage-button {
-    min-width: 44px;
-    padding-inline: 7px;
-  }
+  
 }
 
 /* Keep the category filter line compact on narrow phones. */
@@ -2859,22 +2546,9 @@ body {
   mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 12px), transparent 100%);
 }
 
-.settings-menu-icon svg {
-  width: 18px;
-  height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
 
 /* v4.5.9: dedicated editor/settings screens and simplified mobile navigation */
-.brand-name {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 0.055em;
-}
+
 
 /* Main category filters wrap naturally; no hidden horizontal row or manage button. */
 .category-tabs-shell {
@@ -2898,118 +2572,7 @@ body {
   mask-image: none;
 }
 
-.main-category-tabs .category-tab {
-  flex: 0 0 auto;
-}
 
-/* Editor is a separate app screen rather than an expandable block in the list. */
-body.editor-view-open .primary-view-tabs,
-body[data-app-view="settings"] .primary-view-tabs {
-  display: none;
-}
-
-.editor-view,
-.settings-view {
-  min-width: 0;
-}
-
-.editor-page-heading,
-.settings-view-heading {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  min-height: 48px;
-}
-
-.editor-page-heading > div,
-.settings-view-heading > div {
-  min-width: 0;
-}
-
-.editor-page-heading h2,
-.settings-view-heading h2 {
-  margin: 0;
-  font-size: 19px;
-  letter-spacing: -0.035em;
-}
-
-.editor-page-heading p,
-.settings-view-heading p {
-  margin: 3px 0 0;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.editor-back-button,
-.settings-back-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--surface);
-  color: #475569;
-  cursor: pointer;
-  font-size: 21px;
-  line-height: 1;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.editor-back-button:hover,
-.settings-back-button:hover {
-  border-color: var(--line-strong);
-  background: var(--surface-soft);
-}
-
-.editor-view .editor-panel {
-  width: 100%;
-  margin: 0;
-}
-
-.editor-view .editor-panel.collapsed {
-  display: none;
-}
-
-/* The gear replaces the menu X and opens a dedicated settings screen. */
-.menu-header-settings-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border: 0;
-  border-radius: 11px;
-  background: transparent;
-  color: #6b7280;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.menu-header-settings-button:hover,
-.menu-header-settings-button:focus-visible {
-  background: #f1f5f9;
-  color: #475569;
-}
-
-.menu-header-settings-button svg {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.65;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.settings-view {
-  gap: 12px;
-}
 
 .settings-panel {
   padding: 0;
@@ -3089,13 +2652,6 @@ body[data-app-view="settings"] .primary-view-tabs {
   margin-top: 12px;
 }
 
-.app-install-settings {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px;
-}
 
 .settings-panel-copy {
   min-width: 0;
@@ -3112,39 +2668,22 @@ body[data-app-view="settings"] .primary-view-tabs {
   line-height: 1.55;
 }
 
-.app-install-settings > button {
-  flex: 0 0 auto;
-}
 
 @media (max-width: 520px) {
-  .brand-name {
-    font-size: 16px;
-    letter-spacing: 0.045em;
-  }
+  
 
   .main-category-tabs {
     flex-wrap: wrap;
     overflow: visible;
   }
 
-  .editor-page-heading,
-  .settings-view-heading {
-    min-height: 44px;
-  }
+  
 
-  .editor-view .editor-panel {
-    padding: 14px;
-    border-radius: 14px;
-  }
+  
 
-  .app-install-settings {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+  
 
-  .app-install-settings > button {
-    width: 100%;
-  }
+  
 }
 
 .settings-row-icon svg {
@@ -3164,21 +2703,6 @@ body[data-app-view="settings"] .primary-view-tabs {
   padding: 3px 6px 3px 0;
 }
 
-.brand-mark {
-  display: block;
-  width: 36px;
-  height: 36px;
-  border-radius: 0;
-  background: transparent;
-  object-fit: contain;
-  box-shadow: none;
-}
-
-.brand-name {
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: 0.035em;
-}
 
 .primary-view-tabs {
   margin-top: 14px;
@@ -3219,9 +2743,7 @@ body[data-app-view="settings"] .primary-view-tabs {
   overflow: visible;
 }
 
-.main-category-tabs .category-tab {
-  flex: 0 0 auto;
-}
+
 
 .sort-options {
   gap: 2px 0;
@@ -3232,26 +2754,6 @@ body[data-app-view="settings"] .primary-view-tabs {
   margin-top: 1px;
 }
 
-.menu-header-settings-button {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-}
-
-.menu-header-settings-button:hover,
-.menu-header-settings-button:focus-visible {
-  background: var(--surface-soft);
-}
-
-.menu-header-settings-button img {
-  display: block;
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-}
 
 .menu-subview {
   display: block;
@@ -3265,9 +2767,6 @@ body[data-app-view="settings"] .primary-view-tabs {
   align-items: center;
 }
 
-.menu-settings-back-button {
-  flex: 0 0 auto;
-}
 
 .menu-settings-panel {
   padding: 0;
@@ -3284,15 +2783,9 @@ body[data-app-view="settings"] .primary-view-tabs {
 }
 
 @media (max-width: 520px) {
-  .brand-mark {
-    width: 34px;
-    height: 34px;
-  }
+  
 
-  .brand-name {
-    font-size: 17px;
-    letter-spacing: 0.045em;
-  }
+  
 
   .primary-view-tabs {
     margin-top: 10px;
@@ -3338,10 +2831,6 @@ body[data-app-view="settings"] .primary-view-tabs {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.menu-header-settings-button img {
-  width: 25px;
-  height: 25px;
-}
 
 .data-stat-button {
   display: flex;
@@ -3716,9 +3205,6 @@ body[data-app-view="settings"] .primary-view-tabs {
   display: none;
 }
 
-body.editor-view-open .primary-view-tabs {
-  display: grid;
-}
 
 @media (max-width: 720px) {
   .inline-editor-view .editor-panel {
@@ -3732,7 +3218,7 @@ body.editor-view-open .primary-view-tabs {
   scroll-margin-top: calc(var(--header-height) + 12px);
 }
 
-/* v4.5.15 error feedback and action-state guidance */
+/* Error feedback and action-state guidance */
 .app-notice-region {
   position: fixed;
   z-index: 140;
@@ -3886,5 +3372,35 @@ button[aria-busy="true"]::after {
 
   .app-notice-copy p {
     font-size: 11px;
+  }
+}
+
+
+/* v4.5.16 current settings app-install row */
+.menu-settings-app-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0;
+}
+
+.menu-settings-app-panel > .menu-settings-copy-block {
+  padding-right: 0;
+}
+
+.menu-settings-app-panel > #installAppButton {
+  min-width: 88px;
+  margin-right: 14px;
+}
+
+@media (max-width: 420px) {
+  .menu-settings-app-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-settings-app-panel > #installAppButton {
+    width: calc(100% - 28px);
+    margin: 0 14px 14px;
   }
 }

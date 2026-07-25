@@ -20,13 +20,11 @@ const editingIdInput = document.querySelector("#editingId");
 const editingUpdatedAtInput = document.querySelector("#editingUpdatedAt");
 const searchInput = document.querySelector("#searchInput");
 const categoryTabs = document.querySelector("#categoryTabs");
-const categoryTabsShell = document.querySelector("#categoryTabsShell");
 const sortOptions = document.querySelector("#sortOptions");
 const backupButton = document.querySelector("#backupButton");
 const restoreButton = document.querySelector("#restoreButton");
 const totalMemoCount = document.querySelector("#totalMemoCount");
 const trashMemoCount = document.querySelector("#trashMemoCount");
-const emptyTrashButton = document.querySelector("#emptyTrashButton");
 const resetAllDataButton = document.querySelector("#resetAllDataButton");
 const guideToggleButton = document.querySelector("#guideToggleButton");
 const guideContent = document.querySelector("#guideContent");
@@ -44,8 +42,6 @@ const cloudRefreshButton = document.querySelector("#cloudRefreshButton");
 const lastSyncTime = document.querySelector("#lastSyncTime");
 const dataManagementToggleButton = document.querySelector("#dataManagementToggleButton");
 const dataManagementContent = document.querySelector("#dataManagementContent");
-const accountManagementToggleButton = document.querySelector("#accountManagementToggleButton");
-const accountManagementContent = document.querySelector("#accountManagementContent");
 const openSettingsButton = document.querySelector("#openSettingsButton");
 const menuMainView = document.querySelector("#menuMainView");
 const menuSettingsView = document.querySelector("#menuSettingsView");
@@ -53,26 +49,21 @@ const menuSettingsBackButton = document.querySelector("#menuSettingsBackButton")
 const menuHeaderTitle = document.querySelector("#menuHeaderTitle");
 const menuAccountManagementToggleButton = document.querySelector("#menuAccountManagementToggleButton");
 const menuAccountManagementContent = document.querySelector("#menuAccountManagementContent");
-const settingsBackButton = document.querySelector("#settingsBackButton");
-const editorBackButton = document.querySelector("#editorBackButton");
 const mobileNewMemoButton = document.querySelector("#mobileNewMemoButton");
 const draftRecoveryBanner = document.querySelector("#draftRecoveryBanner");
 const draftRecoveryDescription = document.querySelector("#draftRecoveryDescription");
 const restoreDraftButton = document.querySelector("#restoreDraftButton");
 const discardDraftButton = document.querySelector("#discardDraftButton");
 const draftSaveStatus = document.querySelector("#draftSaveStatus");
-const taskHubToggleButton = document.querySelector("#taskHubToggleButton");
 const taskHubContent = document.querySelector("#taskHubContent");
 const taskHubList = document.querySelector("#taskHubList");
 const taskHubOpenCount = document.querySelector("#taskHubOpenCount");
-const taskHubResultText = document.querySelector("#taskHubResultText");
 const taskHubViewTabs = document.querySelector(".task-hub-view-tabs");
 const notesViewTab = document.querySelector("#notesViewTab");
 const tasksViewTab = document.querySelector("#tasksViewTab");
 const notesView = document.querySelector("#notesView");
 const editorView = document.querySelector("#editorView");
 const tasksView = document.querySelector("#tasksView");
-const settingsView = document.querySelector("#settingsView");
 const trashView = document.querySelector("#trashView");
 const trashList = document.querySelector("#trashList");
 const trashViewCount = document.querySelector("#trashViewCount");
@@ -83,7 +74,6 @@ const appMenuPanel = document.querySelector("#appMenuPanel");
 const appMenuBackdrop = document.querySelector("#appMenuBackdrop");
 const openTrashButton = document.querySelector("#openTrashButton");
 const categoryManagerModal = document.querySelector("#categoryManagerModal");
-const openCategoryManagerButton = document.querySelector("#openCategoryManagerButton");
 const closeCategoryManagerButton = document.querySelector("#closeCategoryManagerButton");
 const categoryCreateForm = document.querySelector("#categoryCreateForm");
 const newCategoryInput = document.querySelector("#newCategoryInput");
@@ -129,7 +119,7 @@ let isApplyingAppHistory = false;
 let lastAppliedNavigationState = null;
 
 function createAppNavigationState(view = currentAppView, layer = "base", detail = {}) {
-  const safeView = ["notes", "tasks", "trash", "settings"].includes(view) ? view : "notes";
+  const safeView = ["notes", "tasks", "trash"].includes(view) ? view : "notes";
   const safeLayer = APP_HISTORY_LAYERS.has(layer) ? layer : "base";
 
   return {
@@ -851,20 +841,17 @@ function handleHomeLogoClick(event) {
 }
 
 function switchAppView(view, options = {}) {
-  const allowedViews = ["notes", "tasks", "trash", "settings"];
+  const allowedViews = ["notes", "tasks", "trash"];
   currentAppView = allowedViews.includes(view) ? view : "notes";
 
   const isNotes = currentAppView === "notes";
   const isTasks = currentAppView === "tasks";
   const isTrash = currentAppView === "trash";
-  const isSettings = currentAppView === "settings";
 
   document.body.dataset.appView = currentAppView;
-  document.body.classList.remove("editor-view-open");
 
   notesView.hidden = !isNotes;
   tasksView.hidden = !isTasks;
-  settingsView.hidden = !isSettings;
   trashView.hidden = !isTrash;
 
   notesViewTab.classList.toggle("active", isNotes);
@@ -909,16 +896,6 @@ function handleDataManagementToggle() {
   dataManagementToggleButton.setAttribute("aria-expanded", String(willOpen));
 }
 
-function handleAccountManagementToggle() {
-  if (!accountManagementToggleButton || !accountManagementContent) {
-    return;
-  }
-
-  const willOpen = accountManagementContent.hidden;
-  accountManagementContent.hidden = !willOpen;
-  accountManagementToggleButton.classList.toggle("is-open", willOpen);
-  accountManagementToggleButton.setAttribute("aria-expanded", String(willOpen));
-}
 
 
 function handleOpenSettingsClick() {
@@ -944,25 +921,6 @@ function handleMenuAccountManagementToggle() {
   menuAccountManagementContent.hidden = !willOpen;
   menuAccountManagementToggleButton.classList.toggle("is-open", willOpen);
   menuAccountManagementToggleButton.setAttribute("aria-expanded", String(willOpen));
-}
-
-function handleSettingsBackClick() {
-  const state = getAppNavigationState();
-
-  if (
-    currentAppView === "settings" &&
-    state?.view === "settings" &&
-    state.layer === "base" &&
-    window.history.length > 1
-  ) {
-    window.history.back();
-    return;
-  }
-
-  switchAppView("notes", {
-    historyMode: "replace",
-    scrollBehavior: "auto",
-  });
 }
 
 function handleEditorBackClick() {
@@ -2046,13 +2004,6 @@ function refreshTaskHub() {
     taskHubOpenCount.textContent = String(openCount);
   }
 
-  if (taskHubResultText) {
-    taskHubResultText.textContent =
-      currentTaskHubView === "open"
-        ? `미완료 ${items.length}개 표시`
-        : `전체 체크리스트 ${items.length}개 표시`;
-  }
-
   taskHubViewTabs
     ?.querySelectorAll("[data-task-view]")
     .forEach((button) => {
@@ -2064,20 +2015,6 @@ function refreshTaskHub() {
   renderTaskHub(items, currentTaskHubView);
 }
 
-function handleTaskHubToggle() {
-  if (!taskHubToggleButton || !taskHubContent) {
-    return;
-  }
-
-  const willOpen = taskHubContent.hidden;
-  taskHubContent.hidden = !willOpen;
-  taskHubToggleButton.textContent = willOpen ? "할 일 접기" : "할 일 보기";
-  taskHubToggleButton.setAttribute("aria-expanded", String(willOpen));
-
-  if (willOpen) {
-    refreshTaskHub();
-  }
-}
 
 function handleTaskHubViewClick(event) {
   const button = event.target.closest("[data-task-view]");
@@ -2290,10 +2227,6 @@ function refreshDataStats() {
 
   if (trashMemoCount) {
     trashMemoCount.textContent = stats.trashCount;
-  }
-
-  if (emptyTrashButton) {
-    emptyTrashButton.disabled = stats.trashCount === 0;
   }
 
   if (emptyTrashViewButton) {
@@ -3171,7 +3104,6 @@ function bindEvents() {
   categoryPickerMenu?.addEventListener("keydown", handleCategoryPickerKeydown);
   categoryInput?.addEventListener("change", syncCategoryPicker);
   document.addEventListener("click", handleDocumentCategoryPickerClick);
-  openCategoryManagerButton?.addEventListener("click", openCategoryManager);
   editorCategoryManagerButton?.addEventListener("click", openCategoryManager);
   closeCategoryManagerButton?.addEventListener("click", closeCategoryManager);
   categoryCreateForm?.addEventListener("submit", (event) => {
@@ -3202,7 +3134,6 @@ function bindEvents() {
 
   backupButton.addEventListener("click", handleBackupClick);
   restoreButton.addEventListener("click", handleRestoreButtonClick);
-  emptyTrashButton?.addEventListener("click", handleEmptyTrashClick);
   emptyTrashViewButton?.addEventListener("click", handleEmptyTrashClick);
   resetAllDataButton.addEventListener("click", handleResetAllDataClick);
   cloudRefreshButton.addEventListener("click", handleCloudRefreshClick);
@@ -3210,12 +3141,9 @@ function bindEvents() {
 
   guideToggleButton.addEventListener("click", handleGuideToggleClick);
   dataManagementToggleButton.addEventListener("click", handleDataManagementToggle);
-  accountManagementToggleButton?.addEventListener("click", handleAccountManagementToggle);
   openSettingsButton?.addEventListener("click", handleOpenSettingsClick);
   menuSettingsBackButton?.addEventListener("click", handleMenuSettingsBackClick);
   menuAccountManagementToggleButton?.addEventListener("click", handleMenuAccountManagementToggle);
-  settingsBackButton?.addEventListener("click", handleSettingsBackClick);
-  editorBackButton?.addEventListener("click", handleEditorBackClick);
   mobileNewMemoButton.addEventListener("click", handleMobileNewMemoClick);
   restoreDraftButton.addEventListener("click", restoreLocalEditorDraft);
   discardDraftButton.addEventListener("click", discardLocalEditorDraft);
@@ -3253,11 +3181,6 @@ function bindEvents() {
 
     if (isEditorOpen()) {
       handleEditorBackClick();
-      return;
-    }
-
-    if (currentAppView === "settings") {
-      handleSettingsBackClick();
       return;
     }
 
@@ -3327,11 +3250,6 @@ if (dataManagementContent) {
   dataManagementContent.hidden = true;
 }
 
-if (accountManagementContent && accountManagementToggleButton) {
-  accountManagementContent.hidden = true;
-  accountManagementToggleButton.classList.remove("is-open");
-  accountManagementToggleButton.setAttribute("aria-expanded", "false");
-}
 
 showMenuSubview("main");
 

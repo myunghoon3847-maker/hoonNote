@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>훈노트 - 1인 업무·아이디어 노트</title>
-<link href="./manifest.json?v=466" rel="manifest"/>
+<link href="./manifest.json?v=467" rel="manifest"/>
 <meta content="#2563eb" name="theme-color"/>
 <meta content="훈노트" name="application-name"/>
 <meta content="훈노트" name="apple-mobile-web-app-title"/>
@@ -12,9 +12,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=466" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=466" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=466" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=467" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=467" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=467" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -125,7 +125,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="훈노트 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="HOONNOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=466"/>
+<img alt="HOONNOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=467"/>
 </a>
 </div>
 <div class="header-actions">
@@ -310,37 +310,7 @@
 <div class="task-hub-list" id="taskHubList"></div>
 </div>
 </section>
-<section aria-labelledby="settingsViewTitle" class="app-view settings-view" hidden="" id="settingsView">
-<div class="settings-view-heading">
-<button aria-label="이전 화면으로 돌아가기" class="settings-back-button" id="settingsBackButton" type="button">
-<span aria-hidden="true">←</span>
-</button>
-<div>
-<h2 id="settingsViewTitle">설정</h2>
-<p>계정과 앱 사용 환경을 관리합니다.</p>
-</div>
-</div>
-<section aria-label="계정 관리" class="panel settings-panel account-settings-panel">
-<button aria-controls="accountManagementContent" aria-expanded="false" class="settings-row-button" id="accountManagementToggleButton" type="button">
-<span aria-hidden="true" class="settings-row-icon"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.5 19c.7-3.3 3.1-5.2 6.5-5.2s5.8 1.9 6.5 5.2"></path></svg></span>
-<span class="settings-row-copy">
-<strong>계정 관리</strong>
-<small>로그인 계정과 계정 삭제</small>
-</span>
-<span aria-hidden="true" class="settings-row-chevron">›</span>
-</button>
-<div class="account-management-content settings-row-content" hidden="" id="accountManagementContent">
-<button class="menu-action-button account-delete-menu-button danger-text" id="legacyOpenAccountDeletionButton" type="button">계정 삭제</button>
-</div>
-</section>
-<section aria-label="앱 설치" class="panel settings-panel app-install-settings">
-<div class="settings-panel-copy">
-<strong>웹 앱 설치</strong>
-<p>지원되는 브라우저에서는 훈노트를 홈 화면에 설치할 수 있습니다.</p>
-</div>
-<button class="secondary-button" hidden="" id="installAppButton" type="button">앱 설치</button>
-</section>
-</section><section aria-labelledby="trashViewTitle" class="app-view trash-view" hidden="" id="trashView">
+<section aria-labelledby="trashViewTitle" class="app-view trash-view" hidden="" id="trashView">
 <div class="trash-view-heading">
 <div class="trash-heading-main">
 <div>
@@ -374,7 +344,7 @@
 
 <section aria-label="설정" class="menu-section menu-settings-entry-section">
 <button aria-label="설정 열기" class="menu-settings-entry-button" id="openSettingsButton" type="button">
-<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=466"/>
+<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=467"/>
 <span class="menu-settings-entry-copy"><strong>설정</strong><small>계정과 앱 설정</small></span>
 <span aria-hidden="true" class="menu-settings-entry-chevron">›</span>
 </button>
@@ -520,17 +490,18 @@
 </button>
 </div>
 </section>
-<section aria-label="앱 정보" class="menu-section settings-panel menu-settings-panel">
+<section aria-label="앱 정보" class="menu-section settings-panel menu-settings-panel menu-settings-app-panel">
 <div class="settings-panel-copy menu-settings-copy-block">
 <strong>앱 정보</strong>
 <p>HOONNOTE는 혼자 쓰는 업무·아이디어·할 일 노트입니다.</p>
 </div>
+<button class="secondary-button" hidden id="installAppButton" type="button">앱 설치</button>
 </section>
 </div>
 </div>
 <div class="menu-footer">
 <span>HOONNOTE</span>
-<span class="version-badge">v4.5.15</span>
+<span class="version-badge">v4.5.16</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -625,13 +596,13 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./js/config.js?v=466"></script>
-<script src="./js/feedback.js?v=466"></script>
-<script src="./js/auth.js?v=466"></script>
-<script src="./js/storage.js?v=466"></script>
-<script src="./js/ui.js?v=466"></script>
-<script src="./js/app.js?v=466"></script>
-<script src="./js/account.js?v=466"></script>
-<script src="./js/pwa.js?v=466"></script>
+<script src="./js/config.js?v=467"></script>
+<script src="./js/feedback.js?v=467"></script>
+<script src="./js/auth.js?v=467"></script>
+<script src="./js/storage.js?v=467"></script>
+<script src="./js/ui.js?v=467"></script>
+<script src="./js/app.js?v=467"></script>
+<script src="./js/account.js?v=467"></script>
+<script src="./js/pwa.js?v=467"></script>
 </body>
 </html>
