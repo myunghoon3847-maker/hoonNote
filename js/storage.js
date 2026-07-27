@@ -15,11 +15,6 @@ const MAX_MEMO_CONTENT_LENGTH = 200000;
 const MAX_MEMO_PROJECT_LENGTH = 100;
 const MAX_MEMO_TASK_TEXT_LENGTH = 500;
 const MAX_MEMO_TASKS = 200;
-const CONTENT_FORMAT_VERSION = 1;
-const MAX_MEMO_CONTENT_BLOCKS = 50;
-const MAX_MEMO_LINK_BLOCKS = 20;
-const MAX_MEMO_LINK_URL_LENGTH = 2048;
-const MAX_MEMO_LINK_LABEL_LENGTH = 300;
 const MAX_BACKUP_MEMOS = 5000;
 const MAX_BACKUP_CATEGORIES = 100;
 const MAX_BACKUP_TOTAL_TASKS = 20000;
@@ -140,125 +135,6 @@ function normalizeTasks(tasks) {
     });
 }
 
-function normalizeMemoBlockId(value, prefix = "block") {
-  const candidate = value ? String(value) : "";
-
-  if (/^[A-Za-z0-9_-]{1,128}$/.test(candidate)) {
-    return candidate;
-  }
-
-  return createSafeId(prefix);
-}
-
-function normalizeHttpUrl(value) {
-  const rawValue = typeof value === "string" ? value.trim() : "";
-
-  if (!rawValue || rawValue.length > MAX_MEMO_LINK_URL_LENGTH) {
-    return "";
-  }
-
-  try {
-    const parsedUrl = new URL(rawValue);
-
-    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
-      return "";
-    }
-
-    parsedUrl.hash = parsedUrl.hash || "";
-    return parsedUrl.toString();
-  } catch (_) {
-    return "";
-  }
-}
-
-function normalizeMemoLinkBlock(block) {
-  const url = normalizeHttpUrl(block && block.url);
-
-  if (!url) {
-    return null;
-  }
-
-  const rawLabel = block && typeof block.label === "string" ? block.label.trim() : "";
-  let fallbackLabel = "";
-
-  try {
-    fallbackLabel = new URL(url).hostname.replace(/^www\./, "");
-  } catch (_) {}
-
-  return {
-    id: normalizeMemoBlockId(block && block.id, "link"),
-    type: "link",
-    url,
-    label: (rawLabel || fallbackLabel || url).slice(0, MAX_MEMO_LINK_LABEL_LENGTH),
-  };
-}
-
-function normalizeMemoContentBlocks(blocks, legacyContent = "") {
-  const safeBlocks = Array.isArray(blocks) ? blocks : [];
-  const normalizedBlocks = [];
-  let paragraphText = typeof legacyContent === "string" ? legacyContent : "";
-  let paragraphId = "";
-  let linkCount = 0;
-
-  safeBlocks.slice(0, MAX_MEMO_CONTENT_BLOCKS).forEach((block) => {
-    if (!block || typeof block !== "object" || Array.isArray(block)) {
-      return;
-    }
-
-    if (block.type === "paragraph" && !paragraphId) {
-      paragraphText = typeof block.text === "string" ? block.text : paragraphText;
-      paragraphId = normalizeMemoBlockId(block.id, "paragraph");
-      return;
-    }
-
-    if (block.type === "link" && linkCount < MAX_MEMO_LINK_BLOCKS) {
-      const normalizedLink = normalizeMemoLinkBlock(block);
-
-      if (normalizedLink) {
-        normalizedBlocks.push(normalizedLink);
-        linkCount += 1;
-      }
-    }
-  });
-
-  const paragraphBlock = {
-    id: paragraphId || "paragraph_main",
-    type: "paragraph",
-    text: paragraphText.slice(0, MAX_MEMO_CONTENT_LENGTH),
-  };
-
-  return [paragraphBlock, ...normalizedBlocks];
-}
-
-function getMemoLinks(memo) {
-  return normalizeMemoContentBlocks(
-    memo && (memo.contentBlocks || memo.content_blocks),
-    memo && memo.content
-  ).filter((block) => block.type === "link");
-}
-
-function createMemoContentBlocks(content, links = []) {
-  return normalizeMemoContentBlocks(
-    [
-      {
-        id: "paragraph_main",
-        type: "paragraph",
-        text: typeof content === "string" ? content : "",
-      },
-      ...(Array.isArray(links) ? links : []),
-    ],
-    content
-  );
-}
-
-function getContentBlocksSearchText(blocks) {
-  return normalizeMemoContentBlocks(blocks, "")
-    .filter((block) => block.type === "link")
-    .map((block) => `${block.label} ${block.url}`)
-    .join(" ")
-    .trim();
-}
-
 function normalizeProject(project) {
   return typeof project === "string" ? project.trim() : "";
 }
@@ -289,13 +165,6 @@ function normalizeMemo(memo) {
     id: memo && memo.id ? String(memo.id) : createSafeId("memo"),
     title: memo && typeof memo.title === "string" ? memo.title : "제목 없음",
     content: memo && typeof memo.content === "string" ? memo.content : "",
-    contentBlocks: normalizeMemoContentBlocks(
-      memo && (memo.contentBlocks || memo.content_blocks),
-      memo && memo.content
-    ),
-    contentFormatVersion: Number.isFinite(Number(memo && (memo.contentFormatVersion ?? memo.content_format_version)))
-      ? Number(memo.contentFormatVersion ?? memo.content_format_version)
-      : 0,
     category: normalizeCategory(memo && memo.category),
     project: normalizeProject(memo && memo.project),
     createdAt: (memo && (memo.createdAt || memo.created_at)) || now,
@@ -323,8 +192,6 @@ function mapDatabaseRowToMemo(row) {
     id: row.id,
     title: row.title,
     content: row.content,
-    contentBlocks: row.content_blocks,
-    contentFormatVersion: row.content_format_version,
     category: row.category,
     project: row.project,
     isImportant: row.is_important,
@@ -737,56 +604,6 @@ function validateMemoForWrite(memoData) {
     }
   });
 
-  if (memoData.contentBlocks !== undefined && !Array.isArray(memoData.contentBlocks)) {
-    throw new Error("메모 블록 형식이 올바르지 않습니다.");
-  }
-
-  const rawContentBlocks = Array.isArray(memoData.contentBlocks)
-    ? memoData.contentBlocks
-    : [];
-
-  if (rawContentBlocks.length > MAX_MEMO_CONTENT_BLOCKS) {
-    throw new Error(`메모 요소는 ${MAX_MEMO_CONTENT_BLOCKS}개까지 저장할 수 있습니다.`);
-  }
-
-  const rawLinkBlocks = rawContentBlocks.filter(
-    (block) => block && typeof block === "object" && !Array.isArray(block) && block.type === "link"
-  );
-
-  if (rawLinkBlocks.length > MAX_MEMO_LINK_BLOCKS) {
-    throw new Error(`링크는 메모 하나에 ${MAX_MEMO_LINK_BLOCKS}개까지 저장할 수 있습니다.`);
-  }
-
-  rawContentBlocks.forEach((block, index) => {
-    if (!block || typeof block !== "object" || Array.isArray(block)) {
-      throw new Error(`${index + 1}번째 메모 요소 형식이 올바르지 않습니다.`);
-    }
-
-    if (block.type === "paragraph") {
-      if (typeof block.text !== "string" || block.text.length > MAX_MEMO_CONTENT_LENGTH) {
-        throw new Error(`${index + 1}번째 텍스트 요소 형식이 올바르지 않습니다.`);
-      }
-      return;
-    }
-
-    if (block.type === "link") {
-      if (!normalizeHttpUrl(block.url)) {
-        throw new Error(`${index + 1}번째 링크 주소가 올바르지 않습니다.`);
-      }
-
-      if (block.label !== undefined && typeof block.label !== "string") {
-        throw new Error(`${index + 1}번째 링크 이름 형식이 올바르지 않습니다.`);
-      }
-
-      if (String(block.label || "").length > MAX_MEMO_LINK_LABEL_LENGTH) {
-        throw new Error(`링크 이름은 ${MAX_MEMO_LINK_LABEL_LENGTH}자 이하로 입력해주세요.`);
-      }
-      return;
-    }
-
-    throw new Error(`${index + 1}번째 메모 요소 유형을 지원하지 않습니다.`);
-  });
-
   if (memoData.tasks !== undefined && !Array.isArray(memoData.tasks)) {
     throw new Error("체크리스트 형식이 올바르지 않습니다.");
   }
@@ -825,8 +642,6 @@ function toDatabasePayload(memoData, userId) {
     user_id: userId,
     title: typeof memoData.title === "string" ? memoData.title : "",
     content: typeof memoData.content === "string" ? memoData.content : "",
-    content_blocks: createMemoContentBlocks(memoData.content, memoData.contentBlocks),
-    content_format_version: CONTENT_FORMAT_VERSION,
     category: normalizeCategory(memoData.category),
     project: normalizeProject(memoData.project),
     is_important: Boolean(memoData.isImportant),
@@ -1039,7 +854,6 @@ async function toggleTaskDone(memoId, taskId, expectedUpdatedAt = "") {
     {
       title: memo.title,
       content: memo.content,
-      contentBlocks: memo.contentBlocks,
       category: memo.category,
       project: memo.project,
       isImportant: memo.isImportant,
@@ -1069,7 +883,7 @@ function getProjectOptions() {
 function createBackupData() {
   return {
     app: "SoloNote",
-    backupVersion: "4.7.0-dev1.1",
+    backupVersion: "4.6.0-rc.1",
     storage: "supabase",
     exportedAt: new Date().toISOString(),
     categories: getMemoCategories().map((category) => category.name),
@@ -1179,34 +993,6 @@ function validateBackupForImport(backupData, importedMemos) {
 
     validateBackupText(memo.title, "제목", MAX_MEMO_TITLE_LENGTH, memoIndex);
     validateBackupText(memo.content, "내용", MAX_MEMO_CONTENT_LENGTH, memoIndex);
-
-    if (memo.contentBlocks !== undefined && !Array.isArray(memo.contentBlocks)) {
-      throw new Error(`백업 파일의 ${memoIndex + 1}번째 메모 블록 형식이 올바르지 않습니다.`);
-    }
-
-    if (Array.isArray(memo.contentBlocks)) {
-      if (memo.contentBlocks.length > MAX_MEMO_CONTENT_BLOCKS) {
-        throw new Error(`백업 파일의 ${memoIndex + 1}번째 메모 요소 수가 너무 많습니다.`);
-      }
-
-      memo.contentBlocks.forEach((block, blockIndex) => {
-        if (!block || typeof block !== "object" || Array.isArray(block)) {
-          throw new Error(`백업 파일의 ${memoIndex + 1}번째 메모 ${blockIndex + 1}번째 요소 형식이 올바르지 않습니다.`);
-        }
-
-        if (block.type === "link") {
-          if (!normalizeHttpUrl(block.url)) {
-            throw new Error(`백업 파일의 ${memoIndex + 1}번째 메모 링크 주소가 올바르지 않습니다.`);
-          }
-          validateBackupText(
-            block.label,
-            `${blockIndex + 1}번째 링크 이름`,
-            MAX_MEMO_LINK_LABEL_LENGTH,
-            memoIndex
-          );
-        }
-      });
-    }
     validateBackupText(memo.project, "프로젝트", MAX_MEMO_PROJECT_LENGTH, memoIndex);
     validateBackupText(memo.category, "카테고리", MAX_MEMO_CATEGORY_LENGTH, memoIndex);
     validateBackupTimestamp(
@@ -1313,7 +1099,6 @@ function createMemoSignature(memo) {
   return [
     normalizeTextForSignature(memo.title),
     normalizeTextForSignature(memo.content),
-    JSON.stringify(normalizeMemoContentBlocks(memo.contentBlocks, memo.content)),
     normalizeTextForSignature(memo.category),
     normalizeTextForSignature(memo.project),
     normalizeDateForSignature(memo.createdAt),

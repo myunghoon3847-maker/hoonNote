@@ -73,39 +73,6 @@ function renderTaskChecklistHtml(memo) {
 }
 
 
-function renderMemoLinksHtml(memo) {
-  const links = typeof getMemoLinks === "function" ? getMemoLinks(memo) : [];
-
-  if (links.length === 0) {
-    return "";
-  }
-
-  return links
-    .map((link) => {
-      let host = link.url;
-      try {
-        host = new URL(link.url).hostname.replace(/^www\./, "");
-      } catch (_) {}
-
-      return `
-        <a class="detail-link-card" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">
-          <span class="detail-link-icon" aria-hidden="true">↗</span>
-          <span class="detail-link-copy">
-            <strong>${escapeHtml(link.label)}</strong>
-            <small>${escapeHtml(host)}</small>
-          </span>
-          <span class="detail-link-arrow" aria-hidden="true">›</span>
-        </a>
-      `;
-    })
-    .join("");
-}
-
-function getMemoLinkCount(memo) {
-  return typeof getMemoLinks === "function" ? getMemoLinks(memo).length : 0;
-}
-
-
 function renderTaskHub(items, view = "open") {
   const taskHubList = document.querySelector("#taskHubList");
 
@@ -208,11 +175,6 @@ function renderMemoList(memos) {
         progress.total > 0
           ? `<span class="task-progress-chip">체크 ${progress.done}/${progress.total}</span>`
           : "";
-      const linkCount = getMemoLinkCount(memo);
-      const linkChip =
-        linkCount > 0
-          ? `<span class="memo-link-chip">링크 ${linkCount}</span>`
-          : "";
 
       return `
         <button type="button" class="memo-card" data-id="${escapeHtml(memo.id)}">
@@ -221,7 +183,6 @@ function renderMemoList(memos) {
               <span class="category-chip">${safeCategory}</span>
               ${memo.isImportant ? '<span class="important-chip">중요</span>' : ""}
               ${taskChip}
-              ${linkChip}
             </div>
             <span class="memo-date">${date}</span>
           </div>
@@ -262,11 +223,6 @@ function renderTrashList(memos) {
         progress.total > 0
           ? `<span class="task-progress-chip">체크 ${progress.done}/${progress.total}</span>`
           : "";
-      const linkCount = getMemoLinkCount(memo);
-      const linkChip =
-        linkCount > 0
-          ? `<span class="memo-link-chip">링크 ${linkCount}</span>`
-          : "";
 
       return `
         <article class="trash-card" data-id="${escapeHtml(memo.id)}">
@@ -280,7 +236,6 @@ function renderTrashList(memos) {
               <div class="memo-card-badges">
                 <span class="category-chip">${safeCategory}</span>
                 ${taskChip}
-                ${linkChip}
               </div>
               <span class="memo-date">${date}</span>
             </div>
@@ -318,7 +273,6 @@ function openDetailModal(memo, options = {}) {
   const editButton = document.querySelector("#editMemoButton");
   const deleteButton = document.querySelector("#deleteMemoButton");
   const checklistContainer = document.querySelector("#detailChecklist");
-  const linksContainer = document.querySelector("#detailLinks");
 
   const detailParts = [];
 
@@ -332,12 +286,6 @@ function openDetailModal(memo, options = {}) {
   document.querySelector("#detailDate").textContent = formatDate(memo.updatedAt || memo.createdAt);
   document.querySelector("#detailTitle").textContent = memo.title;
   document.querySelector("#detailContent").textContent = memo.content;
-
-  if (linksContainer) {
-    const linksHtml = renderMemoLinksHtml(memo);
-    linksContainer.innerHTML = linksHtml;
-    linksContainer.hidden = !linksHtml;
-  }
 
   if (checklistContainer) {
     checklistContainer.innerHTML = renderTaskChecklistHtml(memo);
@@ -499,8 +447,7 @@ function toggleEditor() {
           document.querySelector("#editingId")?.value ||
           document.querySelector("#titleInput")?.value.trim() ||
           document.querySelector("#contentInput")?.value.trim() ||
-          document.querySelectorAll("#taskDraftList .task-draft-item").length ||
-          document.querySelectorAll("#linkDraftList .link-draft-item").length
+          document.querySelectorAll("#taskDraftList .task-draft-item").length
         );
 
   if (hasChanges) {
@@ -553,10 +500,6 @@ function resetForm() {
     resetDraftTasks();
   }
 
-  if (typeof resetDraftLinks === "function") {
-    resetDraftLinks();
-  }
-
   setEditorMode("create");
 
   if (typeof markEditorClean === "function") {
@@ -583,10 +526,6 @@ function fillFormForEdit(memo) {
   document.querySelector("#categoryInput").value = memo.category;
   document.querySelector("#categoryInput").dispatchEvent(new Event("change", { bubbles: true }));
   document.querySelector("#importantInput").checked = Boolean(memo.isImportant);
-
-  if (typeof loadDraftLinks === "function") {
-    loadDraftLinks(typeof getMemoLinks === "function" ? getMemoLinks(memo) : []);
-  }
 
   setEditorMode("edit");
   openEditor();

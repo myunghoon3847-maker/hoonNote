@@ -4,25 +4,11 @@ let currentCategory = "전체";
 let currentSearch = "";
 let currentSort = "updatedDesc";
 let draftTasks = [];
-let draftLinks = [];
 
 const memoForm = document.querySelector("#memoForm");
 const titleInput = document.querySelector("#titleInput");
 const projectInput = document.querySelector("#projectInput");
 const contentInput = document.querySelector("#contentInput");
-const addLinkButton = document.querySelector("#addLinkButton");
-const linkDraftSection = document.querySelector("#linkDraftSection");
-const linkDraftList = document.querySelector("#linkDraftList");
-const linkCountLabel = document.querySelector("#linkCountLabel");
-const linkEditorModal = document.querySelector("#linkEditorModal");
-const linkEditorForm = document.querySelector("#linkEditorForm");
-const editingLinkIdInput = document.querySelector("#editingLinkId");
-const linkUrlInput = document.querySelector("#linkUrlInput");
-const linkLabelInput = document.querySelector("#linkLabelInput");
-const linkEditorStatus = document.querySelector("#linkEditorStatus");
-const closeLinkEditorButton = document.querySelector("#closeLinkEditorButton");
-const cancelLinkEditorButton = document.querySelector("#cancelLinkEditorButton");
-const saveLinkButton = document.querySelector("#saveLinkButton");
 const categoryInput = document.querySelector("#categoryInput");
 const categoryPicker = document.querySelector("#categoryPicker");
 const categoryPickerButton = document.querySelector("#categoryPickerButton");
@@ -103,7 +89,6 @@ let lastAutomaticSyncRequestAt = 0;
 let appMenuCloseTimer = null;
 let isAppMenuOpen = false;
 let categoryManagerPreviousFocus = null;
-let linkEditorPreviousFocus = null;
 
 const AUTO_SYNC_MIN_INTERVAL_MS = 5000;
 
@@ -127,7 +112,6 @@ const APP_HISTORY_LAYERS = new Set([
   "editor",
   "detail",
   "categoryManager",
-  "linkEditor",
   "accountDeletion",
 ]);
 let appNavigationReady = false;
@@ -173,11 +157,9 @@ function openAppHistoryLayer(layer, detail = {}, options = {}) {
     createAppNavigationState(currentAppView, "base");
   const nextState = createAppNavigationState(currentAppView, layer, detail);
   const shouldReplace =
-    currentState.layer === layer ||
-    (!options.preserveParent && (
-      Boolean(options.replace) ||
-      currentState.layer !== "base"
-    ));
+    Boolean(options.replace) ||
+    currentState.layer !== "base" ||
+    currentState.layer === layer;
 
   writeAppNavigationState(nextState, shouldReplace ? "replace" : "push");
   return true;
@@ -229,10 +211,9 @@ function applyAppNavigationState(state) {
   try {
     closeAppMenu({ skipHistory: true });
     closeCategoryManager({ skipHistory: true });
-    closeLinkEditor({ skipHistory: true });
     closeDetailModal({ skipHistory: true });
 
-    if (!["editor", "linkEditor"].includes(nextState.layer)) {
+    if (nextState.layer !== "editor") {
       closeEditor({ skipHistory: true });
     }
 
@@ -252,9 +233,6 @@ function applyAppNavigationState(state) {
       }
     } else if (nextState.layer === "categoryManager") {
       openCategoryManager({ skipHistory: true });
-    } else if (nextState.layer === "linkEditor") {
-      openEditor({ skipHistory: true });
-      openLinkEditor(null, { skipHistory: true });
     }
 
     window.dispatchEvent(
@@ -318,212 +296,6 @@ function initializeAppNavigation() {
 
 
 
-function getDraftLinkById(linkId) {
-  return draftLinks.find((link) => link.id === linkId) || null;
-}
-
-function getLinkDisplayHost(url) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch (_) {
-    return url;
-  }
-}
-
-function renderDraftLinks() {
-  if (!linkDraftSection || !linkDraftList || !linkCountLabel) {
-    return;
-  }
-
-  linkCountLabel.textContent = `${draftLinks.length}개`;
-  linkDraftSection.hidden = draftLinks.length === 0;
-
-  if (draftLinks.length === 0) {
-    linkDraftList.innerHTML = "";
-    return;
-  }
-
-  linkDraftList.innerHTML = draftLinks
-    .map((link) => `
-      <article class="link-draft-item" data-link-id="${escapeHtml(link.id)}">
-        <a class="link-draft-anchor" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">
-          <span class="link-draft-icon" aria-hidden="true">↗</span>
-          <span class="link-draft-copy">
-            <strong>${escapeHtml(link.label)}</strong>
-            <small>${escapeHtml(getLinkDisplayHost(link.url))}</small>
-          </span>
-        </a>
-        <div class="link-draft-actions">
-          <button class="text-button compact-button" data-link-action="edit" data-link-id="${escapeHtml(link.id)}" type="button">수정</button>
-          <button class="text-button compact-button danger-text" data-link-action="delete" data-link-id="${escapeHtml(link.id)}" type="button">삭제</button>
-        </div>
-      </article>
-    `)
-    .join("");
-}
-
-function loadDraftLinks(links) {
-  draftLinks = (Array.isArray(links) ? links : [])
-    .map((link) => normalizeMemoLinkBlock(link))
-    .filter(Boolean)
-    .slice(0, MAX_MEMO_LINK_BLOCKS);
-  renderDraftLinks();
-}
-
-function resetDraftLinks() {
-  draftLinks = [];
-  renderDraftLinks();
-}
-
-function setLinkEditorStatus(message = "", state = "") {
-  if (!linkEditorStatus) {
-    return;
-  }
-
-  linkEditorStatus.textContent = message;
-
-  if (state) {
-    linkEditorStatus.dataset.state = state;
-  } else {
-    delete linkEditorStatus.dataset.state;
-  }
-}
-
-function openLinkEditor(link = null, options = {}) {
-  if (!linkEditorModal || !linkEditorForm) {
-    return;
-  }
-
-  if (draftLinks.length >= MAX_MEMO_LINK_BLOCKS && !link) {
-    showAppNotice(`링크는 메모 하나에 ${MAX_MEMO_LINK_BLOCKS}개까지 추가할 수 있습니다.`, "warning", { title: "링크 추가 제한" });
-    return;
-  }
-
-  linkEditorPreviousFocus = document.activeElement;
-  linkEditorForm.reset();
-  editingLinkIdInput.value = link?.id || "";
-  linkUrlInput.value = link?.url || "";
-  linkLabelInput.value = link?.label || "";
-  saveLinkButton.textContent = link ? "수정 완료" : "링크 추가";
-  document.querySelector("#linkEditorTitle").textContent = link ? "링크 수정" : "링크 삽입";
-  setLinkEditorStatus();
-
-  linkEditorModal.hidden = false;
-  linkEditorModal.classList.remove("hidden");
-  linkEditorModal.setAttribute("aria-hidden", "false");
-  document.body.classList.add("modal-open");
-
-  if (!options.skipHistory) {
-    openAppHistoryLayer("linkEditor", {}, { preserveParent: true });
-  }
-
-  window.setTimeout(() => linkUrlInput?.focus(), 0);
-}
-
-function closeLinkEditor(options = {}) {
-  if (!linkEditorModal) {
-    return;
-  }
-
-  if (
-    !linkEditorModal.hidden &&
-    !options.skipHistory &&
-    closeAppHistoryLayer("linkEditor")
-  ) {
-    return;
-  }
-
-  linkEditorModal.classList.add("hidden");
-  linkEditorModal.hidden = true;
-  linkEditorModal.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("modal-open");
-  linkEditorForm?.reset();
-  setLinkEditorStatus();
-
-  if (
-    linkEditorPreviousFocus &&
-    typeof linkEditorPreviousFocus.focus === "function" &&
-    document.contains(linkEditorPreviousFocus)
-  ) {
-    linkEditorPreviousFocus.focus();
-  }
-
-  linkEditorPreviousFocus = null;
-}
-
-function handleLinkEditorSubmit(event) {
-  event.preventDefault();
-  const url = normalizeHttpUrl(linkUrlInput?.value || "");
-  const label = String(linkLabelInput?.value || "").trim();
-
-  if (!url) {
-    setLinkEditorStatus("http:// 또는 https://로 시작하는 올바른 주소를 입력하세요.", "error");
-    linkUrlInput?.focus();
-    return;
-  }
-
-  const existingId = editingLinkIdInput?.value || "";
-  const normalizedLink = normalizeMemoLinkBlock({
-    id: existingId || createSafeId("link"),
-    type: "link",
-    url,
-    label,
-  });
-
-  if (!normalizedLink) {
-    setLinkEditorStatus("링크 정보를 확인해주세요.", "error");
-    return;
-  }
-
-  if (existingId) {
-    draftLinks = draftLinks.map((link) =>
-      link.id === existingId ? normalizedLink : link
-    );
-  } else {
-    draftLinks.push(normalizedLink);
-  }
-
-  renderDraftLinks();
-  updateEditorDirtyState();
-  closeLinkEditor();
-  showAppNotice(existingId ? "링크를 수정했습니다." : "링크를 메모에 추가했습니다.", "success", {
-    title: existingId ? "링크 수정 완료" : "링크 추가 완료",
-  });
-}
-
-function handleLinkDraftListClick(event) {
-  const actionButton = event.target.closest("[data-link-action]");
-
-  if (!actionButton) {
-    return;
-  }
-
-  const linkId = actionButton.dataset.linkId || "";
-  const link = getDraftLinkById(linkId);
-
-  if (!link) {
-    return;
-  }
-
-  if (actionButton.dataset.linkAction === "edit") {
-    openLinkEditor(link);
-    return;
-  }
-
-  if (actionButton.dataset.linkAction === "delete") {
-    draftLinks = draftLinks.filter((item) => item.id !== linkId);
-    renderDraftLinks();
-    updateEditorDirtyState();
-    showAppNotice("링크를 메모에서 삭제했습니다.", "info", { title: "링크 삭제" });
-  }
-}
-
-function handleLinkEditorModalClick(event) {
-  if (event.target.dataset.linkEditorClose === "true") {
-    closeLinkEditor();
-  }
-}
-
 function getEditorSnapshot() {
   return JSON.stringify({
     title: titleInput?.value || "",
@@ -535,11 +307,6 @@ function getEditorSnapshot() {
     tasks: draftTasks.map((task) => ({
       text: task.text,
       done: Boolean(task.done),
-    })),
-    links: draftLinks.map((link) => ({
-      id: link.id,
-      url: link.url,
-      label: link.label,
     })),
   });
 }
@@ -569,14 +336,13 @@ function hasDraftContent(draft) {
     String(draft.project || "").trim() ||
     String(draft.content || "").trim() ||
     String(draft.editingId || "").trim() ||
-    (Array.isArray(draft.tasks) && draft.tasks.length > 0) ||
-    (Array.isArray(draft.links) && draft.links.length > 0)
+    (Array.isArray(draft.tasks) && draft.tasks.length > 0)
   );
 }
 
 function buildLocalEditorDraft() {
   return {
-    version: "5.0",
+    version: "4.0",
     userId: currentCloudUserId,
     savedAt: new Date().toISOString(),
     title: titleInput?.value || "",
@@ -590,12 +356,6 @@ function buildLocalEditorDraft() {
       id: task.id,
       text: task.text,
       done: Boolean(task.done),
-    })),
-    links: draftLinks.map((link) => ({
-      id: link.id,
-      type: "link",
-      url: link.url,
-      label: link.label,
     })),
   };
 }
@@ -822,8 +582,6 @@ function restoreLocalEditorDraft() {
         }))
       : []
   );
-
-  loadDraftLinks(Array.isArray(draft.links) ? draft.links : []);
 
   setEditorMode(editingIdInput.value ? "edit" : "create");
   openEditor();
@@ -1530,7 +1288,7 @@ function openCategoryManager(options = {}) {
   document.body.classList.add("modal-open");
 
   if (!options.skipHistory) {
-    openAppHistoryLayer("categoryManager", {}, { preserveParent: true });
+    openAppHistoryLayer("categoryManager");
   }
 
   window.setTimeout(() => newCategoryInput?.focus(), 0);
@@ -1948,10 +1706,6 @@ function translateCloudError(error) {
 
   if (isSessionCloudError(error) || /로그인 세션/i.test(message)) {
     return "로그인 시간이 만료되었습니다. 다시 로그인하면 작성 중인 초안을 이어서 사용할 수 있습니다.";
-  }
-
-  if (/(content_blocks|content_format_version)/i.test(message) && /(column|schema cache|could not find)/i.test(message)) {
-    return "링크 저장 구조가 아직 준비되지 않았습니다. Supabase SQL Editor에서 v4.7.0-dev1.1.1의 12번 마이그레이션 SQL을 먼저 실행하세요.";
   }
 
   if (/relation .*memo_categories.* does not exist/i.test(message)) {
@@ -2427,14 +2181,11 @@ function getFilteredMemos() {
       ? memo.tasks.map((task) => task.text).join(" ").toLowerCase()
       : "";
 
-    const linkText = getContentBlocksSearchText(memo.contentBlocks).toLowerCase();
-
     const matchesSearch =
       !search ||
       memo.title.toLowerCase().includes(search) ||
       memo.content.toLowerCase().includes(search) ||
-      taskText.includes(search) ||
-      linkText.includes(search);
+      taskText.includes(search);
 
     return matchesCategory && matchesSearch;
   });
@@ -2810,8 +2561,8 @@ async function handleFormSubmit(event) {
     return;
   }
 
-  if (!content && draftTasks.length === 0 && draftLinks.length === 0) {
-    showAppNotice("내용, 링크 또는 체크리스트 항목을 한 개 이상 추가하세요.", "warning", { title: "저장 전 확인" });
+  if (!content && draftTasks.length === 0) {
+    showAppNotice("내용을 입력하거나 체크리스트 항목을 한 개 이상 추가하세요.", "warning", { title: "저장 전 확인" });
     contentInput.focus();
     return;
   }
@@ -2836,7 +2587,6 @@ async function handleFormSubmit(event) {
     title,
     project,
     content,
-    contentBlocks: createMemoContentBlocks(content, draftLinks),
     category,
     isImportant,
     tasks: draftTasks.map((task) => ({ ...task })),
@@ -3367,12 +3117,6 @@ function bindEvents() {
   memoForm.addEventListener("submit", handleFormSubmit);
   memoForm.addEventListener("input", updateEditorDirtyState);
   memoForm.addEventListener("change", updateEditorDirtyState);
-  addLinkButton?.addEventListener("click", () => openLinkEditor());
-  linkEditorForm?.addEventListener("submit", handleLinkEditorSubmit);
-  closeLinkEditorButton?.addEventListener("click", () => closeLinkEditor());
-  cancelLinkEditorButton?.addEventListener("click", () => closeLinkEditor());
-  linkEditorModal?.addEventListener("click", handleLinkEditorModalClick);
-  linkDraftList?.addEventListener("click", handleLinkDraftListClick);
 
   document.querySelector("#memoList").addEventListener("click", handleMemoListClick);
   trashList?.addEventListener("click", (event) => {
@@ -3422,11 +3166,6 @@ function bindEvents() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") {
-      return;
-    }
-
-    if (linkEditorModal && !linkEditorModal.hidden) {
-      closeLinkEditor();
       return;
     }
 
