@@ -1,23 +1,23 @@
 {
   "applicationName": "Creative Note",
-  "launcherName": "크리에이티브노트",
+  "launcherName": "Creative Note",
   "packageId": "com.hooncompany.hoonnote",
   "host": "myunghoon3847-maker.github.io",
   "startUrl": "/hoonNote/",
   "manifestUrl": "https://myunghoon3847-maker.github.io/hoonNote/manifest.json",
-  "themeColor": "#2563EB",
+  "themeColor": "#7C3AED",
   "navigationColor": "#FFFFFF",
   "backgroundColor": "#F8FAFC",
   "display": "standalone",
   "orientation": "portrait-primary",
   "versionName": "1.1.0",
-  "versionCode": 2,
+  "versionCode": "CURRENT_PLAY_VERSION_CODE + 1",
   "minSdkVersion": 23,
   "targetSdkVersion": 36,
   "appStore": "Google Play",
   "releaseTrack": "Closed testing",
   "signing": "New Google Play upload key",
   "buildFormat": "AAB",
-  "webVersion": "4.8.0",
-  "assetVersion": "480"
+  "webVersion": "4.8.1",
+  "assetVersion": "481"
 }

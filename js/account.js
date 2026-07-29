@@ -149,7 +149,7 @@
     return keys;
   }
 
-  function clearLocal크리에이티브노트Data() {
+  function clearLocalCreativeNoteData() {
     const projectRef = getProjectRef();
     const shouldRemoveLocalKey = (key) =>
       key.startsWith("solonote_") ||
@@ -342,7 +342,7 @@
       console.warn("로컬 로그아웃 정리 중 경고가 발생했습니다.", error);
     }
 
-    clearLocal크리에이티브노트Data();
+    clearLocalCreativeNoteData();
 
     window.sessionStorage.setItem(
       POST_AUTH_MESSAGE_KEY,
@@ -432,7 +432,7 @@
 
       await finishDeletionLocally(
         client,
-        "크리에이티브노트 계정과 데이터가 삭제되었습니다.",
+        "Creative Note 계정과 데이터가 삭제되었습니다.",
         "success"
       );
     } catch (error) {
@@ -454,7 +454,7 @@
         if (accountDeleted) {
           await finishDeletionLocally(
             client,
-            "크리에이티브노트 계정과 데이터가 삭제되었습니다.",
+            "Creative Note 계정과 데이터가 삭제되었습니다.",
             "success"
           );
           return;

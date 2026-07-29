@@ -3186,7 +3186,7 @@ function handleBackupClick() {
     const jsonText = JSON.stringify(backupData, null, 2);
     const blob = new Blob([jsonText], { type: "application/json;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const fileName = `크리에이티브노트-backup-${getTodayTextForFileName()}.json`;
+    const fileName = `Creative Note-backup-${getTodayTextForFileName()}.json`;
 
     const downloadLink = document.createElement("a");
     downloadLink.href = url;
@@ -3241,7 +3241,7 @@ function handleRestoreButtonClick() {
     }
 
     if (!file.name.toLowerCase().endsWith(".json")) {
-      showAppNotice("JSON 형식의 크리에이티브노트 백업 파일만 복원할 수 있습니다.", "warning", {
+      showAppNotice("JSON 형식의 Creative Note 백업 파일만 복원할 수 있습니다.", "warning", {
         title: "지원하지 않는 파일",
       });
       finishRestore();
@@ -3300,7 +3300,7 @@ function handleRestoreButtonClick() {
       } catch (error) {
         console.error(error);
         const message = error instanceof SyntaxError
-          ? "JSON 파일 구조를 읽을 수 없습니다. 손상되지 않은 크리에이티브노트 백업 파일인지 확인하세요."
+          ? "JSON 파일 구조를 읽을 수 없습니다. 손상되지 않은 Creative Note 백업 파일인지 확인하세요."
           : translateCloudError(error);
 
         showAppNotice(message, "error", {

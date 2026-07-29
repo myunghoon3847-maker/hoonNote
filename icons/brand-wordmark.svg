@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 56" role="img" aria-label="Creative Note">
-  <rect x="3" y="7" width="42" height="42" rx="10" fill="#2F67F6"/>
+  <rect x="3" y="7" width="42" height="42" rx="10" fill="#7C3AED"/>
   <rect x="14" y="14" width="22" height="28" rx="4" fill="#fff"/>
-  <path d="M29 14v8h7" fill="#A5BEFF"/>
-  <path d="M19 27h12M19 32h12M19 37h8" stroke="#2F67F6" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M29 14v8h7" fill="#C4B5FD"/>
+  <path d="M19 27h12M19 32h12M19 37h8" stroke="#7C3AED" stroke-width="2.6" stroke-linecap="round"/>
   <text x="58" y="36" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" fill="#0B1C38">Creative Note</text>
 </svg>

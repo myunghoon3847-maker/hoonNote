@@ -4,11 +4,11 @@ Website URL:
 https://myunghoon3847-maker.github.io/hoonNote/
 
 Application name: Creative Note
-Launcher name: 크리에이티브노트
+Launcher name: Creative Note
 Package ID: com.hooncompany.hoonnote
 Start URL: /hoonNote/
 Version name: 1.1.0
-Version code: 2
+Version code: Play Console의 현재 버전 코드 + 1
 Build format: AAB
 Signing alias: upload
 

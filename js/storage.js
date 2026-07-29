@@ -1086,7 +1086,7 @@ function extractMemosFromBackup(backupData) {
     return backupData.memos;
   }
 
-  throw new Error("올바른 크리에이티브노트 백업 파일이 아닙니다.");
+  throw new Error("올바른 Creative Note 백업 파일이 아닙니다.");
 }
 
 function extractMemoCategoryNamesFromBackup(backupData) {

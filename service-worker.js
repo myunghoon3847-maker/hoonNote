@@ -1,30 +1,30 @@
-const CACHE_NAME = "creative-note-v4-8-0-cache";
+const CACHE_NAME = "creative-note-v4-8-1-cache";
 const APP_CACHE_PREFIXES = ["creative-note-", "hoonnote-", "solonote-"];
 const APP_SHELL_URL = "./index.html";
 
 const CORE_ASSETS = [
   "./",
   APP_SHELL_URL,
-  "./manifest.json?v=480",
-  "./css/style.css?v=480",
-  "./js/config.js?v=480",
-  "./js/feedback.js?v=480",
-  "./js/auth.js?v=480",
-  "./js/storage.js?v=480",
-  "./js/ui.js?v=480",
-  "./js/app.js?v=480",
-  "./js/account.js?v=480",
-  "./js/pwa.js?v=480",
-  "./icons/logo-mark.svg?v=480",
-  "./icons/brand-wordmark.svg?v=480",
-  "./icons/settings-gear.png?v=480",
-  "./icons/icon-192.png?v=480",
-  "./icons/icon-512.png?v=480",
-  "./icons/icon-maskable-192.png?v=480",
-  "./icons/icon-maskable-512.png?v=480",
-  "./icons/icon-monochrome-512.png?v=480",
-  "./icons/apple-touch-icon.png?v=480",
-  "./legal/legal.css?v=480",
+  "./manifest.json?v=481",
+  "./css/style.css?v=481",
+  "./js/config.js?v=481",
+  "./js/feedback.js?v=481",
+  "./js/auth.js?v=481",
+  "./js/storage.js?v=481",
+  "./js/ui.js?v=481",
+  "./js/app.js?v=481",
+  "./js/account.js?v=481",
+  "./js/pwa.js?v=481",
+  "./icons/logo-mark.svg?v=481",
+  "./icons/brand-wordmark.svg?v=481",
+  "./icons/settings-gear.png?v=481",
+  "./icons/icon-192.png?v=481",
+  "./icons/icon-512.png?v=481",
+  "./icons/icon-maskable-192.png?v=481",
+  "./icons/icon-maskable-512.png?v=481",
+  "./icons/icon-monochrome-512.png?v=481",
+  "./icons/apple-touch-icon.png?v=481",
+  "./legal/legal.css?v=481",
   "./legal/privacy.html",
   "./legal/terms.html",
   "./support/index.html",
@@ -55,7 +55,7 @@ async function handleNavigation(request) {
     return (
       (await caches.match(request, { ignoreSearch: true })) ||
       (await caches.match(APP_SHELL_URL)) ||
-      new Response("오프라인 상태에서는 크리에이티브노트를 처음 열 수 없습니다.", {
+      new Response("오프라인 상태에서는 Creative Note를 처음 열 수 없습니다.", {
         status: 503,
         headers: { "Content-Type": "text/plain; charset=utf-8" },
       })
