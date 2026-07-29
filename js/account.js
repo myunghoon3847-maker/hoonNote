@@ -149,7 +149,7 @@
     return keys;
   }
 
-  function clearLocal훈노트Data() {
+  function clearLocal크리에이티브노트Data() {
     const projectRef = getProjectRef();
     const shouldRemoveLocalKey = (key) =>
       key.startsWith("solonote_") ||
@@ -284,12 +284,12 @@
             Authorization: `Bearer ${session.access_token}`,
             apikey: config.supabasePublishableKey,
             "Content-Type": "application/json",
-            "X-Client-Info": "hoonnote-v4.6.0-rc.1",
+            "X-Client-Info": "hoonnote-v4.7.0-dev1.1.1",
             "X-Request-Id": requestId,
           },
           body: JSON.stringify({
             confirmation: REQUIRED_CONFIRMATION,
-            clientVersion: "4.6.0-rc.1",
+            clientVersion: "4.7.0-dev1.1",
           }),
           cache: "no-store",
           signal: controller.signal,
@@ -342,7 +342,7 @@
       console.warn("로컬 로그아웃 정리 중 경고가 발생했습니다.", error);
     }
 
-    clearLocal훈노트Data();
+    clearLocal크리에이티브노트Data();
 
     window.sessionStorage.setItem(
       POST_AUTH_MESSAGE_KEY,
@@ -432,7 +432,7 @@
 
       await finishDeletionLocally(
         client,
-        "훈노트 계정과 데이터가 삭제되었습니다.",
+        "크리에이티브노트 계정과 데이터가 삭제되었습니다.",
         "success"
       );
     } catch (error) {
@@ -454,7 +454,7 @@
         if (accountDeleted) {
           await finishDeletionLocally(
             client,
-            "훈노트 계정과 데이터가 삭제되었습니다.",
+            "크리에이티브노트 계정과 데이터가 삭제되었습니다.",
             "success"
           );
           return;

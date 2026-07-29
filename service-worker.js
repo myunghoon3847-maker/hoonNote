@@ -1,30 +1,30 @@
-const CACHE_NAME = "hoonnote-v4-6-0-rc1-cache";
-const APP_CACHE_PREFIXES = ["hoonnote-", "solonote-"];
+const CACHE_NAME = "creative-note-v4-8-0-cache";
+const APP_CACHE_PREFIXES = ["creative-note-", "hoonnote-", "solonote-"];
 const APP_SHELL_URL = "./index.html";
 
 const CORE_ASSETS = [
   "./",
   APP_SHELL_URL,
-  "./manifest.json?v=468",
-  "./css/style.css?v=468",
-  "./js/config.js?v=468",
-  "./js/feedback.js?v=468",
-  "./js/auth.js?v=468",
-  "./js/storage.js?v=468",
-  "./js/ui.js?v=468",
-  "./js/app.js?v=468",
-  "./js/account.js?v=468",
-  "./js/pwa.js?v=468",
-  "./icons/logo-mark.svg?v=468",
-  "./icons/brand-wordmark.svg?v=468",
-  "./icons/settings-gear.png?v=468",
-  "./icons/icon-192.png?v=468",
-  "./icons/icon-512.png?v=468",
-  "./icons/icon-maskable-192.png?v=468",
-  "./icons/icon-maskable-512.png?v=468",
-  "./icons/icon-monochrome-512.png?v=468",
-  "./icons/apple-touch-icon.png?v=468",
-  "./legal/legal.css?v=468",
+  "./manifest.json?v=480",
+  "./css/style.css?v=480",
+  "./js/config.js?v=480",
+  "./js/feedback.js?v=480",
+  "./js/auth.js?v=480",
+  "./js/storage.js?v=480",
+  "./js/ui.js?v=480",
+  "./js/app.js?v=480",
+  "./js/account.js?v=480",
+  "./js/pwa.js?v=480",
+  "./icons/logo-mark.svg?v=480",
+  "./icons/brand-wordmark.svg?v=480",
+  "./icons/settings-gear.png?v=480",
+  "./icons/icon-192.png?v=480",
+  "./icons/icon-512.png?v=480",
+  "./icons/icon-maskable-192.png?v=480",
+  "./icons/icon-maskable-512.png?v=480",
+  "./icons/icon-monochrome-512.png?v=480",
+  "./icons/apple-touch-icon.png?v=480",
+  "./legal/legal.css?v=480",
   "./legal/privacy.html",
   "./legal/terms.html",
   "./support/index.html",
@@ -55,7 +55,7 @@ async function handleNavigation(request) {
     return (
       (await caches.match(request, { ignoreSearch: true })) ||
       (await caches.match(APP_SHELL_URL)) ||
-      new Response("오프라인 상태에서는 훈노트를 처음 열 수 없습니다.", {
+      new Response("오프라인 상태에서는 크리에이티브노트를 처음 열 수 없습니다.", {
         status: 503,
         headers: { "Content-Type": "text/plain; charset=utf-8" },
       })

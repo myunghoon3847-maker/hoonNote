@@ -75,15 +75,15 @@
       setInstallButtonVisible(false);
       setPwaStatus(
         isTrustedWebActivity()
-          ? "Google Play용 훈노트 앱으로 실행 중입니다."
-          : "훈노트가 이 기기에 앱으로 설치되어 실행 중입니다."
+          ? "Google Play용 크리에이티브노트 앱으로 실행 중입니다."
+          : "크리에이티브노트가 이 기기에 앱으로 설치되어 실행 중입니다."
       );
       return;
     }
 
     if (deferredInstallPrompt) {
       setInstallButtonVisible(true);
-      setPwaStatus("이 기기에 훈노트를 앱으로 설치할 수 있습니다.");
+      setPwaStatus("이 기기에 크리에이티브노트를 앱으로 설치할 수 있습니다.");
       return;
     }
 
@@ -142,7 +142,7 @@
       const choice = await deferredInstallPrompt.userChoice;
 
       if (choice && choice.outcome === "accepted") {
-        setPwaStatus("훈노트 설치를 진행하고 있습니다.");
+        setPwaStatus("크리에이티브노트 설치를 진행하고 있습니다.");
       } else {
         setPwaStatus("설치를 취소했습니다. 필요할 때 다시 설치할 수 있습니다.");
       }
@@ -264,7 +264,7 @@
 
     try {
       const registration = await navigator.serviceWorker.register(
-        "./service-worker.js?v=468",
+        "./service-worker.js?v=471",
         { updateViaCache: "none" }
       );
 
@@ -315,7 +315,7 @@
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
     setInstallButtonVisible(false);
-    setPwaStatus("훈노트 설치가 완료되었습니다.");
+    setPwaStatus("크리에이티브노트 설치가 완료되었습니다.");
   });
 
   if ("serviceWorker" in navigator) {

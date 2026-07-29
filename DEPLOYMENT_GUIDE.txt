@@ -1,4 +1,4 @@
-훈노트 v4.7.0-dev1.1 GitHub Pages 404 긴급복구 배포 안내
+크리에이티브노트 v4.7.0-dev1.1 GitHub Pages 404 긴급복구 배포 안내
 
 중요: ZIP 파일 자체를 GitHub에 올리지 마세요.
 1) 이 ZIP을 PC에서 압축 해제합니다.
@@ -8,7 +8,7 @@
 5) Settings → Pages → Source: Deploy from a branch → Branch: main → Folder: /(root) → Save를 확인합니다.
 6) Actions 탭의 pages build and deployment가 초록색 체크가 될 때까지 기다립니다.
 7) 웹 주소 https://myunghoon3847-maker.github.io/solonote/?v=471 를 먼저 확인합니다.
-8) 웹이 열리면 스마트폰에서 훈노트 앱을 완전히 종료하고 다시 실행합니다.
+8) 웹이 열리면 스마트폰에서 크리에이티브노트 앱을 완전히 종료하고 다시 실행합니다.
 
 정상 구조 예시:
 solonote/
@@ -25,9 +25,9 @@ solonote/
 
 잘못된 구조 예시:
 solonote/
-└─ 훈노트_v4.7.0-dev1.1_폴더/
+└─ 크리에이티브노트_v4.7.0-dev1.1_폴더/
    └─ index.html
 
 또는
 solonote/
-└─ 훈노트_v4.7.0-dev1.1_배포본.zip
+└─ 크리에이티브노트_v4.7.0-dev1.1_배포본.zip

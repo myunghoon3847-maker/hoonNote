@@ -1,0 +1,18 @@
+Creative Note Android update
+
+Website URL:
+https://myunghoon3847-maker.github.io/hoonNote/
+
+Application name: Creative Note
+Launcher name: 크리에이티브노트
+Package ID: com.hooncompany.hoonnote
+Start URL: /hoonNote/
+Version name: 1.1.0
+Version code: 2
+Build format: AAB
+Signing alias: upload
+
+주의:
+- 패키지 ID는 기존 앱 업데이트를 위해 변경하지 않습니다.
+- AAB는 사용자의 새 hoonnote-upload-key.jks로 서명해야 합니다.
+- .jks 파일과 비밀번호는 다른 사람에게 전달하지 마세요.

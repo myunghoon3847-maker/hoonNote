@@ -364,7 +364,7 @@ function getRateLimitMessage(error) {
     setElementVisible(loginForm, true);
 
     setAuthCopy(
-      "훈노트",
+      "크리에이티브노트",
       "내 계정으로 로그인하세요.",
       "처음 사용한다면 회원가입 후 이메일 인증을 완료하세요."
     );
@@ -391,7 +391,7 @@ function getRateLimitMessage(error) {
 
     setAuthCopy(
       "회원가입",
-      "훈노트 계정을 만들고 메모를 안전하게 동기화하세요.",
+      "크리에이티브노트 계정을 만들고 메모를 안전하게 동기화하세요.",
       "가입 후 받은 이메일의 인증 링크를 눌러야 로그인이 가능합니다."
     );
 
