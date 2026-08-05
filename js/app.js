@@ -6,6 +6,18 @@ let currentSort = "updatedDesc";
 let draftTasks = [];
 let draftLinks = [];
 
+let memoSelectionMode = false;
+let selectedMemoIds = new Set();
+let memoLongPressTimer = null;
+let memoLongPressTargetId = null;
+let memoLongPressMoved = false;
+let memoLongPressStartX = 0;
+let memoLongPressStartY = 0;
+let suppressNextMemoCardClick = false;
+
+const MEMO_LONG_PRESS_DURATION_MS = 480;
+const MEMO_LONG_PRESS_MOVE_TOLERANCE_PX = 10;
+
 const memoForm = document.querySelector("#memoForm");
 const titleInput = document.querySelector("#titleInput");
 const projectInput = document.querySelector("#projectInput");
@@ -87,6 +99,10 @@ const appMenuButton = document.querySelector("#appMenuButton");
 const appMenuPanel = document.querySelector("#appMenuPanel");
 const appMenuBackdrop = document.querySelector("#appMenuBackdrop");
 const openTrashButton = document.querySelector("#openTrashButton");
+const selectionToolbar = document.querySelector("#selectionToolbar");
+const selectionCountLabel = document.querySelector("#selectionCountLabel");
+const cancelSelectionButton = document.querySelector("#cancelSelectionButton");
+const deleteSelectedButton = document.querySelector("#deleteSelectedButton");
 const categoryManagerModal = document.querySelector("#categoryManagerModal");
 const closeCategoryManagerButton = document.querySelector("#closeCategoryManagerButton");
 const categoryCreateForm = document.querySelector("#categoryCreateForm");
@@ -1085,6 +1101,10 @@ function handleHomeLogoClick(event) {
 function switchAppView(view, options = {}) {
   const allowedViews = ["notes", "tasks", "trash"];
   currentAppView = allowedViews.includes(view) ? view : "notes";
+
+  if (currentAppView !== "notes") {
+    exitMemoSelectionMode();
+  }
 
   const isNotes = currentAppView === "notes";
   const isTasks = currentAppView === "tasks";
@@ -2897,6 +2917,11 @@ async function handleFormSubmit(event) {
 }
 
 function handleMemoListClick(event) {
+  if (suppressNextMemoCardClick) {
+    suppressNextMemoCardClick = false;
+    return;
+  }
+
   const emptyActionButton = event.target.closest("[data-empty-action]");
 
   if (emptyActionButton) {
@@ -2919,11 +2944,171 @@ function handleMemoListClick(event) {
     return;
   }
 
+  if (memoSelectionMode) {
+    toggleMemoSelected(memoCard.dataset.id);
+    return;
+  }
+
   const memo = findMemoById(memoCard.dataset.id);
 
   if (memo) {
     openDetailModal(memo);
   }
+}
+
+
+function updateSelectionToolbar() {
+  if (!selectionToolbar || !selectionCountLabel) {
+    return;
+  }
+
+  const hasSelection = memoSelectionMode && selectedMemoIds.size > 0;
+  selectionToolbar.hidden = !hasSelection;
+  selectionCountLabel.textContent = `${selectedMemoIds.size}개 선택됨`;
+  document.body.classList.toggle("memo-selection-active", memoSelectionMode);
+}
+
+function enterMemoSelectionMode(initialId) {
+  memoSelectionMode = true;
+  selectedMemoIds = new Set(initialId ? [initialId] : []);
+  refreshScreen();
+  updateSelectionToolbar();
+
+  if (typeof navigator.vibrate === "function") {
+    navigator.vibrate(15);
+  }
+}
+
+function exitMemoSelectionMode() {
+  if (!memoSelectionMode && selectedMemoIds.size === 0) {
+    return;
+  }
+
+  memoSelectionMode = false;
+  selectedMemoIds = new Set();
+  refreshScreen();
+  updateSelectionToolbar();
+}
+
+function toggleMemoSelected(id) {
+  if (!id) {
+    return;
+  }
+
+  if (selectedMemoIds.has(id)) {
+    selectedMemoIds.delete(id);
+  } else {
+    selectedMemoIds.add(id);
+  }
+
+  if (selectedMemoIds.size === 0) {
+    exitMemoSelectionMode();
+    return;
+  }
+
+  refreshScreen();
+  updateSelectionToolbar();
+}
+
+function clearMemoLongPressTimer() {
+  if (memoLongPressTimer) {
+    clearTimeout(memoLongPressTimer);
+    memoLongPressTimer = null;
+  }
+}
+
+function handleMemoListPointerDown(event) {
+  if (event.pointerType === "mouse" && event.button !== 0) {
+    return;
+  }
+
+  const memoCard = event.target.closest(".memo-card");
+
+  if (!memoCard) {
+    return;
+  }
+
+  memoLongPressTargetId = memoCard.dataset.id;
+  memoLongPressMoved = false;
+  memoLongPressStartX = event.clientX;
+  memoLongPressStartY = event.clientY;
+
+  clearMemoLongPressTimer();
+  memoLongPressTimer = setTimeout(() => {
+    memoLongPressTimer = null;
+
+    if (memoLongPressMoved || !memoLongPressTargetId) {
+      return;
+    }
+
+    suppressNextMemoCardClick = true;
+
+    if (memoSelectionMode) {
+      toggleMemoSelected(memoLongPressTargetId);
+    } else {
+      enterMemoSelectionMode(memoLongPressTargetId);
+    }
+  }, MEMO_LONG_PRESS_DURATION_MS);
+}
+
+function handleMemoListPointerMove(event) {
+  if (!memoLongPressTimer) {
+    return;
+  }
+
+  const deltaX = Math.abs(event.clientX - memoLongPressStartX);
+  const deltaY = Math.abs(event.clientY - memoLongPressStartY);
+
+  if (deltaX > MEMO_LONG_PRESS_MOVE_TOLERANCE_PX || deltaY > MEMO_LONG_PRESS_MOVE_TOLERANCE_PX) {
+    memoLongPressMoved = true;
+    clearMemoLongPressTimer();
+  }
+}
+
+function handleMemoListPointerUp() {
+  clearMemoLongPressTimer();
+  memoLongPressTargetId = null;
+}
+
+function handleMemoListContextMenu(event) {
+  if (event.target.closest(".memo-card")) {
+    event.preventDefault();
+  }
+}
+
+async function deleteSelectedMemos() {
+  const ids = Array.from(selectedMemoIds);
+
+  if (ids.length === 0) {
+    return;
+  }
+
+  const shouldMoveToTrash = confirm(
+    `선택한 메모 ${ids.length}개를 클라우드 휴지통으로 이동하시겠습니까?`
+  );
+
+  if (!shouldMoveToTrash) {
+    return;
+  }
+
+  const result = await runCloudAction(
+    async () => {
+      for (const id of ids) {
+        await moveMemoToTrash(id);
+      }
+      return true;
+    },
+    {
+      loadingMessage: "휴지통으로 이동 중",
+      successMessage: `${ids.length}개 메모 휴지통으로 이동됨`,
+    }
+  );
+
+  if (!result) {
+    return;
+  }
+
+  exitMemoSelectionMode();
 }
 
 
@@ -3374,7 +3559,18 @@ function bindEvents() {
   linkEditorModal?.addEventListener("click", handleLinkEditorModalClick);
   linkDraftList?.addEventListener("click", handleLinkDraftListClick);
 
-  document.querySelector("#memoList").addEventListener("click", handleMemoListClick);
+  const memoListElement = document.querySelector("#memoList");
+  memoListElement.addEventListener("click", handleMemoListClick);
+  memoListElement.addEventListener("pointerdown", handleMemoListPointerDown);
+  memoListElement.addEventListener("pointermove", handleMemoListPointerMove);
+  memoListElement.addEventListener("pointerup", handleMemoListPointerUp);
+  memoListElement.addEventListener("pointercancel", handleMemoListPointerUp);
+  memoListElement.addEventListener("pointerleave", handleMemoListPointerUp);
+  memoListElement.addEventListener("contextmenu", handleMemoListContextMenu);
+  cancelSelectionButton?.addEventListener("click", exitMemoSelectionMode);
+  deleteSelectedButton?.addEventListener("click", () => {
+    void deleteSelectedMemos();
+  });
   trashList?.addEventListener("click", (event) => {
     void handleTrashListClick(event);
   });

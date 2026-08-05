@@ -828,6 +828,7 @@ button:disabled {
 }
 
 .memo-card {
+  position: relative;
   width: 100%;
   padding: 14px;
   border: 1px solid var(--line);
@@ -836,13 +837,101 @@ button:disabled {
   color: var(--text);
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease,
+    padding-left 0.15s ease, background 0.16s ease;
+  -webkit-touch-callout: none;
+  user-select: none;
 }
 
 .memo-card:hover {
   border-color: var(--primary-line);
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
   transform: translateY(-1px);
+}
+
+/* 롱프레스 다중 선택 삭제 */
+#memoList.selection-mode .memo-card {
+  padding-left: 44px;
+}
+
+#memoList.selection-mode .memo-card:hover {
+  transform: none;
+}
+
+.memo-card.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.memo-select-indicator {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.memo-card.selected .memo-select-indicator {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.memo-card.selected .memo-select-indicator::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.selection-toolbar {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 26;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100% - 28px, 480px);
+  padding: 9px 10px 9px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.selection-toolbar .selection-count {
+  flex: 1 1 auto;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.selection-toolbar .selection-toolbar-cancel {
+  flex: 0 0 auto;
+  color: #ffffff;
+}
+
+.selection-toolbar .selection-toolbar-cancel:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.selection-toolbar .danger-button {
+  flex: 0 0 auto;
+}
+
+body.memo-selection-active .mobile-new-memo-button,
+body.memo-selection-active #editorToggleButton {
+  display: none !important;
 }
 
 .memo-card-top {

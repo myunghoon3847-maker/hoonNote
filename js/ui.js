@@ -181,6 +181,8 @@ function renderTaskHub(items, view = "open") {
 function renderMemoList(memos) {
   const memoList = document.querySelector("#memoList");
 
+  memoList.classList.toggle("selection-mode", Boolean(memoSelectionMode));
+
   if (memos.length === 0) {
     memoList.innerHTML = `
       <div class="empty-state">
@@ -213,9 +215,16 @@ function renderMemoList(memos) {
         linkCount > 0
           ? `<span class="memo-link-chip">링크 ${linkCount}</span>`
           : "";
+      const isSelected = Boolean(memoSelectionMode) && selectedMemoIds.has(memo.id);
+      const selectIndicator = memoSelectionMode
+        ? '<span class="memo-select-indicator" aria-hidden="true"></span>'
+        : "";
+      const cardClass = `memo-card${isSelected ? " selected" : ""}`;
+      const pressedAttr = memoSelectionMode ? ` aria-pressed="${isSelected}"` : "";
 
       return `
-        <button type="button" class="memo-card" data-id="${escapeHtml(memo.id)}">
+        <button type="button" class="${cardClass}" data-id="${escapeHtml(memo.id)}"${pressedAttr}>
+          ${selectIndicator}
           <div class="memo-card-top">
             <div class="memo-card-badges">
               <span class="category-chip">${safeCategory}</span>
