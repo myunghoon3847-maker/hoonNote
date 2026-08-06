@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=482" rel="manifest"/>
+<link href="./manifest.json?v=483" rel="manifest"/>
 <meta content="#7c3aed" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
@@ -13,9 +13,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=482" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=482" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=482" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=483" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=483" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=483" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +126,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=482"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=483"/>
 </a>
 </div>
 <div class="header-actions">
@@ -285,6 +285,7 @@
 <input aria-label="메모 검색" id="searchInput" placeholder="메모 검색" type="search"/>
 </div>
 </div>
+<div class="important-strip" hidden id="importantStrip"></div>
 <section aria-label="카테고리 필터" class="category-filter-section">
 <div class="category-tabs-shell" id="categoryTabsShell">
 <nav aria-label="메모 카테고리" class="category-tabs main-category-tabs" id="categoryTabs">
@@ -372,10 +373,43 @@
 
 <section aria-label="설정" class="menu-section menu-settings-entry-section">
 <button aria-label="설정 열기" class="menu-settings-entry-button" id="openSettingsButton" type="button">
-<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=482"/>
+<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=483"/>
 <span class="menu-settings-entry-copy"><strong>설정</strong><small>계정과 앱 설정</small></span>
 <span aria-hidden="true" class="menu-settings-entry-chevron">›</span>
 </button>
+</section>
+
+</div>
+<div aria-label="설정 메뉴" class="menu-subview menu-subview-settings" hidden id="menuSettingsView">
+<section class="menu-section menu-settings-overview">
+<div class="menu-section-heading menu-subview-heading">
+<div>
+<h3>설정</h3>
+<p>계정과 앱 관련 메뉴</p>
+</div>
+</div>
+</section>
+<section aria-label="계정 관리" class="menu-section settings-panel account-settings-panel menu-settings-panel">
+<button aria-controls="menuAccountManagementContent" aria-expanded="false" class="settings-row-button" id="menuAccountManagementToggleButton" type="button">
+<span aria-hidden="true" class="settings-row-icon"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.5 19c.7-3.3 3.1-5.2 6.5-5.2s5.8 1.9 6.5 5.2"></path></svg></span>
+<span class="settings-row-copy">
+<strong>계정 관리</strong>
+<small>로그아웃과 계정 삭제 메뉴</small>
+</span>
+<span aria-hidden="true" class="settings-row-chevron">›</span>
+</button>
+<div class="account-management-content settings-row-content account-action-list" hidden id="menuAccountManagementContent">
+<button class="account-action-button" id="logoutButton" type="button">
+<span aria-hidden="true" class="account-action-icon"><svg focusable="false" viewBox="0 0 24 24"><path d="M10 5H6.8A1.8 1.8 0 0 0 5 6.8v10.4A1.8 1.8 0 0 0 6.8 19H10"></path><path d="m14 8 4 4-4 4"></path><path d="M9 12h9"></path></svg></span>
+<span class="account-action-copy"><strong>로그아웃</strong><small>현재 기기에서 계정을 종료합니다.</small></span>
+<span aria-hidden="true" class="account-action-chevron">›</span>
+</button>
+<button class="account-action-button account-action-button-danger" id="openAccountDeletionButton" type="button">
+<span aria-hidden="true" class="account-action-icon"><svg focusable="false" viewBox="0 0 24 24"><path d="M4.5 7h15"></path><path d="M9 7V4.8h6V7"></path><path d="m7 7 .8 12h8.4L17 7"></path><path d="M10 10.5v5"></path><path d="M14 10.5v5"></path></svg></span>
+<span class="account-action-copy"><strong>계정 삭제</strong><small>모든 계정 데이터가 영구 삭제됩니다.</small></span>
+<span aria-hidden="true" class="account-action-chevron">›</span>
+</button>
+</div>
 </section>
 <section class="menu-section">
 <h3>빠른 작업</h3>
@@ -485,38 +519,6 @@
 </div>
 </div>
 
-</section>
-</div>
-<div aria-label="설정 메뉴" class="menu-subview menu-subview-settings" hidden id="menuSettingsView">
-<section class="menu-section menu-settings-overview">
-<div class="menu-section-heading menu-subview-heading">
-<div>
-<h3>설정</h3>
-<p>계정과 앱 관련 메뉴</p>
-</div>
-</div>
-</section>
-<section aria-label="계정 관리" class="menu-section settings-panel account-settings-panel menu-settings-panel">
-<button aria-controls="menuAccountManagementContent" aria-expanded="false" class="settings-row-button" id="menuAccountManagementToggleButton" type="button">
-<span aria-hidden="true" class="settings-row-icon"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="8" r="3.25"></circle><path d="M5.5 19c.7-3.3 3.1-5.2 6.5-5.2s5.8 1.9 6.5 5.2"></path></svg></span>
-<span class="settings-row-copy">
-<strong>계정 관리</strong>
-<small>로그아웃과 계정 삭제 메뉴</small>
-</span>
-<span aria-hidden="true" class="settings-row-chevron">›</span>
-</button>
-<div class="account-management-content settings-row-content account-action-list" hidden id="menuAccountManagementContent">
-<button class="account-action-button" id="logoutButton" type="button">
-<span aria-hidden="true" class="account-action-icon"><svg focusable="false" viewBox="0 0 24 24"><path d="M10 5H6.8A1.8 1.8 0 0 0 5 6.8v10.4A1.8 1.8 0 0 0 6.8 19H10"></path><path d="m14 8 4 4-4 4"></path><path d="M9 12h9"></path></svg></span>
-<span class="account-action-copy"><strong>로그아웃</strong><small>현재 기기에서 계정을 종료합니다.</small></span>
-<span aria-hidden="true" class="account-action-chevron">›</span>
-</button>
-<button class="account-action-button account-action-button-danger" id="openAccountDeletionButton" type="button">
-<span aria-hidden="true" class="account-action-icon"><svg focusable="false" viewBox="0 0 24 24"><path d="M4.5 7h15"></path><path d="M9 7V4.8h6V7"></path><path d="m7 7 .8 12h8.4L17 7"></path><path d="M10 10.5v5"></path><path d="M14 10.5v5"></path></svg></span>
-<span class="account-action-copy"><strong>계정 삭제</strong><small>모든 계정 데이터가 영구 삭제됩니다.</small></span>
-<span aria-hidden="true" class="account-action-chevron">›</span>
-</button>
-</div>
 </section>
 <section aria-label="앱 정보" class="menu-section settings-panel menu-settings-panel menu-settings-app-panel">
 <div class="settings-panel-copy menu-settings-copy-block">
@@ -655,13 +657,13 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=482"></script>
-<script src="./js/feedback.js?v=482"></script>
-<script src="./js/auth.js?v=482"></script>
-<script src="./js/storage.js?v=482"></script>
-<script src="./js/ui.js?v=482"></script>
-<script src="./js/app.js?v=482"></script>
-<script src="./js/account.js?v=482"></script>
-<script src="./js/pwa.js?v=482"></script>
+<script src="./js/config.js?v=483"></script>
+<script src="./js/feedback.js?v=483"></script>
+<script src="./js/auth.js?v=483"></script>
+<script src="./js/storage.js?v=483"></script>
+<script src="./js/ui.js?v=483"></script>
+<script src="./js/app.js?v=483"></script>
+<script src="./js/account.js?v=483"></script>
+<script src="./js/pwa.js?v=483"></script>
 </body>
 </html>

@@ -242,6 +242,40 @@ function renderMemoList(memos) {
     .join("");
 }
 
+function renderImportantStrip() {
+  const importantStrip = document.querySelector("#importantStrip");
+
+  if (!importantStrip) {
+    return;
+  }
+
+  const importantMemos = getMemos()
+    .filter((memo) => memo.isImportant && !memo.isDeleted)
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
+
+  if (importantMemos.length === 0) {
+    importantStrip.hidden = true;
+    importantStrip.innerHTML = "";
+    return;
+  }
+
+  importantStrip.hidden = false;
+  importantStrip.innerHTML = importantMemos
+    .map((memo) => {
+      const safeTitle = escapeHtml(memo.title || "제목 없음");
+      const safeCategory = escapeHtml(memo.category);
+
+      return `
+        <button type="button" class="important-strip-card" data-id="${escapeHtml(memo.id)}">
+          <span class="important-strip-star" aria-hidden="true">★</span>
+          <span class="important-strip-category">${safeCategory}</span>
+          <div class="important-strip-title">${safeTitle}</div>
+        </button>
+      `;
+    })
+    .join("");
+}
+
 
 function renderTrashList(memos) {
   const trashList = document.querySelector("#trashList");
