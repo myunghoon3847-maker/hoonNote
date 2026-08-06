@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=484" rel="manifest"/>
+<link href="./manifest.json?v=487" rel="manifest"/>
 <meta content="#7c3aed" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
@@ -13,9 +13,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=484" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=484" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=484" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=487" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=487" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=487" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +126,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=484"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=487"/>
 </a>
 </div>
 <div class="header-actions">
@@ -175,6 +175,9 @@
         할 일
         <span class="tab-count" id="taskHubOpenCount">0</span>
 </button>
+<button aria-controls="calendarView" aria-selected="false" class="primary-view-tab" data-app-view="calendar" id="calendarViewTab" type="button">
+        캘린더
+      </button>
 </nav>
 <main class="workspace">
 <section aria-label="메모" class="app-view" id="notesView">
@@ -250,6 +253,10 @@
 <button aria-controls="categoryManagerModal" aria-haspopup="dialog" aria-label="카테고리 추가 및 관리" class="secondary-button editor-category-manage-button" id="editorCategoryManagerButton" type="button">
                   카테고리 추가·관리
                 </button>
+</div>
+<div class="date-field">
+<label for="dueDateInput">날짜 (선택)</label>
+<input id="dueDateInput" type="date"/>
 </div>
 </div>
 <div class="checklist-editor">
@@ -338,6 +345,21 @@
 <div class="task-hub-list" id="taskHubList"></div>
 </div>
 </section>
+<section aria-label="캘린더" class="app-view" hidden id="calendarView">
+<div class="calendar-header">
+<button aria-label="이전 달" class="text-button compact-button" id="calendarPrevMonthButton" type="button">‹ 이전</button>
+<strong id="calendarMonthLabel">2026년 8월</strong>
+<button aria-label="다음 달" class="text-button compact-button" id="calendarNextMonthButton" type="button">다음 ›</button>
+</div>
+<div class="calendar-weekdays" aria-hidden="true">
+<span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+</div>
+<div class="calendar-grid" id="calendarGrid"></div>
+<div class="calendar-day-panel">
+<h3 id="calendarSelectedDateLabel">날짜를 선택하세요</h3>
+<div class="calendar-day-list" id="calendarDayList"></div>
+</div>
+</section>
 <section aria-labelledby="trashViewTitle" class="app-view trash-view" hidden="" id="trashView">
 <div class="trash-view-heading">
 <div class="trash-heading-main">
@@ -372,10 +394,39 @@
 
 <section aria-label="설정" class="menu-section menu-settings-entry-section">
 <button aria-label="설정 열기" class="menu-settings-entry-button" id="openSettingsButton" type="button">
-<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=484"/>
+<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=487"/>
 <span class="menu-settings-entry-copy"><strong>설정</strong><small>계정과 앱 설정</small></span>
 <span aria-hidden="true" class="menu-settings-entry-chevron">›</span>
 </button>
+</section>
+<section aria-label="카테고리" class="menu-section category-browser-section">
+<div class="menu-section-heading">
+<div>
+<h3>카테고리</h3>
+<p>주제별로 모아보기</p>
+</div>
+</div>
+<div class="category-browser-list" id="categoryBrowserList"></div>
+</section>
+<section aria-label="즐겨찾기" class="menu-section bookmark-section">
+<div class="menu-section-heading">
+<div>
+<h3>즐겨찾기</h3>
+<p>자주 가는 사이트</p>
+</div>
+<button class="text-button compact-button" id="addBookmarkButton" type="button">
+        추가
+      </button>
+</div>
+<div class="bookmark-list" id="bookmarkList"></div>
+<form class="bookmark-form hidden" hidden id="bookmarkForm">
+<input aria-label="사이트 이름" id="bookmarkTitleInput" maxlength="60" placeholder="사이트 이름" required type="text"/>
+<input aria-label="웹사이트 주소" id="bookmarkUrlInput" placeholder="example.com" required type="text"/>
+<div class="bookmark-form-actions">
+<button class="text-button compact-button" id="cancelBookmarkButton" type="button">취소</button>
+<button class="primary-button compact-button" id="saveBookmarkButton" type="submit">저장</button>
+</div>
+</form>
 </section>
 
 </div>
@@ -656,13 +707,13 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=484"></script>
-<script src="./js/feedback.js?v=484"></script>
-<script src="./js/auth.js?v=484"></script>
-<script src="./js/storage.js?v=484"></script>
-<script src="./js/ui.js?v=484"></script>
-<script src="./js/app.js?v=484"></script>
-<script src="./js/account.js?v=484"></script>
-<script src="./js/pwa.js?v=484"></script>
+<script src="./js/config.js?v=487"></script>
+<script src="./js/feedback.js?v=487"></script>
+<script src="./js/auth.js?v=487"></script>
+<script src="./js/storage.js?v=487"></script>
+<script src="./js/ui.js?v=487"></script>
+<script src="./js/app.js?v=487"></script>
+<script src="./js/account.js?v=487"></script>
+<script src="./js/pwa.js?v=487"></script>
 </body>
 </html>

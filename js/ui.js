@@ -31,6 +31,36 @@ function getTaskProgress(tasks) {
   };
 }
 
+function getDueDateBadge(dueDate) {
+  if (!dueDate) {
+    return "";
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const target = new Date(`${dueDate}T00:00:00`);
+
+  if (Number.isNaN(target.getTime())) {
+    return "";
+  }
+
+  const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+  let label;
+  let isOverdue = false;
+
+  if (diffDays === 0) {
+    label = "D-day";
+  } else if (diffDays > 0) {
+    label = `D-${diffDays}`;
+  } else {
+    label = `D+${Math.abs(diffDays)}`;
+    isOverdue = true;
+  }
+
+  return `<span class="due-date-chip${isOverdue ? " overdue" : ""}">${label}</span>`;
+}
+
 function renderTaskChecklistHtml(memo) {
   const tasks = Array.isArray(memo.tasks) ? memo.tasks : [];
 
@@ -215,6 +245,7 @@ function renderMemoList(memos) {
         linkCount > 0
           ? `<span class="memo-link-chip">링크 ${linkCount}</span>`
           : "";
+      const dueDateChip = getDueDateBadge(memo.dueDate);
       const isSelected = Boolean(memoSelectionMode) && selectedMemoIds.has(memo.id);
       const selectIndicator = memoSelectionMode
         ? '<span class="memo-select-indicator" aria-hidden="true"></span>'
@@ -229,6 +260,7 @@ function renderMemoList(memos) {
             <div class="memo-card-badges">
               <span class="category-chip">${safeCategory}</span>
               ${memo.isImportant ? '<span class="important-chip">중요</span>' : ""}
+              ${dueDateChip}
               ${taskChip}
               ${linkChip}
             </div>
@@ -426,6 +458,186 @@ function setActiveCategory(category) {
   });
 }
 
+function toDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function renderCalendar() {
+  const grid = document.querySelector("#calendarGrid");
+  const monthLabel = document.querySelector("#calendarMonthLabel");
+
+  if (!grid || !monthLabel) {
+    return;
+  }
+
+  const year = calendarViewDate.getFullYear();
+  const month = calendarViewDate.getMonth();
+
+  monthLabel.textContent = `${year}년 ${month + 1}월`;
+
+  const firstOfMonth = new Date(year, month, 1);
+  const startWeekday = firstOfMonth.getDay();
+  const gridStart = new Date(year, month, 1 - startWeekday);
+  const todayKey = toDateKey(new Date());
+
+  const memosByDate = {};
+  getMemos()
+    .filter((memo) => !memo.isDeleted && memo.dueDate)
+    .forEach((memo) => {
+      if (!memosByDate[memo.dueDate]) {
+        memosByDate[memo.dueDate] = [];
+      }
+      memosByDate[memo.dueDate].push(memo);
+    });
+
+  if (!selectedCalendarDateKey) {
+    selectedCalendarDateKey = todayKey;
+  }
+
+  const cells = [];
+
+  for (let i = 0; i < 42; i += 1) {
+    const cellDate = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
+    const dateKey = toDateKey(cellDate);
+    const classNames = ["calendar-day"];
+
+    if (cellDate.getMonth() !== month) {
+      classNames.push("other-month");
+    }
+
+    if (dateKey === todayKey) {
+      classNames.push("today");
+    }
+
+    if (dateKey === selectedCalendarDateKey) {
+      classNames.push("selected");
+    }
+
+    const hasMemo = Boolean(memosByDate[dateKey]);
+
+    cells.push(`
+      <button type="button" class="${classNames.join(" ")}" data-date="${dateKey}">
+        <span>${cellDate.getDate()}</span>
+        ${hasMemo ? '<span class="calendar-day-dot" aria-hidden="true"></span>' : ""}
+      </button>
+    `);
+  }
+
+  grid.innerHTML = cells.join("");
+
+  renderCalendarDayList();
+}
+
+function renderCalendarDayList() {
+  const dayList = document.querySelector("#calendarDayList");
+  const dateLabel = document.querySelector("#calendarSelectedDateLabel");
+
+  if (!dayList || !dateLabel) {
+    return;
+  }
+
+  const dateKey = selectedCalendarDateKey;
+
+  if (!dateKey) {
+    dateLabel.textContent = "날짜를 선택하세요";
+    dayList.innerHTML = "";
+    return;
+  }
+
+  const [year, month, day] = dateKey.split("-").map(Number);
+  dateLabel.textContent = `${year}년 ${month}월 ${day}일`;
+
+  const dayMemos = getMemos().filter(
+    (memo) => !memo.isDeleted && memo.dueDate === dateKey
+  );
+
+  if (dayMemos.length === 0) {
+    dayList.innerHTML = '<p class="calendar-day-empty">이 날짜에 등록된 메모가 없습니다.</p>';
+    return;
+  }
+
+  dayList.innerHTML = dayMemos
+    .map((memo) => {
+      const safeTitle = escapeHtml(memo.title || "제목 없음");
+      const safeCategory = escapeHtml(memo.category);
+      const safeId = escapeHtml(memo.id);
+
+      return `
+        <button type="button" class="calendar-day-item" data-id="${safeId}">
+          <strong>${safeTitle}</strong>
+          <span>${safeCategory}</span>
+        </button>
+      `;
+    })
+    .join("");
+}
+
+function renderCategoryBrowser() {
+  const list = document.querySelector("#categoryBrowserList");
+
+  if (!list) {
+    return;
+  }
+
+  const names = getManagedMemoCategoryNames();
+  const activeMemos = getMemos().filter((memo) => !memo.isDeleted);
+
+  if (names.length === 0) {
+    list.innerHTML = '<p class="category-browser-empty">카테고리가 없습니다.</p>';
+    return;
+  }
+
+  list.innerHTML = names
+    .map((name) => {
+      const count = activeMemos.filter((memo) => memo.category === name).length;
+      const safeName = escapeHtml(name);
+
+      return `
+        <button type="button" class="category-browser-item" data-category="${safeName}">
+          <span>${safeName}</span>
+          <span class="category-browser-count">${count}개</span>
+        </button>
+      `;
+    })
+    .join("");
+}
+
+function renderBookmarkList() {
+  const list = document.querySelector("#bookmarkList");
+
+  if (!list) {
+    return;
+  }
+
+  const bookmarks = getBookmarks();
+
+  if (bookmarks.length === 0) {
+    list.innerHTML = '<p class="bookmark-empty">아직 추가한 사이트가 없습니다.</p>';
+    return;
+  }
+
+  list.innerHTML = bookmarks
+    .map((bookmark) => {
+      const safeTitle = escapeHtml(bookmark.title);
+      const safeUrl = escapeHtml(bookmark.url);
+      const safeId = escapeHtml(bookmark.id);
+
+      return `
+        <div class="bookmark-row">
+          <a class="bookmark-link" href="${safeUrl}" rel="noopener noreferrer" target="_blank">
+            <strong>${safeTitle}</strong>
+            <span>${safeUrl}</span>
+          </a>
+          <button aria-label="${safeTitle} 삭제" class="bookmark-delete-button" data-id="${safeId}" type="button">×</button>
+        </div>
+      `;
+    })
+    .join("");
+}
+
 function openEditor(options = {}) {
   const editorPanel = document.querySelector(".editor-panel");
   const editorView = document.querySelector("#editorView");
@@ -592,6 +804,11 @@ function fillFormForEdit(memo) {
   document.querySelector("#categoryInput").value = memo.category;
   document.querySelector("#categoryInput").dispatchEvent(new Event("change", { bubbles: true }));
   document.querySelector("#importantInput").checked = Boolean(memo.isImportant);
+
+  const dueDateInput = document.querySelector("#dueDateInput");
+  if (dueDateInput) {
+    dueDateInput.value = memo.dueDate || "";
+  }
 
   if (typeof loadDraftLinks === "function") {
     loadDraftLinks(typeof getMemoLinks === "function" ? getMemoLinks(memo) : []);

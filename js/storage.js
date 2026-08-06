@@ -4,6 +4,8 @@ let memoCache = [];
 let cloudMemosLoaded = false;
 let memoCategoryCache = [];
 let cloudMemoCategoriesLoaded = false;
+let bookmarkCache = [];
+let cloudBookmarksLoaded = false;
 
 const DEFAULT_MEMO_CATEGORIES = Object.freeze(["업무", "아이디어", "일상"]);
 const LEGACY_TASK_MEMO_CATEGORY = "할 일";
@@ -281,6 +283,20 @@ function normalizeCategory(category) {
   return normalizedCategory || "업무";
 }
 
+function normalizeDueDate(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null;
+}
+
 function normalizeMemo(memo) {
   const now = new Date().toISOString();
 
@@ -314,6 +330,7 @@ function normalizeMemo(memo) {
       memo && memo.isImportant !== undefined
         ? Boolean(memo.isImportant)
         : Boolean(memo && memo.is_important),
+    dueDate: normalizeDueDate(memo && (memo.dueDate ?? memo.due_date)),
     tasks: normalizeTasks(memo && memo.tasks),
   };
 }
@@ -329,6 +346,7 @@ function mapDatabaseRowToMemo(row) {
     project: row.project,
     isImportant: row.is_important,
     isDeleted: row.is_deleted,
+    dueDate: row.due_date,
     tasks: row.tasks,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -715,6 +733,115 @@ async function deleteMemoCategory(categoryId) {
   };
 }
 
+function getBookmarks() {
+  return bookmarkCache.map((bookmark) => ({ ...bookmark }));
+}
+
+function normalizeBookmarkRecord(row) {
+  return {
+    id: String(row.id),
+    title: row.title,
+    url: row.url,
+    position: Number.isFinite(Number(row.position)) ? Number(row.position) : 0,
+    createdAt: row.created_at || "",
+    updatedAt: row.updated_at || row.created_at || "",
+  };
+}
+
+function sortBookmarkCache() {
+  bookmarkCache.sort((left, right) => left.position - right.position);
+}
+
+function normalizeBookmarkUrl(url) {
+  const trimmed = (url || "").trim();
+
+  if (!trimmed) {
+    throw new Error("웹사이트 주소를 입력해주세요.");
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+}
+
+async function loadBookmarksFromCloud() {
+  const { client, user } = await getCloudContext();
+  const { data, error } = await client
+    .from("bookmarks")
+    .select("id, title, url, position, created_at, updated_at")
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw error;
+  }
+
+  bookmarkCache = (data || []).map(normalizeBookmarkRecord);
+  sortBookmarkCache();
+  cloudBookmarksLoaded = true;
+
+  return getBookmarks();
+}
+
+async function addBookmark(title, url) {
+  const normalizedTitle = (title || "").trim();
+
+  if (!normalizedTitle) {
+    throw new Error("사이트 이름을 입력해주세요.");
+  }
+
+  const normalizedUrl = normalizeBookmarkUrl(url);
+  const { client, user } = await getCloudContext();
+  const nextPosition = bookmarkCache.reduce(
+    (highestPosition, bookmark) => Math.max(highestPosition, bookmark.position + 1),
+    0
+  );
+
+  const { data, error } = await client
+    .from("bookmarks")
+    .insert({
+      user_id: user.id,
+      title: normalizedTitle,
+      url: normalizedUrl,
+      position: nextPosition,
+    })
+    .select("id, title, url, position, created_at, updated_at")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  const newBookmark = normalizeBookmarkRecord(data);
+  bookmarkCache.push(newBookmark);
+  sortBookmarkCache();
+  cloudBookmarksLoaded = true;
+
+  return { ...newBookmark };
+}
+
+async function deleteBookmark(id) {
+  const { client, user } = await getCloudContext();
+  const { error } = await client
+    .from("bookmarks")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    throw error;
+  }
+
+  bookmarkCache = bookmarkCache.filter((bookmark) => bookmark.id !== id);
+
+  return true;
+}
+
+function hasLoadedCloudBookmarks() {
+  return cloudBookmarksLoaded;
+}
+
 function validateMemoForWrite(memoData) {
   const stringFields = [
     ["제목", memoData.title, MAX_MEMO_TITLE_LENGTH],
@@ -831,6 +958,7 @@ function toDatabasePayload(memoData, userId) {
     project: normalizeProject(memoData.project),
     is_important: Boolean(memoData.isImportant),
     is_deleted: Boolean(memoData.isDeleted),
+    due_date: normalizeDueDate(memoData.dueDate),
     tasks: normalizeTasks(memoData.tasks),
   };
 }

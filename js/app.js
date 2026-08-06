@@ -8,6 +8,8 @@ let draftLinks = [];
 
 let memoSelectionMode = false;
 let selectedMemoIds = new Set();
+let calendarViewDate = new Date();
+let selectedCalendarDateKey = "";
 let memoLongPressTimer = null;
 let memoLongPressTargetId = null;
 let memoLongPressMoved = false;
@@ -42,6 +44,7 @@ const categoryPickerValue = document.querySelector("#categoryPickerValue");
 const categoryPickerMenu = document.querySelector("#categoryPickerMenu");
 const editorCategoryManagerButton = document.querySelector("#editorCategoryManagerButton");
 const importantInput = document.querySelector("#importantInput");
+const dueDateInput = document.querySelector("#dueDateInput");
 const editingIdInput = document.querySelector("#editingId");
 const editingUpdatedAtInput = document.querySelector("#editingUpdatedAt");
 const searchInput = document.querySelector("#searchInput");
@@ -87,6 +90,14 @@ const taskHubOpenCount = document.querySelector("#taskHubOpenCount");
 const taskHubViewTabs = document.querySelector(".task-hub-view-tabs");
 const notesViewTab = document.querySelector("#notesViewTab");
 const tasksViewTab = document.querySelector("#tasksViewTab");
+const calendarViewTab = document.querySelector("#calendarViewTab");
+const calendarView = document.querySelector("#calendarView");
+const calendarPrevMonthButton = document.querySelector("#calendarPrevMonthButton");
+const calendarNextMonthButton = document.querySelector("#calendarNextMonthButton");
+const calendarMonthLabel = document.querySelector("#calendarMonthLabel");
+const calendarGrid = document.querySelector("#calendarGrid");
+const calendarSelectedDateLabel = document.querySelector("#calendarSelectedDateLabel");
+const calendarDayList = document.querySelector("#calendarDayList");
 const notesView = document.querySelector("#notesView");
 const editorView = document.querySelector("#editorView");
 const tasksView = document.querySelector("#tasksView");
@@ -99,6 +110,13 @@ const appMenuButton = document.querySelector("#appMenuButton");
 const appMenuPanel = document.querySelector("#appMenuPanel");
 const appMenuBackdrop = document.querySelector("#appMenuBackdrop");
 const openTrashButton = document.querySelector("#openTrashButton");
+const categoryBrowserList = document.querySelector("#categoryBrowserList");
+const bookmarkList = document.querySelector("#bookmarkList");
+const bookmarkForm = document.querySelector("#bookmarkForm");
+const bookmarkTitleInput = document.querySelector("#bookmarkTitleInput");
+const bookmarkUrlInput = document.querySelector("#bookmarkUrlInput");
+const addBookmarkButton = document.querySelector("#addBookmarkButton");
+const cancelBookmarkButton = document.querySelector("#cancelBookmarkButton");
 const selectionToolbar = document.querySelector("#selectionToolbar");
 const selectionCountLabel = document.querySelector("#selectionCountLabel");
 const cancelSelectionButton = document.querySelector("#cancelSelectionButton");
@@ -943,6 +961,10 @@ function syncMobileNewMemoButton() {
     currentAppView !== "notes" || isEditorOpen();
 }
 
+function isDesktopLayout() {
+  return window.matchMedia("(min-width: 1024px)").matches;
+}
+
 function closeAppMenu(options = {}) {
   if (!appMenuPanel || !appMenuBackdrop || !appMenuButton) {
     return;
@@ -964,9 +986,15 @@ function closeAppMenu(options = {}) {
 
   appMenuPanel.classList.remove("is-open");
   appMenuBackdrop.classList.remove("is-open");
-  appMenuPanel.setAttribute("aria-hidden", "true");
   appMenuButton.setAttribute("aria-expanded", "false");
   document.body.classList.remove("menu-open");
+
+  if (isDesktopLayout()) {
+    appMenuPanel.setAttribute("aria-hidden", "false");
+    return;
+  }
+
+  appMenuPanel.setAttribute("aria-hidden", "true");
 
   appMenuCloseTimer = window.setTimeout(() => {
     appMenuPanel.hidden = true;
@@ -1099,7 +1127,7 @@ function handleHomeLogoClick(event) {
 }
 
 function switchAppView(view, options = {}) {
-  const allowedViews = ["notes", "tasks", "trash"];
+  const allowedViews = ["notes", "tasks", "calendar", "trash"];
   currentAppView = allowedViews.includes(view) ? view : "notes";
 
   if (currentAppView !== "notes") {
@@ -1108,21 +1136,29 @@ function switchAppView(view, options = {}) {
 
   const isNotes = currentAppView === "notes";
   const isTasks = currentAppView === "tasks";
+  const isCalendar = currentAppView === "calendar";
   const isTrash = currentAppView === "trash";
 
   document.body.dataset.appView = currentAppView;
 
   notesView.hidden = !isNotes;
   tasksView.hidden = !isTasks;
+  calendarView.hidden = !isCalendar;
   trashView.hidden = !isTrash;
 
   notesViewTab.classList.toggle("active", isNotes);
   tasksViewTab.classList.toggle("active", isTasks);
+  calendarViewTab.classList.toggle("active", isCalendar);
   notesViewTab.setAttribute("aria-selected", String(isNotes));
   tasksViewTab.setAttribute("aria-selected", String(isTasks));
+  calendarViewTab.setAttribute("aria-selected", String(isCalendar));
 
   if (isTasks) {
     refreshTaskHub();
+  }
+
+  if (isCalendar) {
+    renderCalendar();
   }
 
   if (isTrash) {
@@ -2087,6 +2123,7 @@ async function loadCloudMemosForSession(session, options = {}) {
     try {
       await loadMemosFromCloud();
       await loadMemoCategoriesFromCloud();
+      await loadBookmarksFromCloud().catch((error) => console.error(error));
 
       if (sequence !== cloudLoadSequence || currentCloudUserId !== userId) {
         return null;
@@ -2094,6 +2131,7 @@ async function loadCloudMemosForSession(session, options = {}) {
 
       renderMemoCategoryControls();
       refreshScreen();
+      renderBookmarkList();
       refreshOpenDetailFromCache();
       refreshLegacyMigrationPanel();
       updateLastSyncTime();
@@ -2595,6 +2633,7 @@ function refreshScreen() {
 
   const filteredMemos = getFilteredMemos();
   renderMemoList(filteredMemos);
+  renderCategoryBrowser();
   setActiveSort(currentSort);
   refreshTrashView();
 }
@@ -2823,6 +2862,7 @@ async function handleFormSubmit(event) {
   const content = contentInput.value.trim();
   const category = categoryInput.value;
   const isImportant = importantInput.checked;
+  const dueDate = dueDateInput ? dueDateInput.value : "";
 
   if (!title) {
     showAppNotice("메모 제목을 입력하세요.", "warning", { title: "저장 전 확인" });
@@ -2859,6 +2899,7 @@ async function handleFormSubmit(event) {
     contentBlocks: createMemoContentBlocks(content, draftLinks),
     category,
     isImportant,
+    dueDate,
     tasks: draftTasks.map((task) => ({ ...task })),
   };
 
@@ -3112,6 +3153,83 @@ async function deleteSelectedMemos() {
 }
 
 
+function handleAddBookmarkClick() {
+  if (!bookmarkForm) {
+    return;
+  }
+
+  bookmarkForm.hidden = false;
+  bookmarkForm.classList.remove("hidden");
+  bookmarkTitleInput?.focus();
+}
+
+function closeBookmarkForm() {
+  if (!bookmarkForm) {
+    return;
+  }
+
+  bookmarkForm.hidden = true;
+  bookmarkForm.classList.add("hidden");
+  bookmarkForm.reset();
+}
+
+async function handleBookmarkFormSubmit(event) {
+  event.preventDefault();
+
+  const title = bookmarkTitleInput?.value || "";
+  const url = bookmarkUrlInput?.value || "";
+
+  const result = await runCloudAction(
+    () => addBookmark(title, url),
+    {
+      loadingMessage: "즐겨찾기 추가 중",
+      successMessage: "즐겨찾기 추가 완료",
+    }
+  );
+
+  if (!result) {
+    return;
+  }
+
+  closeBookmarkForm();
+  renderBookmarkList();
+}
+
+async function handleBookmarkListClick(event) {
+  const deleteButton = event.target.closest(".bookmark-delete-button");
+
+  if (!deleteButton) {
+    return;
+  }
+
+  const id = deleteButton.dataset.id;
+
+  if (!id) {
+    return;
+  }
+
+  const shouldDelete = confirm("이 즐겨찾기를 삭제하시겠습니까?");
+
+  if (!shouldDelete) {
+    return;
+  }
+
+  const result = await runCloudAction(
+    () => deleteBookmark(id),
+    {
+      loadingMessage: "즐겨찾기 삭제 중",
+      successMessage: "즐겨찾기 삭제됨",
+    }
+  );
+
+  if (!result) {
+    return;
+  }
+
+  renderBookmarkList();
+}
+
+
 async function handleTrashListClick(event) {
   const actionButton = event.target.closest("[data-trash-action]");
 
@@ -3201,6 +3319,69 @@ function handleCategoryClick(event) {
   currentCategory = button.dataset.category;
   setActiveCategory(currentCategory);
   refreshScreen();
+}
+
+function handleCalendarPrevMonth() {
+  calendarViewDate = new Date(
+    calendarViewDate.getFullYear(),
+    calendarViewDate.getMonth() - 1,
+    1
+  );
+  renderCalendar();
+}
+
+function handleCalendarNextMonth() {
+  calendarViewDate = new Date(
+    calendarViewDate.getFullYear(),
+    calendarViewDate.getMonth() + 1,
+    1
+  );
+  renderCalendar();
+}
+
+function handleCalendarGridClick(event) {
+  const dayButton = event.target.closest(".calendar-day");
+
+  if (!dayButton) {
+    return;
+  }
+
+  selectedCalendarDateKey = dayButton.dataset.date;
+  renderCalendar();
+}
+
+function handleCalendarDayListClick(event) {
+  const item = event.target.closest(".calendar-day-item");
+
+  if (!item) {
+    return;
+  }
+
+  const memo = findMemoById(item.dataset.id);
+
+  if (memo) {
+    openDetailModal(memo);
+  }
+}
+
+function handleCategoryBrowserClick(event) {
+  const item = event.target.closest(".category-browser-item");
+
+  if (!item) {
+    return;
+  }
+
+  const category = item.dataset.category;
+
+  if (!category) {
+    return;
+  }
+
+  currentCategory = category;
+  setActiveCategory(currentCategory);
+  refreshScreen();
+  switchAppView("notes");
+  closeAppMenu();
 }
 
 function handleSortClick(event) {
@@ -3613,6 +3794,19 @@ function bindEvents() {
   appMenuButton.addEventListener("click", openAppMenu);
   appMenuBackdrop.addEventListener("click", closeAppMenu);
   openTrashButton?.addEventListener("click", handleOpenTrashClick);
+  categoryBrowserList?.addEventListener("click", handleCategoryBrowserClick);
+  calendarPrevMonthButton?.addEventListener("click", handleCalendarPrevMonth);
+  calendarNextMonthButton?.addEventListener("click", handleCalendarNextMonth);
+  calendarGrid?.addEventListener("click", handleCalendarGridClick);
+  calendarDayList?.addEventListener("click", handleCalendarDayListClick);
+  addBookmarkButton?.addEventListener("click", handleAddBookmarkClick);
+  cancelBookmarkButton?.addEventListener("click", closeBookmarkForm);
+  bookmarkForm?.addEventListener("submit", (event) => {
+    void handleBookmarkFormSubmit(event);
+  });
+  bookmarkList?.addEventListener("click", (event) => {
+    void handleBookmarkListClick(event);
+  });
   window.addEventListener("beforeunload", handleBeforeUnload);
   window.addEventListener("solonote-before-logout", handleBeforeLogout);
 
@@ -3715,6 +3909,14 @@ if (appMenuPanel && appMenuBackdrop) {
   appMenuBackdrop.classList.remove("is-open");
   appMenuPanel.hidden = true;
   appMenuBackdrop.hidden = true;
+
+  if (isDesktopLayout()) {
+    appMenuPanel.setAttribute("aria-hidden", "false");
+  }
+
+  window.matchMedia("(min-width: 1024px)").addEventListener("change", (event) => {
+    appMenuPanel.setAttribute("aria-hidden", event.matches ? "false" : "true");
+  });
 }
 
 switchAppView("notes", {
