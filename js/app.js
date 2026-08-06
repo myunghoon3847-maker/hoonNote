@@ -15,6 +15,7 @@ let memoSelectionMode = false;
 let selectedMemoIds = new Set();
 let calendarViewDate = new Date();
 let selectedCalendarDateKey = "";
+let sidebarCollapsed = false;
 let memoLongPressTimer = null;
 let memoLongPressTargetId = null;
 let memoLongPressMoved = false;
@@ -4037,6 +4038,34 @@ function handleCalendarDayListClick(event) {
   }
 }
 
+function applySidebarCollapsedState() {
+  document.body.classList.toggle("sidebar-collapsed", sidebarCollapsed);
+
+  const icon = document.querySelector("#sidebarCollapseIcon");
+  const toggleButton = document.querySelector("#sidebarCollapseToggle");
+
+  if (icon) {
+    icon.textContent = sidebarCollapsed ? "›" : "‹";
+  }
+
+  if (toggleButton) {
+    toggleButton.setAttribute("aria-label", sidebarCollapsed ? "사이드바 펼치기" : "사이드바 접기");
+  }
+
+  renderCategoryBrowser();
+}
+
+function toggleSidebarCollapse() {
+  sidebarCollapsed = !sidebarCollapsed;
+  applySidebarCollapsedState();
+
+  try {
+    window.localStorage.setItem("solonote_sidebar_collapsed", sidebarCollapsed ? "1" : "0");
+  } catch (_) {
+    /* 저장 실패는 무시 (시크릿 모드 등) */
+  }
+}
+
 function handleCategoryBrowserClick(event) {
   const item = event.target.closest(".category-browser-item");
 
@@ -4510,6 +4539,7 @@ function bindEvents() {
   appMenuBackdrop.addEventListener("click", closeAppMenu);
   openTrashButton?.addEventListener("click", handleOpenTrashClick);
   categoryBrowserList?.addEventListener("click", handleCategoryBrowserClick);
+  document.querySelector("#sidebarCollapseToggle")?.addEventListener("click", toggleSidebarCollapse);
   calendarPrevMonthButton?.addEventListener("click", handleCalendarPrevMonth);
   calendarNextMonthButton?.addEventListener("click", handleCalendarNextMonth);
   calendarGrid?.addEventListener("click", handleCalendarGridClick);
@@ -4624,6 +4654,13 @@ if (appMenuPanel && appMenuBackdrop) {
   appMenuBackdrop.classList.remove("is-open");
   appMenuPanel.hidden = true;
   appMenuBackdrop.hidden = true;
+
+  try {
+    sidebarCollapsed = window.localStorage.getItem("solonote_sidebar_collapsed") === "1";
+  } catch (_) {
+    sidebarCollapsed = false;
+  }
+  applySidebarCollapsedState();
 
   if (isDesktopLayout()) {
     appMenuPanel.setAttribute("aria-hidden", "false");

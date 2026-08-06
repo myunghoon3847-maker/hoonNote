@@ -464,7 +464,7 @@ button:disabled {
 .primary-view-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  width: min(100% - 28px, 460px);
+  width: min(100% - 28px, 360px);
   margin: 16px auto 0;
   padding: 4px;
   border-radius: 12px;
@@ -1498,6 +1498,27 @@ body.memo-selection-active #editorToggleButton {
   border-bottom: 1px solid var(--line);
 }
 
+.sidebar-collapse-toggle {
+  display: none;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-right: auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.sidebar-collapse-toggle:hover {
+  border-color: var(--primary-line);
+  color: var(--primary);
+}
+
 .menu-header > div {
   display: grid;
   min-width: 0;
@@ -1989,7 +2010,7 @@ body.memo-selection-active #editorToggleButton {
   }
 
   .primary-view-tabs {
-    width: min(100% - 20px, 460px);
+    width: min(100% - 20px, 360px);
   }
 
   .form-grid {
@@ -3937,10 +3958,18 @@ button[aria-busy="true"]::after {
 
 /* ===================================================================
    PC 와이드 데스크톱 레이아웃 (1024px 이상)
-   - 좌측 사이드바(메뉴 상시 노출) + 중앙 메모 그리드 + 우측 상세 패널
+   - 좌측 사이드바(메뉴 상시 노출, 접기 가능) + 중앙 메모 그리드 + 우측 상세 패널
    - 1024px 미만은 기존 레이아웃을 그대로 사용(모바일/태블릿 영향 없음)
    =================================================================== */
 @media (min-width: 1024px) {
+  body {
+    --sidebar-width: 300px;
+  }
+
+  body.sidebar-collapsed {
+    --sidebar-width: 68px;
+  }
+
   .header-inner {
     width: 100%;
     max-width: none;
@@ -3960,26 +3989,34 @@ button[aria-busy="true"]::after {
     right: auto;
     left: 0;
     z-index: 40;
-    width: 300px;
+    width: var(--sidebar-width);
     height: calc(100dvh - var(--header-height));
     transform: none !important;
     opacity: 1 !important;
     box-shadow: none;
     border-left: 0;
     border-right: 1px solid var(--line);
+    transition: width 0.16s ease;
   }
 
   .app-menu-panel[hidden] {
     display: grid !important;
   }
 
+  .sidebar-collapse-toggle {
+    display: inline-flex;
+  }
+
   .primary-view-tabs,
-  .status-banner,
+  .status-banner {
+    margin-left: calc(var(--sidebar-width) + 32px);
+  }
+
   .workspace {
-    margin-left: 300px;
+    margin-left: calc(var(--sidebar-width) + 32px);
     width: auto;
     max-width: 1400px;
-    padding: 0 32px 0 0;
+    padding: 24px 32px 48px 0;
   }
 
   .memo-list {
@@ -4001,6 +4038,40 @@ button[aria-busy="true"]::after {
     height: 100%;
     border-radius: 0;
     box-shadow: -18px 0 40px rgba(15, 23, 42, 0.12);
+  }
+
+  /* 사이드바 접힘 상태 - 텍스트 숨기고 아이콘만 표시 */
+  body.sidebar-collapsed .menu-scroll {
+    padding: 12px 10px 20px;
+  }
+
+  body.sidebar-collapsed .signed-in-email,
+  body.sidebar-collapsed #menuHeaderTitle,
+  body.sidebar-collapsed .menu-settings-entry-copy,
+  body.sidebar-collapsed .menu-settings-entry-chevron,
+  body.sidebar-collapsed .category-browser-section .menu-section-heading,
+  body.sidebar-collapsed .bookmark-section {
+    display: none;
+  }
+
+  body.sidebar-collapsed .menu-settings-entry-button {
+    justify-content: center;
+    padding: 10px;
+  }
+
+  body.sidebar-collapsed .category-browser-list {
+    grid-template-columns: 1fr;
+  }
+
+  body.sidebar-collapsed .category-browser-item {
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    border-radius: 999px;
+    font-size: 13px;
   }
 }
 
@@ -4307,24 +4378,28 @@ button[aria-busy="true"]::after {
 
 /* ===== PDF 내보내기(인쇄) ===== */
 @media print {
-  body * {
-    visibility: hidden;
-  }
-
-  #detailModal,
-  #detailModal .modal-card,
-  #detailModal .modal-card * {
-    visibility: visible;
+  .app-header,
+  .status-banner,
+  .primary-view-tabs,
+  .workspace,
+  .app-menu-backdrop,
+  #appMenuPanel,
+  #appMenuPanel[hidden],
+  .mobile-new-memo-button,
+  .selection-toolbar,
+  .app-notice-region,
+  .modal:not(#detailModal) {
+    display: none !important;
   }
 
   #detailModal {
-    position: static;
-    display: block;
+    display: block !important;
+    position: static !important;
     background: #fff;
   }
 
   #detailModal .modal-backdrop {
-    display: none;
+    display: none !important;
   }
 
   #detailModal .modal-card {
