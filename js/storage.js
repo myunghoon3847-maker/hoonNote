@@ -20,6 +20,13 @@ const MAX_MEMO_TASKS = 200;
 const CONTENT_FORMAT_VERSION = 1;
 const MAX_MEMO_CONTENT_BLOCKS = 50;
 const MAX_MEMO_LINK_BLOCKS = 20;
+const MAX_MEMO_STYLED_PARAGRAPH_BLOCKS = 20;
+const MAX_MEMO_TABLE_BLOCKS = 10;
+const MAX_MEMO_TABLE_ROWS = 20;
+const MAX_MEMO_TABLE_COLS = 10;
+const MAX_MEMO_TABLE_CELL_LENGTH = 500;
+const MAX_MEMO_IMAGE_BLOCKS = 10;
+const MAX_MEMO_STYLED_PARAGRAPH_LENGTH = 4000;
 const MAX_MEMO_LINK_URL_LENGTH = 2048;
 const MAX_MEMO_LINK_LABEL_LENGTH = 300;
 const MAX_BACKUP_MEMOS = 5000;
@@ -195,12 +202,135 @@ function normalizeMemoLinkBlock(block) {
   };
 }
 
+const MEMO_STYLED_PARAGRAPH_COLORS = new Set([
+  "default",
+  "red",
+  "orange",
+  "green",
+  "blue",
+  "purple",
+]);
+
+const MEMO_STYLED_PARAGRAPH_SIZES = new Set(["small", "normal", "large"]);
+
+function normalizeMemoStyledParagraphBlock(block) {
+  const text = block && typeof block.text === "string" ? block.text.trim() : "";
+
+  if (!text) {
+    return null;
+  }
+
+  const color = MEMO_STYLED_PARAGRAPH_COLORS.has(block && block.color)
+    ? block.color
+    : "default";
+  const size = MEMO_STYLED_PARAGRAPH_SIZES.has(block && block.size)
+    ? block.size
+    : "normal";
+
+  return {
+    id: normalizeMemoBlockId(block && block.id, "styled"),
+    type: "styled_paragraph",
+    text: text.slice(0, MAX_MEMO_STYLED_PARAGRAPH_LENGTH),
+    bold: Boolean(block && block.bold),
+    color,
+    size,
+  };
+}
+
+function normalizeMemoTableBlock(block) {
+  const rawRows = Array.isArray(block && block.rows) ? block.rows : [];
+
+  const rows = rawRows.slice(0, MAX_MEMO_TABLE_ROWS).map((row) => {
+    const rawCells = Array.isArray(row) ? row : [];
+
+    return rawCells.slice(0, MAX_MEMO_TABLE_COLS).map((cell) =>
+      String(cell ?? "").slice(0, MAX_MEMO_TABLE_CELL_LENGTH)
+    );
+  });
+
+  const hasContent = rows.some((row) => row.some((cell) => cell.trim().length > 0));
+
+  if (rows.length === 0 || !hasContent) {
+    return null;
+  }
+
+  return {
+    id: normalizeMemoBlockId(block && block.id, "table"),
+    type: "table",
+    rows,
+  };
+}
+
+const MEMO_IMAGE_BUCKET = "memo-images";
+const MAX_MEMO_IMAGE_FILE_SIZE = 8 * 1024 * 1024;
+
+async function uploadMemoImage(file) {
+  if (!file || typeof file !== "object") {
+    throw new Error("이미지 파일을 선택해주세요.");
+  }
+
+  if (file.size > MAX_MEMO_IMAGE_FILE_SIZE) {
+    throw new Error("이미지 용량은 8MB 이하만 업로드할 수 있습니다.");
+  }
+
+  const { client, user } = await getCloudContext();
+  const extension = (file.name && file.name.includes(".")
+    ? file.name.split(".").pop()
+    : file.type.split("/").pop() || "png"
+  )
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 8) || "png";
+
+  const filePath = `${user.id}/${createSafeId("img")}.${extension}`;
+
+  const { error: uploadError } = await client.storage
+    .from(MEMO_IMAGE_BUCKET)
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } = client.storage.from(MEMO_IMAGE_BUCKET).getPublicUrl(filePath);
+
+  if (!data || !data.publicUrl) {
+    throw new Error("이미지 주소를 가져오지 못했습니다.");
+  }
+
+  return data.publicUrl;
+}
+
+function normalizeMemoImageBlock(block) {
+  const url = normalizeHttpUrl(block && block.url);
+
+  if (!url) {
+    return null;
+  }
+
+  const alt = block && typeof block.alt === "string" ? block.alt.trim() : "";
+
+  return {
+    id: normalizeMemoBlockId(block && block.id, "image"),
+    type: "image",
+    url,
+    alt: alt.slice(0, MAX_MEMO_LINK_LABEL_LENGTH),
+  };
+}
+
 function normalizeMemoContentBlocks(blocks, legacyContent = "") {
   const safeBlocks = Array.isArray(blocks) ? blocks : [];
   const normalizedBlocks = [];
   let paragraphText = typeof legacyContent === "string" ? legacyContent : "";
   let paragraphId = "";
   let linkCount = 0;
+  let styledCount = 0;
+  let tableCount = 0;
+  let imageCount = 0;
 
   safeBlocks.slice(0, MAX_MEMO_CONTENT_BLOCKS).forEach((block) => {
     if (!block || typeof block !== "object" || Array.isArray(block)) {
@@ -219,6 +349,39 @@ function normalizeMemoContentBlocks(blocks, legacyContent = "") {
       if (normalizedLink) {
         normalizedBlocks.push(normalizedLink);
         linkCount += 1;
+      }
+
+      return;
+    }
+
+    if (block.type === "styled_paragraph" && styledCount < MAX_MEMO_STYLED_PARAGRAPH_BLOCKS) {
+      const normalizedStyled = normalizeMemoStyledParagraphBlock(block);
+
+      if (normalizedStyled) {
+        normalizedBlocks.push(normalizedStyled);
+        styledCount += 1;
+      }
+
+      return;
+    }
+
+    if (block.type === "table" && tableCount < MAX_MEMO_TABLE_BLOCKS) {
+      const normalizedTable = normalizeMemoTableBlock(block);
+
+      if (normalizedTable) {
+        normalizedBlocks.push(normalizedTable);
+        tableCount += 1;
+      }
+
+      return;
+    }
+
+    if (block.type === "image" && imageCount < MAX_MEMO_IMAGE_BLOCKS) {
+      const normalizedImage = normalizeMemoImageBlock(block);
+
+      if (normalizedImage) {
+        normalizedBlocks.push(normalizedImage);
+        imageCount += 1;
       }
     }
   });
@@ -239,7 +402,28 @@ function getMemoLinks(memo) {
   ).filter((block) => block.type === "link");
 }
 
-function createMemoContentBlocks(content, links = []) {
+function getMemoStyledParagraphs(memo) {
+  return normalizeMemoContentBlocks(
+    memo && (memo.contentBlocks || memo.content_blocks),
+    memo && memo.content
+  ).filter((block) => block.type === "styled_paragraph");
+}
+
+function getMemoTables(memo) {
+  return normalizeMemoContentBlocks(
+    memo && (memo.contentBlocks || memo.content_blocks),
+    memo && memo.content
+  ).filter((block) => block.type === "table");
+}
+
+function getMemoImages(memo) {
+  return normalizeMemoContentBlocks(
+    memo && (memo.contentBlocks || memo.content_blocks),
+    memo && memo.content
+  ).filter((block) => block.type === "image");
+}
+
+function createMemoContentBlocks(content, links = [], extraBlocks = []) {
   return normalizeMemoContentBlocks(
     [
       {
@@ -248,17 +432,31 @@ function createMemoContentBlocks(content, links = []) {
         text: typeof content === "string" ? content : "",
       },
       ...(Array.isArray(links) ? links : []),
+      ...(Array.isArray(extraBlocks) ? extraBlocks : []),
     ],
     content
   );
 }
 
 function getContentBlocksSearchText(blocks) {
-  return normalizeMemoContentBlocks(blocks, "")
+  const normalized = normalizeMemoContentBlocks(blocks, "");
+
+  const linkText = normalized
     .filter((block) => block.type === "link")
     .map((block) => `${block.label} ${block.url}`)
-    .join(" ")
-    .trim();
+    .join(" ");
+
+  const styledText = normalized
+    .filter((block) => block.type === "styled_paragraph")
+    .map((block) => block.text)
+    .join(" ");
+
+  const tableText = normalized
+    .filter((block) => block.type === "table")
+    .map((block) => block.rows.map((row) => row.join(" ")).join(" "))
+    .join(" ");
+
+  return `${linkText} ${styledText} ${tableText}`.trim();
 }
 
 function normalizeProject(project) {
@@ -907,6 +1105,27 @@ function validateMemoForWrite(memoData) {
 
       if (String(block.label || "").length > MAX_MEMO_LINK_LABEL_LENGTH) {
         throw new Error(`링크 이름은 ${MAX_MEMO_LINK_LABEL_LENGTH}자 이하로 입력해주세요.`);
+      }
+      return;
+    }
+
+    if (block.type === "styled_paragraph") {
+      if (typeof block.text !== "string" || block.text.length > MAX_MEMO_STYLED_PARAGRAPH_LENGTH) {
+        throw new Error(`${index + 1}번째 서식 문단 형식이 올바르지 않습니다.`);
+      }
+      return;
+    }
+
+    if (block.type === "table") {
+      if (!Array.isArray(block.rows)) {
+        throw new Error(`${index + 1}번째 표 형식이 올바르지 않습니다.`);
+      }
+      return;
+    }
+
+    if (block.type === "image") {
+      if (!normalizeHttpUrl(block.url)) {
+        throw new Error(`${index + 1}번째 이미지 주소가 올바르지 않습니다.`);
       }
       return;
     }

@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=487" rel="manifest"/>
+<link href="./manifest.json?v=488" rel="manifest"/>
 <meta content="#7c3aed" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
@@ -13,9 +13,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=487" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=487" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=487" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=488" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=488" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=488" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +126,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=487"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=488"/>
 </a>
 </div>
 <div class="header-actions">
@@ -224,7 +224,18 @@
 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M10.6 13.4a4 4 0 0 0 5.7 0l2.1-2.1a4 4 0 0 0-5.7-5.7l-1.2 1.2"></path><path d="M13.4 10.6a4 4 0 0 0-5.7 0l-2.1 2.1a4 4 0 0 0 5.7 5.7l1.2-1.2"></path></svg>
 <span>링크</span>
 </button>
-<span class="memo-insert-hint">사진과 표는 다음 개발 버전에서 추가됩니다.</span>
+<button aria-haspopup="dialog" class="secondary-button compact-button memo-insert-button" id="addStyledParagraphButton" type="button">
+<span aria-hidden="true">가</span>
+<span>서식 문단</span>
+</button>
+<button aria-haspopup="dialog" class="secondary-button compact-button memo-insert-button" id="addTableButton" type="button">
+<span aria-hidden="true">▦</span>
+<span>표</span>
+</button>
+<button aria-haspopup="dialog" class="secondary-button compact-button memo-insert-button" id="addImageButton" type="button">
+<span aria-hidden="true">🖼</span>
+<span>이미지</span>
+</button>
 </div>
 <section aria-label="삽입한 링크" class="link-draft-section" hidden id="linkDraftSection">
 <div class="link-draft-section-header">
@@ -232,6 +243,27 @@
 <span id="linkCountLabel">0개</span>
 </div>
 <div class="link-draft-list" id="linkDraftList"></div>
+</section>
+<section aria-label="삽입한 서식 문단" class="link-draft-section" hidden id="styledDraftSection">
+<div class="link-draft-section-header">
+<strong>서식 문단</strong>
+<span id="styledCountLabel">0개</span>
+</div>
+<div class="link-draft-list" id="styledDraftList"></div>
+</section>
+<section aria-label="삽입한 표" class="link-draft-section" hidden id="tableDraftSection">
+<div class="link-draft-section-header">
+<strong>표</strong>
+<span id="tableCountLabel">0개</span>
+</div>
+<div class="link-draft-list" id="tableDraftList"></div>
+</section>
+<section aria-label="삽입한 이미지" class="link-draft-section" hidden id="imageDraftSection">
+<div class="link-draft-section-header">
+<strong>이미지</strong>
+<span id="imageCountLabel">0개</span>
+</div>
+<div class="link-draft-list" id="imageDraftList"></div>
 </section>
 <div class="form-grid">
 <div class="category-field editor-category-panel">
@@ -394,7 +426,7 @@
 
 <section aria-label="설정" class="menu-section menu-settings-entry-section">
 <button aria-label="설정 열기" class="menu-settings-entry-button" id="openSettingsButton" type="button">
-<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=487"/>
+<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=488"/>
 <span class="menu-settings-entry-copy"><strong>설정</strong><small>계정과 앱 설정</small></span>
 <span aria-hidden="true" class="menu-settings-entry-chevron">›</span>
 </button>
@@ -688,6 +720,88 @@
 </form>
 </article>
 </div>
+<div aria-hidden="true" aria-labelledby="styledParagraphTitle" aria-modal="true" class="modal hidden" hidden id="styledParagraphModal" role="dialog">
+<div class="modal-backdrop" data-styled-editor-close="true"></div>
+<article class="modal-card link-editor-card">
+<button aria-label="서식 문단 닫기" class="close-button" id="closeStyledParagraphButton" type="button">×</button>
+<p class="category-manager-eyebrow">메모 요소</p>
+<h2 id="styledParagraphTitle">서식 문단 삽입</h2>
+<form class="link-editor-form" id="styledParagraphForm">
+<input id="editingStyledId" type="hidden"/>
+<input id="styledSizeInput" type="hidden" value="normal"/>
+<input id="styledColorInput" type="hidden" value="default"/>
+<label for="styledTextInput">내용</label>
+<textarea id="styledTextInput" maxlength="4000" placeholder="강조하고 싶은 문단을 입력하세요." rows="4"></textarea>
+<label class="checkbox-row" for="styledBoldInput">
+<input id="styledBoldInput" type="checkbox"/>
+<span>굵게</span>
+</label>
+<span class="styled-option-label">글자 크기</span>
+<div class="styled-size-options" id="styledSizeOptions">
+<button class="styled-option-chip" data-size="small" type="button">작게</button>
+<button class="styled-option-chip active" data-size="normal" type="button">보통</button>
+<button class="styled-option-chip" data-size="large" type="button">크게</button>
+</div>
+<span class="styled-option-label">색상</span>
+<div class="styled-color-options" id="styledColorOptions">
+<button aria-label="기본" class="styled-color-swatch color-default active" data-color="default" type="button"></button>
+<button aria-label="빨강" class="styled-color-swatch color-red" data-color="red" type="button"></button>
+<button aria-label="주황" class="styled-color-swatch color-orange" data-color="orange" type="button"></button>
+<button aria-label="초록" class="styled-color-swatch color-green" data-color="green" type="button"></button>
+<button aria-label="파랑" class="styled-color-swatch color-blue" data-color="blue" type="button"></button>
+<button aria-label="보라" class="styled-color-swatch color-purple" data-color="purple" type="button"></button>
+</div>
+<p aria-live="polite" class="link-editor-status" id="styledParagraphStatus"></p>
+<div class="link-editor-actions">
+<button class="text-button" id="cancelStyledParagraphButton" type="button">취소</button>
+<button class="primary-button" id="saveStyledParagraphButton" type="submit">추가</button>
+</div>
+</form>
+</article>
+</div>
+<div aria-hidden="true" aria-labelledby="tableEditorTitle" aria-modal="true" class="modal hidden" hidden id="tableEditorModal" role="dialog">
+<div class="modal-backdrop" data-table-editor-close="true"></div>
+<article class="modal-card table-editor-card">
+<button aria-label="표 편집 닫기" class="close-button" id="closeTableEditorButton" type="button">×</button>
+<p class="category-manager-eyebrow">메모 요소</p>
+<h2 id="tableEditorTitle">표 삽입</h2>
+<input id="editingTableId" type="hidden"/>
+<div class="table-editor-toolbar">
+<button class="secondary-button compact-button" id="addTableRowButton" type="button">행 추가</button>
+<button class="secondary-button compact-button" id="addTableColButton" type="button">열 추가</button>
+<button class="text-button compact-button" id="removeTableRowButton" type="button">행 삭제</button>
+<button class="text-button compact-button" id="removeTableColButton" type="button">열 삭제</button>
+</div>
+<div class="table-editor-grid-wrap">
+<div class="table-editor-grid" id="tableEditorGrid"></div>
+</div>
+<p aria-live="polite" class="link-editor-status" id="tableEditorStatus"></p>
+<div class="link-editor-actions">
+<button class="text-button" id="cancelTableEditorButton" type="button">취소</button>
+<button class="primary-button" id="saveTableButton" type="button">추가</button>
+</div>
+</article>
+</div>
+<div aria-hidden="true" aria-labelledby="imageUploadTitle" aria-modal="true" class="modal hidden" hidden id="imageUploadModal" role="dialog">
+<div class="modal-backdrop" data-image-editor-close="true"></div>
+<article class="modal-card link-editor-card">
+<button aria-label="이미지 삽입 닫기" class="close-button" id="closeImageUploadButton" type="button">×</button>
+<p class="category-manager-eyebrow">메모 요소</p>
+<h2 id="imageUploadTitle">이미지 삽입</h2>
+<form class="link-editor-form" id="imageUploadForm">
+<label for="imageFileInput">이미지 파일</label>
+<input accept="image/png,image/jpeg,image/webp,image/gif" id="imageFileInput" type="file"/>
+<div class="image-upload-preview" hidden id="imageUploadPreview"></div>
+<label for="imageAltInput">설명 (선택)</label>
+<input id="imageAltInput" maxlength="300" placeholder="예: 회의 화이트보드 사진" type="text"/>
+<p aria-live="polite" class="link-editor-status" id="imageUploadStatus"></p>
+<div class="link-editor-actions">
+<button class="text-button" id="cancelImageUploadButton" type="button">취소</button>
+<button class="primary-button" id="saveImageButton" type="submit">추가</button>
+</div>
+</form>
+</article>
+</div>
 <div aria-hidden="true" aria-labelledby="detailTitle" aria-modal="true" class="modal hidden" hidden="" id="detailModal" role="dialog">
 <div class="modal-backdrop" data-close="true"></div>
 <article class="modal-card">
@@ -699,21 +813,25 @@
 <h2 id="detailTitle"></h2>
 <p id="detailContent"></p>
 <div aria-label="메모 링크" class="detail-links" hidden id="detailLinks"></div>
+<div id="detailStyledParagraphs"></div>
+<div id="detailTables"></div>
+<div id="detailImages"></div>
 <div id="detailChecklist"></div>
 <div class="detail-actions">
+<button class="secondary-button" id="exportPdfButton" type="button">PDF로 내보내기</button>
 <button class="secondary-button" id="editMemoButton" type="button">수정하기</button>
 <button class="danger-button" id="deleteMemoButton" type="button">삭제하기</button>
 </div>
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=487"></script>
-<script src="./js/feedback.js?v=487"></script>
-<script src="./js/auth.js?v=487"></script>
-<script src="./js/storage.js?v=487"></script>
-<script src="./js/ui.js?v=487"></script>
-<script src="./js/app.js?v=487"></script>
-<script src="./js/account.js?v=487"></script>
-<script src="./js/pwa.js?v=487"></script>
+<script src="./js/config.js?v=488"></script>
+<script src="./js/feedback.js?v=488"></script>
+<script src="./js/auth.js?v=488"></script>
+<script src="./js/storage.js?v=488"></script>
+<script src="./js/ui.js?v=488"></script>
+<script src="./js/app.js?v=488"></script>
+<script src="./js/account.js?v=488"></script>
+<script src="./js/pwa.js?v=488"></script>
 </body>
 </html>

@@ -5,6 +5,11 @@ let currentSearch = "";
 let currentSort = "updatedDesc";
 let draftTasks = [];
 let draftLinks = [];
+let draftStyledParagraphs = [];
+let draftTables = [];
+let draftImages = [];
+let tableEditorRows = [];
+let editingTableDraftId = "";
 
 let memoSelectionMode = false;
 let selectedMemoIds = new Set();
@@ -37,6 +42,51 @@ const linkEditorStatus = document.querySelector("#linkEditorStatus");
 const closeLinkEditorButton = document.querySelector("#closeLinkEditorButton");
 const cancelLinkEditorButton = document.querySelector("#cancelLinkEditorButton");
 const saveLinkButton = document.querySelector("#saveLinkButton");
+
+const styledDraftSection = document.querySelector("#styledDraftSection");
+const styledDraftList = document.querySelector("#styledDraftList");
+const styledCountLabel = document.querySelector("#styledCountLabel");
+const styledParagraphModal = document.querySelector("#styledParagraphModal");
+const styledParagraphForm = document.querySelector("#styledParagraphForm");
+const editingStyledIdInput = document.querySelector("#editingStyledId");
+const styledSizeInput = document.querySelector("#styledSizeInput");
+const styledColorInput = document.querySelector("#styledColorInput");
+const styledTextInput = document.querySelector("#styledTextInput");
+const styledBoldInput = document.querySelector("#styledBoldInput");
+const styledSizeOptions = document.querySelector("#styledSizeOptions");
+const styledColorOptions = document.querySelector("#styledColorOptions");
+const styledParagraphStatus = document.querySelector("#styledParagraphStatus");
+const closeStyledParagraphButton = document.querySelector("#closeStyledParagraphButton");
+const cancelStyledParagraphButton = document.querySelector("#cancelStyledParagraphButton");
+
+const tableDraftSection = document.querySelector("#tableDraftSection");
+const tableDraftList = document.querySelector("#tableDraftList");
+const tableCountLabel = document.querySelector("#tableCountLabel");
+const tableEditorModal = document.querySelector("#tableEditorModal");
+const tableEditorGrid = document.querySelector("#tableEditorGrid");
+const tableEditorStatus = document.querySelector("#tableEditorStatus");
+const editingTableIdInput = document.querySelector("#editingTableId");
+const addTableRowButton = document.querySelector("#addTableRowButton");
+const addTableColButton = document.querySelector("#addTableColButton");
+const removeTableRowButton = document.querySelector("#removeTableRowButton");
+const removeTableColButton = document.querySelector("#removeTableColButton");
+const saveTableButton = document.querySelector("#saveTableButton");
+const closeTableEditorButton = document.querySelector("#closeTableEditorButton");
+const cancelTableEditorButton = document.querySelector("#cancelTableEditorButton");
+
+const imageDraftSection = document.querySelector("#imageDraftSection");
+const imageDraftList = document.querySelector("#imageDraftList");
+const imageCountLabel = document.querySelector("#imageCountLabel");
+const imageUploadModal = document.querySelector("#imageUploadModal");
+const imageUploadForm = document.querySelector("#imageUploadForm");
+const imageFileInput = document.querySelector("#imageFileInput");
+const imageAltInput = document.querySelector("#imageAltInput");
+const imageUploadPreview = document.querySelector("#imageUploadPreview");
+const imageUploadStatus = document.querySelector("#imageUploadStatus");
+const closeImageUploadButton = document.querySelector("#closeImageUploadButton");
+const cancelImageUploadButton = document.querySelector("#cancelImageUploadButton");
+
+const exportPdfButton = document.querySelector("#exportPdfButton");
 const categoryInput = document.querySelector("#categoryInput");
 const categoryPicker = document.querySelector("#categoryPicker");
 const categoryPickerButton = document.querySelector("#categoryPickerButton");
@@ -556,6 +606,625 @@ function handleLinkEditorModalClick(event) {
   if (event.target.dataset.linkEditorClose === "true") {
     closeLinkEditor();
   }
+}
+
+/* ===== 서식 문단 ===== */
+
+function renderDraftStyledParagraphs() {
+  if (!styledDraftSection || !styledDraftList || !styledCountLabel) {
+    return;
+  }
+
+  styledCountLabel.textContent = `${draftStyledParagraphs.length}개`;
+  styledDraftSection.hidden = draftStyledParagraphs.length === 0;
+
+  if (draftStyledParagraphs.length === 0) {
+    styledDraftList.innerHTML = "";
+    return;
+  }
+
+  styledDraftList.innerHTML = draftStyledParagraphs
+    .map((block) => `
+      <article class="link-draft-item" data-styled-id="${escapeHtml(block.id)}">
+        <span class="link-draft-anchor">
+          <span class="link-draft-icon" aria-hidden="true">가</span>
+          <span class="link-draft-copy">
+            <strong>${escapeHtml(block.text.slice(0, 40))}${block.text.length > 40 ? "…" : ""}</strong>
+            <small>${block.bold ? "굵게 · " : ""}${block.size} · ${block.color}</small>
+          </span>
+        </span>
+        <div class="link-draft-actions">
+          <button class="text-button compact-button" data-styled-action="edit" data-styled-id="${escapeHtml(block.id)}" type="button">수정</button>
+          <button class="text-button compact-button danger-text" data-styled-action="delete" data-styled-id="${escapeHtml(block.id)}" type="button">삭제</button>
+        </div>
+      </article>
+    `)
+    .join("");
+}
+
+function loadDraftStyledParagraphs(blocks) {
+  draftStyledParagraphs = (Array.isArray(blocks) ? blocks : []).slice(0, MAX_MEMO_STYLED_PARAGRAPH_BLOCKS);
+  renderDraftStyledParagraphs();
+}
+
+function resetDraftStyledParagraphs() {
+  draftStyledParagraphs = [];
+  renderDraftStyledParagraphs();
+}
+
+function setStyledParagraphStatus(message = "", state = "") {
+  if (!styledParagraphStatus) {
+    return;
+  }
+
+  styledParagraphStatus.textContent = message;
+
+  if (state) {
+    styledParagraphStatus.dataset.state = state;
+  } else {
+    delete styledParagraphStatus.dataset.state;
+  }
+}
+
+function setStyledSizeSelection(size) {
+  if (styledSizeInput) {
+    styledSizeInput.value = size;
+  }
+
+  styledSizeOptions?.querySelectorAll(".styled-option-chip").forEach((chip) => {
+    chip.classList.toggle("active", chip.dataset.size === size);
+  });
+}
+
+function setStyledColorSelection(color) {
+  if (styledColorInput) {
+    styledColorInput.value = color;
+  }
+
+  styledColorOptions?.querySelectorAll(".styled-color-swatch").forEach((swatch) => {
+    swatch.classList.toggle("active", swatch.dataset.color === color);
+  });
+}
+
+function openStyledParagraphEditor(block = null) {
+  if (!styledParagraphModal || !styledParagraphForm) {
+    return;
+  }
+
+  if (draftStyledParagraphs.length >= MAX_MEMO_STYLED_PARAGRAPH_BLOCKS && !block) {
+    showAppNotice(`서식 문단은 메모 하나에 ${MAX_MEMO_STYLED_PARAGRAPH_BLOCKS}개까지 추가할 수 있습니다.`, "warning", { title: "추가 제한" });
+    return;
+  }
+
+  styledParagraphForm.reset();
+  editingStyledIdInput.value = block?.id || "";
+  styledTextInput.value = block?.text || "";
+  styledBoldInput.checked = Boolean(block?.bold);
+  setStyledSizeSelection(block?.size || "normal");
+  setStyledColorSelection(block?.color || "default");
+  document.querySelector("#saveStyledParagraphButton").textContent = block ? "수정 완료" : "추가";
+  document.querySelector("#styledParagraphTitle").textContent = block ? "서식 문단 수정" : "서식 문단 삽입";
+  setStyledParagraphStatus();
+
+  styledParagraphModal.hidden = false;
+  styledParagraphModal.classList.remove("hidden");
+  styledParagraphModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+
+  window.setTimeout(() => styledTextInput?.focus(), 0);
+}
+
+function closeStyledParagraphEditor() {
+  if (!styledParagraphModal) {
+    return;
+  }
+
+  styledParagraphModal.classList.add("hidden");
+  styledParagraphModal.hidden = true;
+  styledParagraphModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+  styledParagraphForm?.reset();
+  setStyledParagraphStatus();
+}
+
+function handleStyledParagraphSubmit(event) {
+  event.preventDefault();
+
+  const text = String(styledTextInput?.value || "").trim();
+
+  if (!text) {
+    setStyledParagraphStatus("내용을 입력하세요.", "error");
+    styledTextInput?.focus();
+    return;
+  }
+
+  const existingId = editingStyledIdInput?.value || "";
+  const block = {
+    id: existingId || createSafeId("styled"),
+    type: "styled_paragraph",
+    text,
+    bold: Boolean(styledBoldInput?.checked),
+    size: styledSizeInput?.value || "normal",
+    color: styledColorInput?.value || "default",
+  };
+
+  if (existingId) {
+    draftStyledParagraphs = draftStyledParagraphs.map((item) =>
+      item.id === existingId ? block : item
+    );
+  } else {
+    draftStyledParagraphs.push(block);
+  }
+
+  renderDraftStyledParagraphs();
+  updateEditorDirtyState();
+  closeStyledParagraphEditor();
+  showAppNotice(existingId ? "서식 문단을 수정했습니다." : "서식 문단을 메모에 추가했습니다.", "success", {
+    title: existingId ? "수정 완료" : "추가 완료",
+  });
+}
+
+function handleStyledDraftListClick(event) {
+  const actionButton = event.target.closest("[data-styled-action]");
+
+  if (!actionButton) {
+    return;
+  }
+
+  const styledId = actionButton.dataset.styledId || "";
+  const block = draftStyledParagraphs.find((item) => item.id === styledId);
+
+  if (!block) {
+    return;
+  }
+
+  if (actionButton.dataset.styledAction === "edit") {
+    openStyledParagraphEditor(block);
+    return;
+  }
+
+  if (actionButton.dataset.styledAction === "delete") {
+    draftStyledParagraphs = draftStyledParagraphs.filter((item) => item.id !== styledId);
+    renderDraftStyledParagraphs();
+    updateEditorDirtyState();
+    showAppNotice("서식 문단을 메모에서 삭제했습니다.", "info", { title: "삭제 완료" });
+  }
+}
+
+function handleStyledParagraphModalClick(event) {
+  if (event.target.dataset.styledEditorClose === "true") {
+    closeStyledParagraphEditor();
+  }
+}
+
+/* ===== 표 ===== */
+
+function createEmptyTableRows(rowCount = 3, colCount = 3) {
+  return Array.from({ length: rowCount }, () => Array.from({ length: colCount }, () => ""));
+}
+
+function renderTableEditorGrid() {
+  if (!tableEditorGrid) {
+    return;
+  }
+
+  tableEditorGrid.innerHTML = tableEditorRows
+    .map(
+      (row, rowIndex) => `
+        <div class="table-editor-row">
+          ${row
+            .map(
+              (cell, colIndex) => `
+                <input
+                  class="table-editor-cell"
+                  data-row="${rowIndex}"
+                  data-col="${colIndex}"
+                  value="${escapeHtml(cell)}"
+                  maxlength="${MAX_MEMO_TABLE_CELL_LENGTH}"
+                />
+              `
+            )
+            .join("")}
+        </div>
+      `
+    )
+    .join("");
+}
+
+function readTableEditorGridFromDom() {
+  if (!tableEditorGrid) {
+    return;
+  }
+
+  tableEditorGrid.querySelectorAll(".table-editor-cell").forEach((input) => {
+    const rowIndex = Number(input.dataset.row);
+    const colIndex = Number(input.dataset.col);
+
+    if (tableEditorRows[rowIndex] && tableEditorRows[rowIndex][colIndex] !== undefined) {
+      tableEditorRows[rowIndex][colIndex] = input.value;
+    }
+  });
+}
+
+function renderDraftTables() {
+  if (!tableDraftSection || !tableDraftList || !tableCountLabel) {
+    return;
+  }
+
+  tableCountLabel.textContent = `${draftTables.length}개`;
+  tableDraftSection.hidden = draftTables.length === 0;
+
+  if (draftTables.length === 0) {
+    tableDraftList.innerHTML = "";
+    return;
+  }
+
+  tableDraftList.innerHTML = draftTables
+    .map((block) => `
+      <article class="link-draft-item" data-table-id="${escapeHtml(block.id)}">
+        <span class="link-draft-anchor">
+          <span class="link-draft-icon" aria-hidden="true">▦</span>
+          <span class="link-draft-copy">
+            <strong>표</strong>
+            <small>${block.rows.length}행 × ${(block.rows[0] || []).length}열</small>
+          </span>
+        </span>
+        <div class="link-draft-actions">
+          <button class="text-button compact-button" data-table-action="edit" data-table-id="${escapeHtml(block.id)}" type="button">수정</button>
+          <button class="text-button compact-button danger-text" data-table-action="delete" data-table-id="${escapeHtml(block.id)}" type="button">삭제</button>
+        </div>
+      </article>
+    `)
+    .join("");
+}
+
+function loadDraftTables(blocks) {
+  draftTables = (Array.isArray(blocks) ? blocks : []).slice(0, MAX_MEMO_TABLE_BLOCKS);
+  renderDraftTables();
+}
+
+function resetDraftTables() {
+  draftTables = [];
+  renderDraftTables();
+}
+
+function setTableEditorStatus(message = "", state = "") {
+  if (!tableEditorStatus) {
+    return;
+  }
+
+  tableEditorStatus.textContent = message;
+
+  if (state) {
+    tableEditorStatus.dataset.state = state;
+  } else {
+    delete tableEditorStatus.dataset.state;
+  }
+}
+
+function openTableEditor(block = null) {
+  if (!tableEditorModal) {
+    return;
+  }
+
+  if (draftTables.length >= MAX_MEMO_TABLE_BLOCKS && !block) {
+    showAppNotice(`표는 메모 하나에 ${MAX_MEMO_TABLE_BLOCKS}개까지 추가할 수 있습니다.`, "warning", { title: "추가 제한" });
+    return;
+  }
+
+  editingTableDraftId = block?.id || "";
+  tableEditorRows = block
+    ? block.rows.map((row) => [...row])
+    : createEmptyTableRows();
+  renderTableEditorGrid();
+  setTableEditorStatus();
+  document.querySelector("#tableEditorTitle").textContent = block ? "표 수정" : "표 삽입";
+  document.querySelector("#saveTableButton").textContent = block ? "수정 완료" : "추가";
+
+  tableEditorModal.hidden = false;
+  tableEditorModal.classList.remove("hidden");
+  tableEditorModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+}
+
+function closeTableEditor() {
+  if (!tableEditorModal) {
+    return;
+  }
+
+  tableEditorModal.classList.add("hidden");
+  tableEditorModal.hidden = true;
+  tableEditorModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+  setTableEditorStatus();
+}
+
+function handleAddTableRow() {
+  readTableEditorGridFromDom();
+  const colCount = (tableEditorRows[0] || []).length || 3;
+
+  if (tableEditorRows.length >= MAX_MEMO_TABLE_ROWS) {
+    setTableEditorStatus(`행은 최대 ${MAX_MEMO_TABLE_ROWS}개까지 만들 수 있습니다.`, "error");
+    return;
+  }
+
+  tableEditorRows.push(Array.from({ length: colCount }, () => ""));
+  renderTableEditorGrid();
+}
+
+function handleAddTableCol() {
+  readTableEditorGridFromDom();
+
+  if ((tableEditorRows[0] || []).length >= MAX_MEMO_TABLE_COLS) {
+    setTableEditorStatus(`열은 최대 ${MAX_MEMO_TABLE_COLS}개까지 만들 수 있습니다.`, "error");
+    return;
+  }
+
+  tableEditorRows = tableEditorRows.map((row) => [...row, ""]);
+  renderTableEditorGrid();
+}
+
+function handleRemoveTableRow() {
+  readTableEditorGridFromDom();
+
+  if (tableEditorRows.length <= 1) {
+    return;
+  }
+
+  tableEditorRows.pop();
+  renderTableEditorGrid();
+}
+
+function handleRemoveTableCol() {
+  readTableEditorGridFromDom();
+
+  if ((tableEditorRows[0] || []).length <= 1) {
+    return;
+  }
+
+  tableEditorRows = tableEditorRows.map((row) => row.slice(0, -1));
+  renderTableEditorGrid();
+}
+
+function handleSaveTableClick() {
+  readTableEditorGridFromDom();
+
+  const hasContent = tableEditorRows.some((row) => row.some((cell) => cell.trim().length > 0));
+
+  if (!hasContent) {
+    setTableEditorStatus("표에 내용을 하나 이상 입력하세요.", "error");
+    return;
+  }
+
+  const block = {
+    id: editingTableDraftId || createSafeId("table"),
+    type: "table",
+    rows: tableEditorRows.map((row) => [...row]),
+  };
+
+  if (editingTableDraftId) {
+    draftTables = draftTables.map((item) => (item.id === editingTableDraftId ? block : item));
+  } else {
+    draftTables.push(block);
+  }
+
+  renderDraftTables();
+  updateEditorDirtyState();
+  closeTableEditor();
+  showAppNotice(editingTableDraftId ? "표를 수정했습니다." : "표를 메모에 추가했습니다.", "success", {
+    title: editingTableDraftId ? "수정 완료" : "추가 완료",
+  });
+}
+
+function handleTableDraftListClick(event) {
+  const actionButton = event.target.closest("[data-table-action]");
+
+  if (!actionButton) {
+    return;
+  }
+
+  const tableId = actionButton.dataset.tableId || "";
+  const block = draftTables.find((item) => item.id === tableId);
+
+  if (!block) {
+    return;
+  }
+
+  if (actionButton.dataset.tableAction === "edit") {
+    openTableEditor(block);
+    return;
+  }
+
+  if (actionButton.dataset.tableAction === "delete") {
+    draftTables = draftTables.filter((item) => item.id !== tableId);
+    renderDraftTables();
+    updateEditorDirtyState();
+    showAppNotice("표를 메모에서 삭제했습니다.", "info", { title: "삭제 완료" });
+  }
+}
+
+function handleTableEditorModalClick(event) {
+  if (event.target.dataset.tableEditorClose === "true") {
+    closeTableEditor();
+  }
+}
+
+/* ===== 이미지 ===== */
+
+function renderDraftImages() {
+  if (!imageDraftSection || !imageDraftList || !imageCountLabel) {
+    return;
+  }
+
+  imageCountLabel.textContent = `${draftImages.length}개`;
+  imageDraftSection.hidden = draftImages.length === 0;
+
+  if (draftImages.length === 0) {
+    imageDraftList.innerHTML = "";
+    return;
+  }
+
+  imageDraftList.innerHTML = draftImages
+    .map((block) => `
+      <article class="link-draft-item" data-image-id="${escapeHtml(block.id)}">
+        <span class="link-draft-anchor">
+          <span class="link-draft-icon" aria-hidden="true">🖼</span>
+          <span class="link-draft-copy">
+            <strong>${escapeHtml(block.alt || "이미지")}</strong>
+          </span>
+        </span>
+        <div class="link-draft-actions">
+          <button class="text-button compact-button danger-text" data-image-action="delete" data-image-id="${escapeHtml(block.id)}" type="button">삭제</button>
+        </div>
+      </article>
+    `)
+    .join("");
+}
+
+function loadDraftImages(blocks) {
+  draftImages = (Array.isArray(blocks) ? blocks : []).slice(0, MAX_MEMO_IMAGE_BLOCKS);
+  renderDraftImages();
+}
+
+function resetDraftImages() {
+  draftImages = [];
+  renderDraftImages();
+}
+
+function setImageUploadStatus(message = "", state = "") {
+  if (!imageUploadStatus) {
+    return;
+  }
+
+  imageUploadStatus.textContent = message;
+
+  if (state) {
+    imageUploadStatus.dataset.state = state;
+  } else {
+    delete imageUploadStatus.dataset.state;
+  }
+}
+
+function openImageUploadModal() {
+  if (!imageUploadModal || !imageUploadForm) {
+    return;
+  }
+
+  if (draftImages.length >= MAX_MEMO_IMAGE_BLOCKS) {
+    showAppNotice(`이미지는 메모 하나에 ${MAX_MEMO_IMAGE_BLOCKS}개까지 추가할 수 있습니다.`, "warning", { title: "추가 제한" });
+    return;
+  }
+
+  imageUploadForm.reset();
+  if (imageUploadPreview) {
+    imageUploadPreview.hidden = true;
+    imageUploadPreview.innerHTML = "";
+  }
+  setImageUploadStatus();
+
+  imageUploadModal.hidden = false;
+  imageUploadModal.classList.remove("hidden");
+  imageUploadModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+}
+
+function closeImageUploadModal() {
+  if (!imageUploadModal) {
+    return;
+  }
+
+  imageUploadModal.classList.add("hidden");
+  imageUploadModal.hidden = true;
+  imageUploadModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
+  imageUploadForm?.reset();
+  setImageUploadStatus();
+}
+
+function handleImageFileChange() {
+  const file = imageFileInput?.files?.[0];
+
+  if (!imageUploadPreview) {
+    return;
+  }
+
+  if (!file) {
+    imageUploadPreview.hidden = true;
+    imageUploadPreview.innerHTML = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    imageUploadPreview.innerHTML = `<img alt="미리보기" src="${reader.result}"/>`;
+    imageUploadPreview.hidden = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function handleImageUploadSubmit(event) {
+  event.preventDefault();
+
+  const file = imageFileInput?.files?.[0];
+
+  if (!file) {
+    setImageUploadStatus("이미지 파일을 선택하세요.", "error");
+    return;
+  }
+
+  const saveImageButton = document.querySelector("#saveImageButton");
+  setActionButtonBusy(saveImageButton, true, "업로드 중...", "추가");
+  setImageUploadStatus("업로드 중입니다...", "");
+
+  try {
+    const url = await uploadMemoImage(file);
+    const block = {
+      id: createSafeId("image"),
+      type: "image",
+      url,
+      alt: String(imageAltInput?.value || "").trim(),
+    };
+
+    draftImages.push(block);
+    renderDraftImages();
+    updateEditorDirtyState();
+    closeImageUploadModal();
+    showAppNotice("이미지를 메모에 추가했습니다.", "success", { title: "추가 완료" });
+  } catch (error) {
+    console.error(error);
+    setImageUploadStatus(translateCloudError(error), "error");
+  } finally {
+    setActionButtonBusy(saveImageButton, false, "업로드 중...", "추가");
+  }
+}
+
+function handleImageDraftListClick(event) {
+  const actionButton = event.target.closest("[data-image-action]");
+
+  if (!actionButton) {
+    return;
+  }
+
+  const imageId = actionButton.dataset.imageId || "";
+
+  if (actionButton.dataset.imageAction === "delete") {
+    draftImages = draftImages.filter((item) => item.id !== imageId);
+    renderDraftImages();
+    updateEditorDirtyState();
+    showAppNotice("이미지를 메모에서 삭제했습니다.", "info", { title: "삭제 완료" });
+  }
+}
+
+function handleImageUploadModalClick(event) {
+  if (event.target.dataset.imageEditorClose === "true") {
+    closeImageUploadModal();
+  }
+}
+
+/* ===== PDF 내보내기 ===== */
+
+function handleExportPdfClick() {
+  window.print();
 }
 
 function getEditorSnapshot() {
@@ -2896,7 +3565,11 @@ async function handleFormSubmit(event) {
     title,
     project,
     content,
-    contentBlocks: createMemoContentBlocks(content, draftLinks),
+    contentBlocks: createMemoContentBlocks(content, draftLinks, [
+      ...draftStyledParagraphs,
+      ...draftTables,
+      ...draftImages,
+    ]),
     category,
     isImportant,
     dueDate,
@@ -3739,6 +4412,48 @@ function bindEvents() {
   cancelLinkEditorButton?.addEventListener("click", () => closeLinkEditor());
   linkEditorModal?.addEventListener("click", handleLinkEditorModalClick);
   linkDraftList?.addEventListener("click", handleLinkDraftListClick);
+
+  document.querySelector("#addStyledParagraphButton")?.addEventListener("click", () => openStyledParagraphEditor());
+  styledParagraphForm?.addEventListener("submit", handleStyledParagraphSubmit);
+  closeStyledParagraphButton?.addEventListener("click", closeStyledParagraphEditor);
+  cancelStyledParagraphButton?.addEventListener("click", closeStyledParagraphEditor);
+  styledParagraphModal?.addEventListener("click", handleStyledParagraphModalClick);
+  styledDraftList?.addEventListener("click", handleStyledDraftListClick);
+  styledSizeOptions?.addEventListener("click", (event) => {
+    const chip = event.target.closest("[data-size]");
+    if (chip) {
+      setStyledSizeSelection(chip.dataset.size);
+    }
+  });
+  styledColorOptions?.addEventListener("click", (event) => {
+    const swatch = event.target.closest("[data-color]");
+    if (swatch) {
+      setStyledColorSelection(swatch.dataset.color);
+    }
+  });
+
+  document.querySelector("#addTableButton")?.addEventListener("click", () => openTableEditor());
+  closeTableEditorButton?.addEventListener("click", closeTableEditor);
+  cancelTableEditorButton?.addEventListener("click", closeTableEditor);
+  tableEditorModal?.addEventListener("click", handleTableEditorModalClick);
+  tableDraftList?.addEventListener("click", handleTableDraftListClick);
+  addTableRowButton?.addEventListener("click", handleAddTableRow);
+  addTableColButton?.addEventListener("click", handleAddTableCol);
+  removeTableRowButton?.addEventListener("click", handleRemoveTableRow);
+  removeTableColButton?.addEventListener("click", handleRemoveTableCol);
+  saveTableButton?.addEventListener("click", handleSaveTableClick);
+
+  document.querySelector("#addImageButton")?.addEventListener("click", openImageUploadModal);
+  imageUploadForm?.addEventListener("submit", (event) => {
+    void handleImageUploadSubmit(event);
+  });
+  closeImageUploadButton?.addEventListener("click", closeImageUploadModal);
+  cancelImageUploadButton?.addEventListener("click", closeImageUploadModal);
+  imageUploadModal?.addEventListener("click", handleImageUploadModalClick);
+  imageDraftList?.addEventListener("click", handleImageDraftListClick);
+  imageFileInput?.addEventListener("change", handleImageFileChange);
+
+  exportPdfButton?.addEventListener("click", handleExportPdfClick);
 
   const memoListElement = document.querySelector("#memoList");
   memoListElement.addEventListener("click", handleMemoListClick);

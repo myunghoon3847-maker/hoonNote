@@ -246,6 +246,12 @@ function renderMemoList(memos) {
           ? `<span class="memo-link-chip">링크 ${linkCount}</span>`
           : "";
       const dueDateChip = getDueDateBadge(memo.dueDate);
+      const tableCount = typeof getMemoTables === "function" ? getMemoTables(memo).length : 0;
+      const imageCount = typeof getMemoImages === "function" ? getMemoImages(memo).length : 0;
+      const extraChips = [
+        tableCount > 0 ? `<span class="memo-extra-chip">표 ${tableCount}</span>` : "",
+        imageCount > 0 ? `<span class="memo-extra-chip">이미지 ${imageCount}</span>` : "",
+      ].join("");
       const isSelected = Boolean(memoSelectionMode) && selectedMemoIds.has(memo.id);
       const selectIndicator = memoSelectionMode
         ? '<span class="memo-select-indicator" aria-hidden="true"></span>'
@@ -263,6 +269,7 @@ function renderMemoList(memos) {
               ${dueDateChip}
               ${taskChip}
               ${linkChip}
+              ${extraChips}
             </div>
             <span class="memo-date">${date}</span>
           </div>
@@ -354,6 +361,57 @@ function renderTrashList(memos) {
 
 let detailModalPreviousFocus = null;
 
+function renderMemoStyledParagraphsHtml(memo) {
+  const blocks = typeof getMemoStyledParagraphs === "function" ? getMemoStyledParagraphs(memo) : [];
+
+  return blocks
+    .map((block) => {
+      const classNames = [
+        "styled-paragraph-block",
+        block.bold ? "bold" : "",
+        `size-${block.size}`,
+        `color-${block.color}`,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      return `<p class="${classNames}">${escapeHtml(block.text)}</p>`;
+    })
+    .join("");
+}
+
+function renderMemoTablesHtml(memo) {
+  const blocks = typeof getMemoTables === "function" ? getMemoTables(memo) : [];
+
+  return blocks
+    .map((block) => {
+      const rowsHtml = block.rows
+        .map(
+          (row) =>
+            `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`
+        )
+        .join("");
+
+      return `<div class="detail-table-wrap"><table class="detail-table">${rowsHtml}</table></div>`;
+    })
+    .join("");
+}
+
+function renderMemoImagesHtml(memo) {
+  const blocks = typeof getMemoImages === "function" ? getMemoImages(memo) : [];
+
+  return blocks
+    .map(
+      (block) => `
+        <figure class="detail-image-block">
+          <img src="${escapeHtml(block.url)}" alt="${escapeHtml(block.alt || "메모 이미지")}" loading="lazy"/>
+          ${block.alt ? `<figcaption>${escapeHtml(block.alt)}</figcaption>` : ""}
+        </figure>
+      `
+    )
+    .join("");
+}
+
 function openDetailModal(memo, options = {}) {
   const modal = document.querySelector("#detailModal");
   const editButton = document.querySelector("#editMemoButton");
@@ -378,6 +436,21 @@ function openDetailModal(memo, options = {}) {
     const linksHtml = renderMemoLinksHtml(memo);
     linksContainer.innerHTML = linksHtml;
     linksContainer.hidden = !linksHtml;
+  }
+
+  const styledContainer = document.querySelector("#detailStyledParagraphs");
+  if (styledContainer) {
+    styledContainer.innerHTML = renderMemoStyledParagraphsHtml(memo);
+  }
+
+  const tablesContainer = document.querySelector("#detailTables");
+  if (tablesContainer) {
+    tablesContainer.innerHTML = renderMemoTablesHtml(memo);
+  }
+
+  const imagesContainer = document.querySelector("#detailImages");
+  if (imagesContainer) {
+    imagesContainer.innerHTML = renderMemoImagesHtml(memo);
   }
 
   if (checklistContainer) {
@@ -778,6 +851,18 @@ function resetForm() {
     resetDraftLinks();
   }
 
+  if (typeof resetDraftStyledParagraphs === "function") {
+    resetDraftStyledParagraphs();
+  }
+
+  if (typeof resetDraftTables === "function") {
+    resetDraftTables();
+  }
+
+  if (typeof resetDraftImages === "function") {
+    resetDraftImages();
+  }
+
   setEditorMode("create");
 
   if (typeof markEditorClean === "function") {
@@ -812,6 +897,20 @@ function fillFormForEdit(memo) {
 
   if (typeof loadDraftLinks === "function") {
     loadDraftLinks(typeof getMemoLinks === "function" ? getMemoLinks(memo) : []);
+  }
+
+  if (typeof loadDraftStyledParagraphs === "function") {
+    loadDraftStyledParagraphs(
+      typeof getMemoStyledParagraphs === "function" ? getMemoStyledParagraphs(memo) : []
+    );
+  }
+
+  if (typeof loadDraftTables === "function") {
+    loadDraftTables(typeof getMemoTables === "function" ? getMemoTables(memo) : []);
+  }
+
+  if (typeof loadDraftImages === "function") {
+    loadDraftImages(typeof getMemoImages === "function" ? getMemoImages(memo) : []);
   }
 
   setEditorMode("edit");
