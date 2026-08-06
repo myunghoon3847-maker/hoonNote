@@ -45,7 +45,6 @@ const importantInput = document.querySelector("#importantInput");
 const editingIdInput = document.querySelector("#editingId");
 const editingUpdatedAtInput = document.querySelector("#editingUpdatedAt");
 const searchInput = document.querySelector("#searchInput");
-const importantStrip = document.querySelector("#importantStrip");
 const categoryTabs = document.querySelector("#categoryTabs");
 const sortOptions = document.querySelector("#sortOptions");
 const backupButton = document.querySelector("#backupButton");
@@ -2596,7 +2595,6 @@ function refreshScreen() {
 
   const filteredMemos = getFilteredMemos();
   renderMemoList(filteredMemos);
-  renderImportantStrip();
   setActiveSort(currentSort);
   refreshTrashView();
 }
@@ -3114,21 +3112,6 @@ async function deleteSelectedMemos() {
 }
 
 
-function handleImportantStripClick(event) {
-  const card = event.target.closest(".important-strip-card");
-
-  if (!card) {
-    return;
-  }
-
-  const memo = findMemoById(card.dataset.id);
-
-  if (memo) {
-    openDetailModal(memo);
-  }
-}
-
-
 async function handleTrashListClick(event) {
   const actionButton = event.target.closest("[data-trash-action]");
 
@@ -3592,7 +3575,6 @@ function bindEvents() {
     void handleTrashListClick(event);
   });
   searchInput.addEventListener("input", handleSearchInput);
-  importantStrip?.addEventListener("click", handleImportantStripClick);
   sortOptions?.addEventListener("click", handleSortClick);
 
   document.querySelector("#editorToggleButton").addEventListener("click", toggleEditor);
