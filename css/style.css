@@ -44,9 +44,12 @@ body {
   line-height: 1.55;
 }
 
+html:has(body.modal-open),
+html:has(body.menu-open),
 body.modal-open,
 body.menu-open {
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 button,
@@ -2028,6 +2031,7 @@ body.memo-selection-active #editorToggleButton {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0 22px;
 }
 
@@ -4108,11 +4112,11 @@ button[aria-busy="true"]::after {
   }
 
   body.sidebar-collapsed .signed-in-email,
-  body.sidebar-collapsed #menuHeaderTitle {
+  body.sidebar-collapsed #menuHeaderTitle,
+  body.sidebar-collapsed .menu-footer {
     display: none;
   }
 }
-
 /* 캘린더 탭 */
 .calendar-header {
   display: flex;

@@ -4639,6 +4639,41 @@ function bindEvents() {
 }
 
 initializeAppNavigation();
+(function setupRobustScrollLock() {
+  let savedScrollY = 0;
+  let isLocked = false;
+
+  function applyLock() {
+    const shouldLock =
+      document.body.classList.contains("modal-open") ||
+      document.body.classList.contains("menu-open");
+
+    if (shouldLock && !isLocked) {
+      savedScrollY = window.scrollY || window.pageYOffset || 0;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${savedScrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
+      isLocked = true;
+      return;
+    }
+
+    if (!shouldLock && isLocked) {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      isLocked = false;
+      window.scrollTo(0, savedScrollY);
+    }
+  }
+
+  new MutationObserver(applyLock).observe(document.body, {
+    attributes: true,
+    attributeFilter: ["class"],
+  });
+})();
+
 bindEvents();
 renderTaskDraftList();
 markEditorClean();
