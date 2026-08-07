@@ -161,6 +161,7 @@ const appMenuButton = document.querySelector("#appMenuButton");
 const appMenuPanel = document.querySelector("#appMenuPanel");
 const appMenuBackdrop = document.querySelector("#appMenuBackdrop");
 const openTrashButton = document.querySelector("#openTrashButton");
+const detailModal = document.querySelector("#detailModal");
 const categoryBrowserList = document.querySelector("#categoryBrowserList");
 const bookmarkList = document.querySelector("#bookmarkList");
 const bookmarkForm = document.querySelector("#bookmarkForm");
@@ -1687,7 +1688,7 @@ function showMenuSubview(view = "main") {
   }
 
   if (menuHeaderTitle) {
-    menuHeaderTitle.textContent = isSettings ? "설정" : "메뉴";
+    menuHeaderTitle.textContent = isSettings ? "설정" : "";
   }
 
   if (menuSettingsBackButton) {
@@ -4041,22 +4042,20 @@ function handleCalendarDayListClick(event) {
 function applySidebarCollapsedState() {
   document.body.classList.toggle("sidebar-collapsed", sidebarCollapsed);
 
-  const icon = document.querySelector("#sidebarCollapseIcon");
   const toggleButton = document.querySelector("#sidebarCollapseToggle");
-
-  if (icon) {
-    icon.textContent = sidebarCollapsed ? "›" : "‹";
-  }
 
   if (toggleButton) {
     toggleButton.setAttribute("aria-label", sidebarCollapsed ? "사이드바 펼치기" : "사이드바 접기");
   }
-
-  renderCategoryBrowser();
 }
 
 function toggleSidebarCollapse() {
   sidebarCollapsed = !sidebarCollapsed;
+
+  if (sidebarCollapsed) {
+    showMenuSubview("main");
+  }
+
   applySidebarCollapsedState();
 
   try {
@@ -4221,6 +4220,22 @@ function handleModalClick(event) {
   if (event.target.dataset.close === "true") {
     closeDetailModal();
   }
+}
+
+function handleOutsideDetailClick(event) {
+  if (!detailModal || detailModal.hidden) {
+    return;
+  }
+
+  if (detailModal.contains(event.target)) {
+    return;
+  }
+
+  if (event.target.closest(".memo-card")) {
+    return;
+  }
+
+  closeDetailModal();
 }
 
 function getTodayTextForFileName() {
@@ -4506,6 +4521,7 @@ function bindEvents() {
   document.querySelector("#resetButton").addEventListener("click", handleCancelEditorClick);
   document.querySelector("#closeDetailButton").addEventListener("click", closeDetailModal);
   document.querySelector("#detailModal").addEventListener("click", handleModalClick);
+  document.addEventListener("click", handleOutsideDetailClick, true);
   document.querySelector("#editMemoButton").addEventListener("click", handleEditClick);
   document.querySelector("#deleteMemoButton").addEventListener("click", handleDeleteClick);
 

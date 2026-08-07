@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=489" rel="manifest"/>
+<link href="./manifest.json?v=491" rel="manifest"/>
 <meta content="#7c3aed" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
@@ -13,9 +13,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=489" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=489" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=489" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=491" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=491" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=491" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +126,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=489"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=491"/>
 </a>
 </div>
 <div class="header-actions">
@@ -414,10 +414,10 @@
 <aside aria-hidden="true" aria-label="앱 메뉴" class="app-menu-panel" hidden="" id="appMenuPanel">
 <div class="menu-header">
 <button aria-label="사이드바 접기" class="sidebar-collapse-toggle" id="sidebarCollapseToggle" type="button">
-<span aria-hidden="true" id="sidebarCollapseIcon">‹</span>
+<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><line x1="4" x2="20" y1="7" y2="7"></line><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="17" y2="17"></line></svg>
 </button>
 <div>
-<strong id="menuHeaderTitle">메뉴</strong>
+<strong id="menuHeaderTitle"></strong>
 <span class="signed-in-email" id="signedInEmail">로그인됨</span>
 </div>
 <button aria-label="메뉴 목록으로 돌아가기" class="menu-header-back-button" hidden id="menuSettingsBackButton" title="뒤로가기" type="button">
@@ -458,7 +458,7 @@
 </section>
 <section aria-label="설정" class="menu-section menu-settings-entry-section">
 <button aria-label="설정 열기" class="menu-settings-entry-button" id="openSettingsButton" type="button">
-<img alt="" aria-hidden="true" src="./icons/settings-gear.png?v=489"/>
+<svg aria-hidden="true" class="menu-settings-entry-icon" fill="none" focusable="false" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
 <span class="menu-settings-entry-copy"><strong>설정</strong><small>계정과 앱 설정</small></span>
 <span aria-hidden="true" class="menu-settings-entry-chevron">›</span>
 </button>
@@ -807,19 +807,23 @@
 </div>
 <div aria-hidden="true" aria-labelledby="detailTitle" aria-modal="true" class="modal hidden" hidden="" id="detailModal" role="dialog">
 <div class="modal-backdrop" data-close="true"></div>
-<article class="modal-card">
+<article class="modal-card detail-modal-card">
 <button aria-label="상세 보기 닫기" class="close-button" id="closeDetailButton" type="button">×</button>
+<div class="detail-modal-header">
 <div class="detail-meta">
 <span class="category-chip" id="detailCategory">업무</span>
 <span id="detailDate"></span>
 </div>
 <h2 id="detailTitle"></h2>
+</div>
+<div class="detail-modal-scroll">
 <p id="detailContent"></p>
 <div aria-label="메모 링크" class="detail-links" hidden id="detailLinks"></div>
 <div id="detailStyledParagraphs"></div>
 <div id="detailTables"></div>
 <div id="detailImages"></div>
 <div id="detailChecklist"></div>
+</div>
 <div class="detail-actions">
 <button class="secondary-button" id="exportPdfButton" type="button">PDF로 내보내기</button>
 <button class="secondary-button" id="editMemoButton" type="button">수정하기</button>
@@ -828,13 +832,13 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=489"></script>
-<script src="./js/feedback.js?v=489"></script>
-<script src="./js/auth.js?v=489"></script>
-<script src="./js/storage.js?v=489"></script>
-<script src="./js/ui.js?v=489"></script>
-<script src="./js/app.js?v=489"></script>
-<script src="./js/account.js?v=489"></script>
-<script src="./js/pwa.js?v=489"></script>
+<script src="./js/config.js?v=491"></script>
+<script src="./js/feedback.js?v=491"></script>
+<script src="./js/auth.js?v=491"></script>
+<script src="./js/storage.js?v=491"></script>
+<script src="./js/ui.js?v=491"></script>
+<script src="./js/app.js?v=491"></script>
+<script src="./js/account.js?v=491"></script>
+<script src="./js/pwa.js?v=491"></script>
 </body>
 </html>

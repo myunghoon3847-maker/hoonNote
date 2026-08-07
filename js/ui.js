@@ -667,14 +667,11 @@ function renderCategoryBrowser() {
     .map((name) => {
       const count = activeMemos.filter((memo) => memo.category === name).length;
       const safeName = escapeHtml(name);
-      const label = sidebarCollapsed
-        ? `<span>${escapeHtml(name.charAt(0))}</span>`
-        : `<span>${safeName}</span><span class="category-browser-count">${count}개</span>`;
-      const titleAttr = sidebarCollapsed ? ` title="${safeName} · ${count}개"` : "";
 
       return `
-        <button type="button" class="category-browser-item" data-category="${safeName}"${titleAttr}>
-          ${label}
+        <button type="button" class="category-browser-item" data-category="${safeName}">
+          <span>${safeName}</span>
+          <span class="category-browser-count">${count}개</span>
         </button>
       `;
     })
