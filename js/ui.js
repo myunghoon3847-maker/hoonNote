@@ -740,9 +740,11 @@ function openEditor(options = {}) {
     window.solonoteNavigation?.openLayer("editor");
   }
 
-  window.requestAnimationFrame(() => {
-    editorPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+  if (!editorPanel.classList.contains("editor-view-as-modal") && !editorView.classList.contains("editor-view-as-modal")) {
+    window.requestAnimationFrame(() => {
+      editorPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 }
 
 function closeEditor(options = {}) {
@@ -759,10 +761,12 @@ function closeEditor(options = {}) {
   }
 
   editorPanel?.classList.add("collapsed");
+  editorPanel?.classList.remove("editor-view-as-modal");
 
   if (editorView) {
     editorView.hidden = true;
     editorView.setAttribute("aria-hidden", "true");
+    editorView.classList.remove("editor-view-as-modal");
   }
 
   if (toggleButton) {
@@ -774,6 +778,18 @@ function closeEditor(options = {}) {
 
   if (mobileNewMemoButton) {
     mobileNewMemoButton.hidden = document.body.dataset.appView !== "notes";
+  }
+
+  if (isEditingFromDetailView) {
+    const memoIdToReopen = editingFromDetailMemoId;
+    isEditingFromDetailView = false;
+    editingFromDetailMemoId = "";
+
+    const memoToReopen = memoIdToReopen ? findMemoById(memoIdToReopen) : null;
+
+    if (memoToReopen) {
+      openDetailModal(memoToReopen, { skipHistory: true });
+    }
   }
 }
 

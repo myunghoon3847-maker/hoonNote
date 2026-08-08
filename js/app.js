@@ -16,6 +16,8 @@ let selectedMemoIds = new Set();
 let calendarViewDate = new Date();
 let selectedCalendarDateKey = "";
 let sidebarCollapsed = false;
+let isEditingFromDetailView = false;
+let editingFromDetailMemoId = "";
 let memoLongPressTimer = null;
 let memoLongPressTargetId = null;
 let memoLongPressMoved = false;
@@ -1798,7 +1800,7 @@ function handleHomeLogoClick(event) {
 }
 
 function switchAppView(view, options = {}) {
-  const allowedViews = ["notes", "tasks", "calendar", "trash"];
+  const allowedViews = ["notes", "trash"];
   currentAppView = allowedViews.includes(view) ? view : "notes";
 
   if (currentAppView !== "notes") {
@@ -4136,6 +4138,9 @@ async function handleEditClick() {
   }
 
   switchAppView("notes");
+  isEditingFromDetailView = true;
+  editingFromDetailMemoId = memoId;
+  document.querySelector("#editorView")?.classList.add("editor-view-as-modal");
   fillFormForEdit(memo);
   loadDraftTasks(memo.tasks);
   markEditorClean();
@@ -4541,9 +4546,9 @@ function bindEvents() {
   restoreDraftButton.addEventListener("click", restoreLocalEditorDraft);
   discardDraftButton.addEventListener("click", discardLocalEditorDraft);
 
-  addTaskButton.addEventListener("click", handleAddTask);
-  taskInput.addEventListener("keydown", handleTaskInputKeydown);
-  taskDraftList.addEventListener("click", handleTaskDraftListClick);
+  addTaskButton?.addEventListener("click", handleAddTask);
+  taskInput?.addEventListener("keydown", handleTaskInputKeydown);
+  taskDraftList?.addEventListener("click", handleTaskDraftListClick);
   taskHubViewTabs.addEventListener("click", handleTaskHubViewClick);
   taskHubList.addEventListener("click", (event) => {
     void handleTaskHubClick(event);
