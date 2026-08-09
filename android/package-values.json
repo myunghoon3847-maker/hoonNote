@@ -5,7 +5,7 @@
   "host": "myunghoon3847-maker.github.io",
   "startUrl": "/hoonNote/",
   "manifestUrl": "https://myunghoon3847-maker.github.io/hoonNote/manifest.json",
-  "themeColor": "#7C3AED",
+  "themeColor": "#0EA5E9",
   "navigationColor": "#FFFFFF",
   "backgroundColor": "#F8FAFC",
   "display": "standalone",
@@ -18,6 +18,6 @@
   "releaseTrack": "Closed testing",
   "signing": "New Google Play upload key",
   "buildFormat": "AAB",
-  "webVersion": "4.9.8",
-  "assetVersion": "498"
+  "webVersion": "4.9.10",
+  "assetVersion": "500"
 }

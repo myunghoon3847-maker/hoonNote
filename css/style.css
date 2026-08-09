@@ -8,9 +8,9 @@
   --line-strong: #cbd5e1;
   --text: #0f172a;
   --muted: #64748b;
-  --primary: #7c3aed;
-  --primary-soft: #f5f3ff;
-  --primary-line: #ddd6fe;
+  --primary: #0ea5e9;
+  --primary-soft: #f0f9ff;
+  --primary-line: #bae6fd;
   --danger: #dc2626;
   --danger-soft: #fef2f2;
   --success: #059669;
@@ -100,7 +100,7 @@ select:focus-visible {
 }
 
 .primary-button:hover {
-  background: #6d28d9;
+  background: #0369a1;
 }
 
 .secondary-button {
@@ -115,7 +115,7 @@ select:focus-visible {
 .secondary-button.active {
   border-color: var(--primary-line);
   background: var(--primary-soft);
-  color: #6d28d9;
+  color: #0369a1;
 }
 
 
@@ -286,7 +286,7 @@ button:disabled {
 .memo-form input:focus,
 .memo-form textarea:focus,
 .memo-form select:focus {
-  border-color: #c4b5fd;
+  border-color: #7dd3fc;
 }
 
 .auth-link-button {
@@ -477,12 +477,7 @@ button:disabled {
   background: #e9eef7;
 }
 
-.primary-view-tabs {
-  display: none;
-}
-
-#tasksViewTab,
-#calendarViewTab {
+#tasksViewTab {
   display: none;
 }
 
@@ -511,8 +506,8 @@ button:disabled {
   margin-left: 5px;
   padding: 0 6px;
   border-radius: 999px;
-  background: #ede9fe;
-  color: #6d28d9;
+  background: #e0f2fe;
+  color: #0369a1;
   font-size: 11px;
 }
 
@@ -831,7 +826,8 @@ button:disabled {
 .bookmark-link {
   flex: 1 1 auto;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 9px;
   min-width: 0;
   padding: 9px 12px;
   border: 1px solid var(--line);
@@ -846,14 +842,35 @@ button:disabled {
   background: var(--primary-soft);
 }
 
-.bookmark-link strong {
+.bookmark-favicon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.bookmark-favicon-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.bookmark-link-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bookmark-link-copy strong {
   overflow: hidden;
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.bookmark-link span {
+.bookmark-link-copy span {
   overflow: hidden;
   color: var(--muted);
   font-size: 11px;
@@ -933,8 +950,8 @@ button:disabled {
 
 .category-tab.protected-category-tab {
   border-color: #e9d5ff;
-  background: #f3e8ff;
-  color: #5B21B6;
+  background: #e0f2fe;
+  color: #075985;
 }
 
 .category-tab.protected-category-tab:hover {
@@ -943,8 +960,8 @@ button:disabled {
 }
 
 .category-tab.protected-category-tab.active {
-  border-color: #7c3aed;
-  background: #7c3aed;
+  border-color: #0ea5e9;
+  background: #0ea5e9;
   color: #ffffff;
 }
 
@@ -1130,7 +1147,7 @@ body.memo-selection-active #editorToggleButton {
 
 .due-date-chip {
   background: var(--primary-soft);
-  color: #6d28d9;
+  color: #0369a1;
 }
 
 .due-date-chip.overdue {
@@ -1145,7 +1162,7 @@ body.memo-selection-active #editorToggleButton {
 
 .task-progress-chip {
   background: var(--primary-soft);
-  color: #6d28d9;
+  color: #0369a1;
 }
 
 .memo-date {
@@ -1172,8 +1189,18 @@ body.memo-selection-active #editorToggleButton {
 }
 
 .star-mark {
+  display: inline-block;
   margin-right: 5px;
+  color: var(--line-strong);
+  cursor: pointer;
+}
+
+.star-mark.active {
   color: #f59e0b;
+}
+
+.star-mark:hover {
+  transform: scale(1.15);
 }
 
 .empty-state {
@@ -1386,7 +1413,7 @@ body.memo-selection-active #editorToggleButton {
   justify-content: center;
   width: 21px;
   height: 21px;
-  border: 2px solid #c4b5fd;
+  border: 2px solid #7dd3fc;
   border-radius: 6px;
   background: var(--surface);
   color: #ffffff;
@@ -1664,7 +1691,7 @@ body.memo-selection-active #editorToggleButton {
 
 .data-stat-button {
   width: 100%;
-  border: 1px solid #ede9fe;
+  border: 1px solid #e0f2fe;
   background: var(--primary-soft);
   cursor: pointer;
   text-align: left;
@@ -1672,8 +1699,8 @@ body.memo-selection-active #editorToggleButton {
 
 .data-stat-button:hover,
 .data-stat-button:focus-visible {
-  border-color: #c4b5fd;
-  background: #ede9fe;
+  border-color: #7dd3fc;
+  background: #e0f2fe;
 }
 
 .data-stats strong {
@@ -1762,7 +1789,7 @@ body.memo-selection-active #editorToggleButton {
   padding: 0 8px;
   border-radius: 999px;
   background: var(--primary-soft);
-  color: #6d28d9;
+  color: #0369a1;
   font-weight: 700;
 }
 
@@ -1996,7 +2023,7 @@ body.memo-selection-active #editorToggleButton {
   justify-content: center;
   width: 20px;
   height: 20px;
-  border: 2px solid #c4b5fd;
+  border: 2px solid #7dd3fc;
   border-radius: 6px;
   background: var(--surface);
   color: #ffffff;
@@ -2050,7 +2077,7 @@ body.memo-selection-active #editorToggleButton {
 .detail-modal-card .detail-actions {
   flex: 0 0 auto;
   margin-top: 0;
-  padding: 14px 22px;
+  padding: 16px 22px calc(24px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
 }
 
@@ -2335,7 +2362,7 @@ body.memo-selection-active #editorToggleButton {
 }
 
 .account-deletion-status[data-state="info"] {
-  color: #6d28d9;
+  color: #0369a1;
 }
 
 .account-deletion-status[data-state="success"] {
@@ -2670,13 +2697,13 @@ body {
   min-height: 38px;
   border: 1px solid var(--primary-line);
   background: var(--primary-soft);
-  color: #6d28d9;
+  color: #0369a1;
   text-align: center;
 }
 
 .editor-category-manage-button:hover {
-  border-color: #c4b5fd;
-  background: #ede9fe;
+  border-color: #7dd3fc;
+  background: #e0f2fe;
 }
 
 
@@ -3339,7 +3366,7 @@ body {
 
 .category-picker-option[aria-selected="true"] {
   background: var(--primary-soft);
-  color: #6d28d9;
+  color: #0369a1;
   font-weight: 800;
 }
 
@@ -3596,7 +3623,7 @@ body {
   }
 
   .inline-editor-view.editor-view-as-modal .editor-panel {
-    width: min(440px, 40vw);
+    width: min(680px, 56vw);
     max-height: 100%;
     height: 100%;
     border-radius: 0;
@@ -3658,8 +3685,8 @@ body.auth-logged-in .app-notice-region {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #7c3aed;
-  box-shadow: 0 0 0 4px #ede9fe;
+  background: #0ea5e9;
+  box-shadow: 0 0 0 4px #e0f2fe;
 }
 
 .app-notice[data-state="success"] .app-notice-marker {
@@ -3721,7 +3748,7 @@ body.auth-logged-in .app-notice-region {
 .app-notice-action {
   padding: 0 9px;
   background: var(--primary-soft);
-  color: #6d28d9;
+  color: #0369a1;
   font-size: 11px;
   white-space: nowrap;
 }
@@ -3805,6 +3832,12 @@ button[aria-busy="true"]::after {
 }
 
 /* v4.7.0-dev1 memo block editor foundation and link blocks */
+.editor-divider {
+  margin: 14px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
 .memo-content-heading-row {
   display: flex;
   align-items: center;
@@ -3820,7 +3853,7 @@ button[aria-busy="true"]::after {
   border: 1px solid #ddd6fe;
   border-radius: 999px;
   background: #f5f3ff;
-  color: #6d28d9;
+  color: #0369a1;
   font-size: 11px;
   font-weight: 800;
   white-space: nowrap;
@@ -3867,7 +3900,7 @@ button[aria-busy="true"]::after {
   display: grid;
   gap: 9px;
   padding: 12px;
-  border: 1px solid #ede9fe;
+  border: 1px solid #e0f2fe;
   border-radius: 14px;
   background: #faf8ff;
 }
@@ -3931,7 +3964,7 @@ button[aria-busy="true"]::after {
   height: 32px;
   border-radius: 10px;
   background: #f5f3ff;
-  color: #7c3aed;
+  color: #0ea5e9;
   font-weight: 900;
 }
 
@@ -3973,7 +4006,7 @@ button[aria-busy="true"]::after {
   padding: 0 8px;
   border-radius: 999px;
   background: #f5f3ff;
-  color: #6d28d9;
+  color: #0369a1;
   font-size: 10px;
   font-weight: 900;
 }
@@ -4240,6 +4273,28 @@ button[aria-busy="true"]::after {
   font-weight: 700;
 }
 
+.calendar-day.saturday .calendar-day-number {
+  color: #2563eb;
+}
+
+.calendar-day.sunday .calendar-day-number,
+.calendar-day.holiday .calendar-day-number {
+  color: #dc2626;
+}
+
+.calendar-day.today .calendar-day-number {
+  color: var(--primary);
+}
+
+.calendar-day-holiday-name {
+  overflow: hidden;
+  max-width: 100%;
+  color: #dc2626;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .calendar-day.selected {
   border-color: var(--primary);
   background: var(--primary-soft);
@@ -4266,6 +4321,24 @@ button[aria-busy="true"]::after {
 .calendar-day-list {
   display: grid;
   gap: 8px;
+}
+
+.calendar-add-memo-button {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--primary-line);
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary);
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.calendar-add-memo-button:hover {
+  background: #e0f2fe;
 }
 
 .calendar-day-empty {
@@ -4344,7 +4417,7 @@ button[aria-busy="true"]::after {
 .styled-option-chip.active {
   border-color: var(--primary);
   background: var(--primary-soft);
-  color: #6d28d9;
+  color: #0369a1;
 }
 
 .styled-color-options {
@@ -4437,7 +4510,7 @@ button[aria-busy="true"]::after {
 .styled-paragraph-block.color-orange { color: #c2410c; }
 .styled-paragraph-block.color-green { color: #059669; }
 .styled-paragraph-block.color-blue { color: #2563eb; }
-.styled-paragraph-block.color-purple { color: #7c3aed; }
+.styled-paragraph-block.color-purple { color: #0ea5e9; }
 
 .detail-table-wrap {
   margin: 12px 0;
@@ -4485,6 +4558,11 @@ button[aria-busy="true"]::after {
 
 /* ===== PDF 내보내기(인쇄) ===== */
 @media print {
+  .app {
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
   .app-header,
   .status-banner,
   .primary-view-tabs,

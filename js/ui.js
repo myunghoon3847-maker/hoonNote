@@ -234,7 +234,7 @@ function renderMemoList(memos) {
       const safeContent = escapeHtml(memo.content);
       const safeCategory = memo.isDeleted ? "휴지통" : escapeHtml(memo.category);
       const date = formatDate(memo.updatedAt || memo.createdAt);
-      const importantMark = memo.isImportant ? '<span class="star-mark" aria-label="중요 메모">★</span>' : "";
+      const importantMark = `<span class="star-mark${memo.isImportant ? " active" : ""}" data-toggle-important="true" data-id="${escapeHtml(memo.id)}" role="button" tabindex="0" aria-label="${memo.isImportant ? "중요 표시 해제" : "중요 표시"}">${memo.isImportant ? "★" : "☆"}</span>`;
       const progress = getTaskProgress(memo.tasks);
       const taskChip =
         progress.total > 0
@@ -538,6 +538,33 @@ function toDateKey(date) {
   return `${year}-${month}-${day}`;
 }
 
+const KOREAN_HOLIDAYS_2026 = {
+  "2026-01-01": "신정",
+  "2026-02-16": "설날 연휴",
+  "2026-02-17": "설날",
+  "2026-02-18": "설날 연휴",
+  "2026-03-01": "삼일절",
+  "2026-03-02": "삼일절 대체공휴일",
+  "2026-05-01": "노동절",
+  "2026-05-05": "어린이날",
+  "2026-05-24": "부처님오신날",
+  "2026-05-25": "부처님오신날 대체공휴일",
+  "2026-06-06": "현충일",
+  "2026-08-15": "광복절",
+  "2026-08-17": "광복절 대체공휴일",
+  "2026-09-24": "추석 연휴",
+  "2026-09-25": "추석",
+  "2026-09-26": "추석 연휴",
+  "2026-10-03": "개천절",
+  "2026-10-05": "개천절 대체공휴일",
+  "2026-10-09": "한글날",
+  "2026-12-25": "크리스마스",
+};
+
+function getHolidayName(dateKey) {
+  return KOREAN_HOLIDAYS_2026[dateKey] || "";
+}
+
 function renderCalendar() {
   const grid = document.querySelector("#calendarGrid");
   const monthLabel = document.querySelector("#calendarMonthLabel");
@@ -575,6 +602,8 @@ function renderCalendar() {
   for (let i = 0; i < 42; i += 1) {
     const cellDate = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate() + i);
     const dateKey = toDateKey(cellDate);
+    const weekday = cellDate.getDay();
+    const holidayName = getHolidayName(dateKey);
     const classNames = ["calendar-day"];
 
     if (cellDate.getMonth() !== month) {
@@ -589,11 +618,20 @@ function renderCalendar() {
       classNames.push("selected");
     }
 
+    if (holidayName) {
+      classNames.push("holiday");
+    } else if (weekday === 0) {
+      classNames.push("sunday");
+    } else if (weekday === 6) {
+      classNames.push("saturday");
+    }
+
     const hasMemo = Boolean(memosByDate[dateKey]);
 
     cells.push(`
-      <button type="button" class="${classNames.join(" ")}" data-date="${dateKey}">
-        <span>${cellDate.getDate()}</span>
+      <button type="button" class="${classNames.join(" ")}" data-date="${dateKey}"${holidayName ? ` title="${escapeHtml(holidayName)}"` : ""}>
+        <span class="calendar-day-number">${cellDate.getDate()}</span>
+        ${holidayName ? `<span class="calendar-day-holiday-name">${escapeHtml(holidayName)}</span>` : ""}
         ${hasMemo ? '<span class="calendar-day-dot" aria-hidden="true"></span>' : ""}
       </button>
     `);
@@ -621,31 +659,40 @@ function renderCalendarDayList() {
   }
 
   const [year, month, day] = dateKey.split("-").map(Number);
-  dateLabel.textContent = `${year}년 ${month}월 ${day}일`;
+  const holidayName = getHolidayName(dateKey);
+  dateLabel.textContent = `${year}년 ${month}월 ${day}일${holidayName ? ` · ${holidayName}` : ""}`;
 
   const dayMemos = getMemos().filter(
     (memo) => !memo.isDeleted && memo.dueDate === dateKey
   );
 
+  const addButtonHtml = `
+    <button type="button" class="calendar-add-memo-button" id="calendarAddMemoButton" data-date="${escapeHtml(dateKey)}">
+      + 이 날짜에 메모 추가
+    </button>
+  `;
+
   if (dayMemos.length === 0) {
-    dayList.innerHTML = '<p class="calendar-day-empty">이 날짜에 등록된 메모가 없습니다.</p>';
+    dayList.innerHTML = addButtonHtml + '<p class="calendar-day-empty">이 날짜에 등록된 메모가 없습니다.</p>';
     return;
   }
 
-  dayList.innerHTML = dayMemos
-    .map((memo) => {
-      const safeTitle = escapeHtml(memo.title || "제목 없음");
-      const safeCategory = escapeHtml(memo.category);
-      const safeId = escapeHtml(memo.id);
+  dayList.innerHTML =
+    addButtonHtml +
+    dayMemos
+      .map((memo) => {
+        const safeTitle = escapeHtml(memo.title || "제목 없음");
+        const safeCategory = escapeHtml(memo.category);
+        const safeId = escapeHtml(memo.id);
 
-      return `
-        <button type="button" class="calendar-day-item" data-id="${safeId}">
-          <strong>${safeTitle}</strong>
-          <span>${safeCategory}</span>
-        </button>
-      `;
-    })
-    .join("");
+        return `
+          <button type="button" class="calendar-day-item" data-id="${safeId}">
+            <strong>${safeTitle}</strong>
+            <span>${safeCategory}</span>
+          </button>
+        `;
+      })
+      .join("");
 }
 
 function renderCategoryBrowser() {
@@ -697,12 +744,24 @@ function renderBookmarkList() {
       const safeTitle = escapeHtml(bookmark.title);
       const safeUrl = escapeHtml(bookmark.url);
       const safeId = escapeHtml(bookmark.id);
+      let domain = "";
+
+      try {
+        domain = new URL(bookmark.url).hostname;
+      } catch (_) {}
+
+      const faviconHtml = domain
+        ? `<img class="bookmark-favicon" src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}" alt="" aria-hidden="true" loading="lazy"/>`
+        : '<span class="bookmark-favicon bookmark-favicon-fallback" aria-hidden="true">🔗</span>';
 
       return `
         <div class="bookmark-row">
           <a class="bookmark-link" href="${safeUrl}" rel="noopener noreferrer" target="_blank">
-            <strong>${safeTitle}</strong>
-            <span>${safeUrl}</span>
+            ${faviconHtml}
+            <span class="bookmark-link-copy">
+              <strong>${safeTitle}</strong>
+              <span>${safeUrl}</span>
+            </span>
           </a>
           <button aria-label="${safeTitle} 삭제" class="bookmark-delete-button" data-id="${safeId}" type="button">×</button>
         </div>

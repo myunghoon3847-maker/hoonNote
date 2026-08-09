@@ -16,6 +16,12 @@ let selectedMemoIds = new Set();
 let calendarViewDate = new Date();
 let selectedCalendarDateKey = "";
 let sidebarCollapsed = false;
+let styledParagraphSourceSelection = null;
+let bookmarkLongPressTimer = null;
+let bookmarkLongPressMoved = false;
+let bookmarkLongPressStartX = 0;
+let bookmarkLongPressStartY = 0;
+let bookmarkLongPressId = "";
 let isEditingFromDetailView = false;
 let editingFromDetailMemoId = "";
 let memoLongPressTimer = null;
@@ -700,15 +706,32 @@ function openStyledParagraphEditor(block = null) {
     return;
   }
 
+  styledParagraphSourceSelection = null;
+
+  let prefillText = block?.text || "";
+
+  if (!block && contentInput && contentInput.selectionStart !== contentInput.selectionEnd) {
+    const selectionStart = contentInput.selectionStart;
+    const selectionEnd = contentInput.selectionEnd;
+    const selectedText = contentInput.value.slice(selectionStart, selectionEnd).trim();
+
+    if (selectedText) {
+      prefillText = selectedText;
+      styledParagraphSourceSelection = { start: selectionStart, end: selectionEnd };
+    }
+  }
+
   styledParagraphForm.reset();
   editingStyledIdInput.value = block?.id || "";
-  styledTextInput.value = block?.text || "";
+  styledTextInput.value = prefillText;
   styledBoldInput.checked = Boolean(block?.bold);
   setStyledSizeSelection(block?.size || "normal");
   setStyledColorSelection(block?.color || "default");
   document.querySelector("#saveStyledParagraphButton").textContent = block ? "수정 완료" : "추가";
   document.querySelector("#styledParagraphTitle").textContent = block ? "서식 문단 수정" : "서식 문단 삽입";
-  setStyledParagraphStatus();
+  setStyledParagraphStatus(
+    styledParagraphSourceSelection ? "본문에서 선택한 내용을 가져왔습니다. 저장하면 본문에서는 지워져요." : ""
+  );
 
   styledParagraphModal.hidden = false;
   styledParagraphModal.classList.remove("hidden");
@@ -729,6 +752,7 @@ function closeStyledParagraphEditor() {
   document.body.classList.remove("modal-open");
   styledParagraphForm?.reset();
   setStyledParagraphStatus();
+  styledParagraphSourceSelection = null;
 }
 
 function handleStyledParagraphSubmit(event) {
@@ -759,6 +783,13 @@ function handleStyledParagraphSubmit(event) {
   } else {
     draftStyledParagraphs.push(block);
   }
+
+  if (!existingId && styledParagraphSourceSelection && contentInput) {
+    const { start, end } = styledParagraphSourceSelection;
+    contentInput.value = contentInput.value.slice(0, start) + contentInput.value.slice(end);
+  }
+
+  styledParagraphSourceSelection = null;
 
   renderDraftStyledParagraphs();
   updateEditorDirtyState();
@@ -1800,7 +1831,7 @@ function handleHomeLogoClick(event) {
 }
 
 function switchAppView(view, options = {}) {
-  const allowedViews = ["notes", "trash"];
+  const allowedViews = ["notes", "calendar", "trash"];
   currentAppView = allowedViews.includes(view) ? view : "notes";
 
   if (currentAppView !== "notes") {
@@ -3640,6 +3671,13 @@ function handleMemoListClick(event) {
     return;
   }
 
+  const importantToggle = event.target.closest("[data-toggle-important]");
+
+  if (importantToggle) {
+    void handleToggleImportantFromCard(importantToggle.dataset.id);
+    return;
+  }
+
   const emptyActionButton = event.target.closest("[data-empty-action]");
 
   if (emptyActionButton) {
@@ -3872,19 +3910,71 @@ async function handleBookmarkFormSubmit(event) {
   renderBookmarkList();
 }
 
-async function handleBookmarkListClick(event) {
-  const deleteButton = event.target.closest(".bookmark-delete-button");
+function clearBookmarkLongPressTimer() {
+  if (bookmarkLongPressTimer) {
+    clearTimeout(bookmarkLongPressTimer);
+    bookmarkLongPressTimer = null;
+  }
+}
 
-  if (!deleteButton) {
+function handleBookmarkListPointerDown(event) {
+  if (event.pointerType === "mouse") {
     return;
   }
 
-  const id = deleteButton.dataset.id;
+  const row = event.target.closest(".bookmark-row");
 
-  if (!id) {
+  if (!row) {
     return;
   }
 
+  const deleteButton = row.querySelector(".bookmark-delete-button");
+  bookmarkLongPressId = deleteButton?.dataset.id || "";
+
+  if (!bookmarkLongPressId) {
+    return;
+  }
+
+  bookmarkLongPressMoved = false;
+  bookmarkLongPressStartX = event.clientX;
+  bookmarkLongPressStartY = event.clientY;
+
+  clearBookmarkLongPressTimer();
+  bookmarkLongPressTimer = setTimeout(() => {
+    bookmarkLongPressTimer = null;
+
+    if (bookmarkLongPressMoved || !bookmarkLongPressId) {
+      return;
+    }
+
+    if (navigator.vibrate) {
+      navigator.vibrate(15);
+    }
+
+    void confirmAndDeleteBookmark(bookmarkLongPressId);
+  }, MEMO_LONG_PRESS_DURATION_MS);
+}
+
+function handleBookmarkListPointerMove(event) {
+  if (!bookmarkLongPressTimer) {
+    return;
+  }
+
+  const deltaX = Math.abs(event.clientX - bookmarkLongPressStartX);
+  const deltaY = Math.abs(event.clientY - bookmarkLongPressStartY);
+
+  if (deltaX > MEMO_LONG_PRESS_MOVE_TOLERANCE_PX || deltaY > MEMO_LONG_PRESS_MOVE_TOLERANCE_PX) {
+    bookmarkLongPressMoved = true;
+    clearBookmarkLongPressTimer();
+  }
+}
+
+function handleBookmarkListPointerUp() {
+  clearBookmarkLongPressTimer();
+  bookmarkLongPressId = "";
+}
+
+async function confirmAndDeleteBookmark(id) {
   const shouldDelete = confirm("이 즐겨찾기를 삭제하시겠습니까?");
 
   if (!shouldDelete) {
@@ -3904,6 +3994,22 @@ async function handleBookmarkListClick(event) {
   }
 
   renderBookmarkList();
+}
+
+async function handleBookmarkListClick(event) {
+  const deleteButton = event.target.closest(".bookmark-delete-button");
+
+  if (!deleteButton) {
+    return;
+  }
+
+  const id = deleteButton.dataset.id;
+
+  if (!id) {
+    return;
+  }
+
+  await confirmAndDeleteBookmark(id);
 }
 
 
@@ -4028,6 +4134,13 @@ function handleCalendarGridClick(event) {
 }
 
 function handleCalendarDayListClick(event) {
+  const addButton = event.target.closest("#calendarAddMemoButton");
+
+  if (addButton) {
+    handleCalendarAddMemoClick(addButton.dataset.date);
+    return;
+  }
+
   const item = event.target.closest(".calendar-day-item");
 
   if (!item) {
@@ -4039,6 +4152,40 @@ function handleCalendarDayListClick(event) {
   if (memo) {
     openDetailModal(memo);
   }
+}
+
+function handleCalendarAddMemoClick(dateKey) {
+  switchAppView("notes");
+
+  if (!confirmDiscardEditorChanges()) {
+    return;
+  }
+
+  if (readLocalEditorDraft()) {
+    const shouldStartNew = window.confirm(
+      "자동 저장된 초안이 있습니다. 초안을 삭제하고 새 메모를 작성하시겠습니까?"
+    );
+
+    if (!shouldStartNew) {
+      showDraftRecoveryBanner(readLocalEditorDraft());
+      return;
+    }
+
+    clearLocalEditorDraft();
+  }
+
+  resetForm();
+  openEditor();
+
+  if (dueDateInput && dateKey) {
+    dueDateInput.value = dateKey;
+  }
+
+  document.querySelector(".editor-panel")?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+  window.setTimeout(() => titleInput?.focus(), 250);
 }
 
 function applySidebarCollapsedState() {
@@ -4064,6 +4211,28 @@ function toggleSidebarCollapse() {
     window.localStorage.setItem("solonote_sidebar_collapsed", sidebarCollapsed ? "1" : "0");
   } catch (_) {
     /* 저장 실패는 무시 (시크릿 모드 등) */
+  }
+}
+
+async function handleToggleImportantFromCard(memoId) {
+  const memo = findMemoById(memoId);
+
+  if (!memo) {
+    return;
+  }
+
+  const updatedData = { ...memo, isImportant: !memo.isImportant };
+
+  const result = await runCloudAction(
+    () => updateMemo(memoId, updatedData, memo.updatedAt),
+    {
+      loadingMessage: "중요 표시 변경 중",
+      successMessage: memo.isImportant ? "중요 표시를 해제했습니다." : "중요 표시했습니다.",
+    }
+  );
+
+  if (!result) {
+    return;
   }
 }
 
@@ -4241,6 +4410,22 @@ function handleOutsideDetailClick(event) {
   }
 
   closeDetailModal();
+}
+
+function handleOutsideAppMenuClick(event) {
+  if (!isAppMenuOpen || isDesktopLayout()) {
+    return;
+  }
+
+  if (appMenuPanel?.contains(event.target)) {
+    return;
+  }
+
+  if (event.target.closest("#appMenuButton")) {
+    return;
+  }
+
+  closeAppMenu();
 }
 
 function getTodayTextForFileName() {
@@ -4527,6 +4712,7 @@ function bindEvents() {
   document.querySelector("#closeDetailButton").addEventListener("click", closeDetailModal);
   document.querySelector("#detailModal").addEventListener("click", handleModalClick);
   document.addEventListener("click", handleOutsideDetailClick, true);
+  document.addEventListener("click", handleOutsideAppMenuClick, true);
   document.querySelector("#editMemoButton").addEventListener("click", handleEditClick);
   document.querySelector("#deleteMemoButton").addEventListener("click", handleDeleteClick);
 
@@ -4573,6 +4759,11 @@ function bindEvents() {
   bookmarkList?.addEventListener("click", (event) => {
     void handleBookmarkListClick(event);
   });
+  bookmarkList?.addEventListener("pointerdown", handleBookmarkListPointerDown);
+  bookmarkList?.addEventListener("pointermove", handleBookmarkListPointerMove);
+  bookmarkList?.addEventListener("pointerup", handleBookmarkListPointerUp);
+  bookmarkList?.addEventListener("pointercancel", handleBookmarkListPointerUp);
+  bookmarkList?.addEventListener("pointerleave", handleBookmarkListPointerUp);
   window.addEventListener("beforeunload", handleBeforeUnload);
   window.addEventListener("solonote-before-logout", handleBeforeLogout);
 

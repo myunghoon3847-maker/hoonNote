@@ -5,17 +5,17 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=498" rel="manifest"/>
-<meta content="#7c3aed" name="theme-color"/>
+<link href="./manifest.json?v=500" rel="manifest"/>
+<meta content="#0ea5e9" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
 <meta content="yes" name="apple-mobile-web-app-capable"/>
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=498" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=498" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=498" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=500" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=500" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=500" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +126,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=498"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=500"/>
 </a>
 </div>
 <div class="header-actions">
@@ -213,6 +213,7 @@
 <input id="projectInput" type="hidden"/>
 <label for="titleInput">제목</label>
 <input autocomplete="off" id="titleInput" maxlength="300" placeholder="메모 제목" type="text"/>
+<hr class="editor-divider"/>
 <div class="memo-content-heading-row">
 <label for="contentInput">내용</label>
 <span class="editor-format-badge">블록 편집기 미리보기</span>
@@ -285,6 +286,10 @@
 <button aria-controls="categoryManagerModal" aria-haspopup="dialog" aria-label="카테고리 추가 및 관리" class="secondary-button editor-category-manage-button" id="editorCategoryManagerButton" type="button">
                   카테고리 추가·관리
                 </button>
+</div>
+<div class="date-field">
+<label for="dueDateInput">날짜 (선택)</label>
+<input id="dueDateInput" type="date"/>
 </div>
 </div>
 <div class="form-footer">
@@ -590,7 +595,7 @@
 </div>
 <div class="menu-footer">
 <span>CREATIVE NOTE</span>
-<span class="version-badge">v4.9.8</span>
+<span class="version-badge">v4.9.10</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -806,13 +811,13 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=498"></script>
-<script src="./js/feedback.js?v=498"></script>
-<script src="./js/auth.js?v=498"></script>
-<script src="./js/storage.js?v=498"></script>
-<script src="./js/ui.js?v=498"></script>
-<script src="./js/app.js?v=498"></script>
-<script src="./js/account.js?v=498"></script>
-<script src="./js/pwa.js?v=498"></script>
+<script src="./js/config.js?v=500"></script>
+<script src="./js/feedback.js?v=500"></script>
+<script src="./js/auth.js?v=500"></script>
+<script src="./js/storage.js?v=500"></script>
+<script src="./js/ui.js?v=500"></script>
+<script src="./js/app.js?v=500"></script>
+<script src="./js/account.js?v=500"></script>
+<script src="./js/pwa.js?v=500"></script>
 </body>
 </html>
