@@ -528,6 +528,10 @@ function normalizeMemo(memo) {
       memo && memo.isImportant !== undefined
         ? Boolean(memo.isImportant)
         : Boolean(memo && memo.is_important),
+    isPinned:
+      memo && memo.isPinned !== undefined
+        ? Boolean(memo.isPinned)
+        : Boolean(memo && memo.is_pinned),
     dueDate: normalizeDueDate(memo && (memo.dueDate ?? memo.due_date)),
     tasks: normalizeTasks(memo && memo.tasks),
   };
@@ -543,6 +547,7 @@ function mapDatabaseRowToMemo(row) {
     category: row.category,
     project: row.project,
     isImportant: row.is_important,
+    isPinned: row.is_pinned,
     isDeleted: row.is_deleted,
     dueDate: row.due_date,
     tasks: row.tasks,
@@ -1215,6 +1220,7 @@ function toDatabasePayload(memoData, userId) {
     category: normalizeCategory(memoData.category),
     project: normalizeProject(memoData.project),
     is_important: Boolean(memoData.isImportant),
+    is_pinned: Boolean(memoData.isPinned),
     is_deleted: Boolean(memoData.isDeleted),
     due_date: normalizeDueDate(memoData.dueDate),
     tasks: normalizeTasks(memoData.tasks),

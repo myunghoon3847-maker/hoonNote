@@ -1802,6 +1802,16 @@ function handleHomeLogoClick(event) {
   closeCategoryManager({ skipHistory: true });
   closeDetailModal({ skipHistory: true });
 
+  if (memoGridViewEnabled) {
+    memoGridViewEnabled = false;
+    applyMemoGridView();
+    try {
+      window.localStorage.setItem("solonote_memo_grid_view", "0");
+    } catch (_) {
+      /* 저장 실패는 무시 */
+    }
+  }
+
   let savedDraft = null;
 
   if (isEditorOpen()) {
@@ -3344,6 +3354,7 @@ function refreshScreen() {
 
   const filteredMemos = getFilteredMemos();
   renderMemoList(filteredMemos);
+  renderPinnedStrip();
   renderCategoryBrowser();
   setActiveSort(currentSort);
   refreshTrashView();
@@ -4353,6 +4364,50 @@ function toggleSidebarCollapse() {
   }
 }
 
+const MAX_PINNED_MEMOS = 5;
+
+async function handleTogglePin(memoId) {
+  const memo = findMemoById(memoId);
+
+  if (!memo) {
+    return;
+  }
+
+  if (!memo.isPinned) {
+    const pinnedCount = getMemos().filter((item) => item.isPinned && !item.isDeleted).length;
+
+    if (pinnedCount >= MAX_PINNED_MEMOS) {
+      showAppNotice(
+        `고정은 최대 ${MAX_PINNED_MEMOS}개까지 가능합니다. 먼저 하나를 해제해주세요.`,
+        "warning",
+        { title: "고정 한도 초과" }
+      );
+      return;
+    }
+  }
+
+  const updatedData = { ...memo, isPinned: !memo.isPinned };
+
+  const result = await runCloudAction(
+    () => updateMemo(memoId, updatedData, memo.updatedAt),
+    {
+      loadingMessage: "고정 상태 변경 중",
+      successMessage: memo.isPinned ? "고정을 해제했습니다." : "고정했습니다.",
+    }
+  );
+
+  if (!result) {
+    return;
+  }
+
+  const pinButton = document.querySelector("#pinMemoButton");
+  if (pinButton) {
+    pinButton.textContent = result.isPinned ? "고정 해제" : "고정하기";
+  }
+
+  renderPinnedStrip();
+}
+
 async function handleToggleImportantFromCard(memoId) {
   const memo = findMemoById(memoId);
 
@@ -4887,6 +4942,20 @@ function bindEvents() {
   openTrashButton?.addEventListener("click", handleOpenTrashClick);
   categoryBrowserList?.addEventListener("click", handleCategoryBrowserClick);
   document.querySelector("#sidebarCollapseToggle")?.addEventListener("click", toggleSidebarCollapse);
+  document.querySelector("#mobileMenuCloseButton")?.addEventListener("click", () => closeAppMenu());
+  document.querySelector("#pinMemoButton")?.addEventListener("click", (event) => {
+    void handleTogglePin(event.currentTarget.dataset.id);
+  });
+  document.querySelector("#pinnedStrip")?.addEventListener("click", (event) => {
+    const item = event.target.closest(".pinned-strip-item");
+    if (!item) {
+      return;
+    }
+    const memo = findMemoById(item.dataset.id);
+    if (memo) {
+      openDetailModal(memo);
+    }
+  });
   document.querySelector("#editorResizeHandle")?.addEventListener("pointerdown", handleEditorResizeHandlePointerDown);
   document.addEventListener("pointermove", handleEditorResizeHandlePointerMove);
   document.addEventListener("pointerup", handleEditorResizeHandlePointerUp);

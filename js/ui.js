@@ -416,8 +416,15 @@ function openDetailModal(memo, options = {}) {
   const modal = document.querySelector("#detailModal");
   const editButton = document.querySelector("#editMemoButton");
   const deleteButton = document.querySelector("#deleteMemoButton");
+  const pinButton = document.querySelector("#pinMemoButton");
   const checklistContainer = document.querySelector("#detailChecklist");
   const linksContainer = document.querySelector("#detailLinks");
+
+  if (pinButton) {
+    pinButton.hidden = Boolean(memo.isDeleted);
+    pinButton.dataset.id = memo.id;
+    pinButton.textContent = memo.isPinned ? "고정 해제" : "고정하기";
+  }
 
   const detailParts = [];
 
@@ -705,6 +712,40 @@ function renderCalendarDayList() {
         `;
       })
       .join("");
+}
+
+function renderPinnedStrip() {
+  const strip = document.querySelector("#pinnedStrip");
+
+  if (!strip) {
+    return;
+  }
+
+  const pinned = getMemos()
+    .filter((memo) => memo.isPinned && !memo.isDeleted)
+    .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))
+    .slice(0, 5);
+
+  if (pinned.length === 0) {
+    strip.hidden = true;
+    strip.innerHTML = "";
+    return;
+  }
+
+  strip.hidden = false;
+  strip.innerHTML = pinned
+    .map((memo) => {
+      const safeTitle = escapeHtml(memo.title || "제목 없음");
+      const safeId = escapeHtml(memo.id);
+
+      return `
+        <button class="pinned-strip-item" data-id="${safeId}" type="button">
+          <span class="pinned-strip-icon" aria-hidden="true">📌</span>
+          <span class="pinned-strip-title">${safeTitle}</span>
+        </button>
+      `;
+    })
+    .join("");
 }
 
 function renderCategoryBrowser() {

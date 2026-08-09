@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=503" rel="manifest"/>
+<link href="./manifest.json?v=505" rel="manifest"/>
 <meta content="#0ea5e9" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
@@ -13,9 +13,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=503" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=503" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=503" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=505" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=505" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=505" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +126,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=503"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=505"/>
 </a>
 </div>
 <div class="header-actions">
@@ -228,19 +228,19 @@
 <textarea id="contentInput" maxlength="200000" placeholder="내용을 입력하세요." rows="11"></textarea>
 <div aria-label="메모 요소 삽입" class="memo-insert-toolbar">
 <span class="memo-insert-label">삽입</span>
-<button aria-haspopup="dialog" class="secondary-button compact-button memo-insert-button" id="addLinkButton" type="button">
+<button aria-haspopup="dialog" aria-label="링크 삽입" class="secondary-button compact-button memo-insert-button" id="addLinkButton" type="button">
 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="M10.6 13.4a4 4 0 0 0 5.7 0l2.1-2.1a4 4 0 0 0-5.7-5.7l-1.2 1.2"></path><path d="M13.4 10.6a4 4 0 0 0-5.7 0l-2.1 2.1a4 4 0 0 0 5.7 5.7l1.2-1.2"></path></svg>
 <span>링크</span>
 </button>
-<button aria-haspopup="dialog" class="secondary-button compact-button memo-insert-button" id="addStyledParagraphButton" type="button">
+<button aria-haspopup="dialog" aria-label="서식 문단 삽입" class="secondary-button compact-button memo-insert-button" id="addStyledParagraphButton" type="button">
 <span aria-hidden="true">가</span>
 <span>서식 문단</span>
 </button>
-<button aria-haspopup="dialog" class="secondary-button compact-button memo-insert-button" id="addTableButton" type="button">
+<button aria-haspopup="dialog" aria-label="표 삽입" class="secondary-button compact-button memo-insert-button" id="addTableButton" type="button">
 <span aria-hidden="true">▦</span>
 <span>표</span>
 </button>
-<button aria-haspopup="dialog" class="secondary-button compact-button memo-insert-button" id="addImageButton" type="button">
+<button aria-haspopup="dialog" aria-label="이미지 삽입" class="secondary-button compact-button memo-insert-button" id="addImageButton" type="button">
 <span aria-hidden="true">🖼</span>
 <span>이미지</span>
 </button>
@@ -331,6 +331,7 @@
 
 </div>
 </section>
+<div class="pinned-strip" hidden id="pinnedStrip"></div>
 <div class="list-controls-row">
 <nav aria-label="메모 정렬" class="sort-options" id="sortOptions">
 <button aria-pressed="true" class="sort-option active" data-sort="updatedDesc" type="button">
@@ -421,6 +422,7 @@
 <button aria-label="메뉴 목록으로 돌아가기" class="menu-header-back-button" hidden id="menuSettingsBackButton" title="뒤로가기" type="button">
 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"></path></svg>
 </button>
+<button aria-label="메뉴 닫기" class="menu-header-close-button" id="mobileMenuCloseButton" type="button">×</button>
 </div>
 <div class="menu-scroll">
 <div class="menu-subview menu-subview-main" id="menuMainView">
@@ -595,8 +597,8 @@
 <p>정식 메모는 클라우드에, 저장 전 초안은 현재 브라우저에 보관됩니다.</p>
 </div>
 <div class="guide-item">
-<strong>메모와 할 일</strong>
-<p>메모 화면은 기록과 검색, 할 일 화면은 체크리스트 관리에 사용합니다.</p>
+<strong>메모 작성</strong>
+<p>날짜, 체크리스트, 표, 이미지, 서식 문단을 추가해 자유롭게 기록할 수 있습니다.</p>
 </div>
 <div class="guide-item">
 <strong>백업</strong>
@@ -616,7 +618,7 @@
 </div>
 <div class="menu-footer">
 <span>CREATIVE NOTE</span>
-<span class="version-badge">v5.1</span>
+<span class="version-badge">v5.3</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -825,6 +827,7 @@
 <div id="detailChecklist"></div>
 </div>
 <div class="detail-actions">
+<button class="secondary-button" id="pinMemoButton" type="button">고정하기</button>
 <button class="secondary-button" id="exportPdfButton" type="button">PDF로 내보내기</button>
 <button class="secondary-button" id="editMemoButton" type="button">수정하기</button>
 <button class="danger-button" id="deleteMemoButton" type="button">삭제하기</button>
@@ -832,13 +835,13 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=503"></script>
-<script src="./js/feedback.js?v=503"></script>
-<script src="./js/auth.js?v=503"></script>
-<script src="./js/storage.js?v=503"></script>
-<script src="./js/ui.js?v=503"></script>
-<script src="./js/app.js?v=503"></script>
-<script src="./js/account.js?v=503"></script>
-<script src="./js/pwa.js?v=503"></script>
+<script src="./js/config.js?v=505"></script>
+<script src="./js/feedback.js?v=505"></script>
+<script src="./js/auth.js?v=505"></script>
+<script src="./js/storage.js?v=505"></script>
+<script src="./js/ui.js?v=505"></script>
+<script src="./js/app.js?v=505"></script>
+<script src="./js/account.js?v=505"></script>
+<script src="./js/pwa.js?v=505"></script>
 </body>
 </html>
