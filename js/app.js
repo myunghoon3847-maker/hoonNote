@@ -16,6 +16,9 @@ let selectedMemoIds = new Set();
 let calendarViewDate = new Date();
 let selectedCalendarDateKey = "";
 let sidebarCollapsed = false;
+let editorPanelResizing = false;
+let editorPanelResizeStartX = 0;
+let editorPanelResizeStartWidth = 0;
 let memoGridViewEnabled = false;
 let styledParagraphSourceSelection = null;
 let bookmarkLongPressTimer = null;
@@ -174,6 +177,7 @@ const detailModal = document.querySelector("#detailModal");
 const categoryBrowserList = document.querySelector("#categoryBrowserList");
 const bookmarkList = document.querySelector("#bookmarkList");
 const bookmarkForm = document.querySelector("#bookmarkForm");
+const bookmarkFormModal = document.querySelector("#bookmarkFormModal");
 const bookmarkTitleInput = document.querySelector("#bookmarkTitleInput");
 const bookmarkUrlInput = document.querySelector("#bookmarkUrlInput");
 const bookmarkGroupInput = document.querySelector("#bookmarkGroupInput");
@@ -3872,7 +3876,7 @@ async function deleteSelectedMemos() {
 
 
 function handleAddBookmarkClick() {
-  if (!bookmarkForm) {
+  if (!bookmarkForm || !bookmarkFormModal) {
     return;
   }
 
@@ -3881,14 +3885,18 @@ function handleAddBookmarkClick() {
   }
 
   bookmarkForm.reset();
+  document.querySelector("#bookmarkFormTitle").textContent = "즐겨찾기 추가";
   document.querySelector("#saveBookmarkButton").textContent = "저장";
-  bookmarkForm.hidden = false;
-  bookmarkForm.classList.remove("hidden");
-  bookmarkTitleInput?.focus();
+
+  bookmarkFormModal.hidden = false;
+  bookmarkFormModal.classList.remove("hidden");
+  bookmarkFormModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  window.setTimeout(() => bookmarkTitleInput?.focus(), 0);
 }
 
 function openEditBookmarkForm(bookmark) {
-  if (!bookmarkForm || !bookmark) {
+  if (!bookmarkForm || !bookmarkFormModal || !bookmark) {
     return;
   }
 
@@ -3908,19 +3916,25 @@ function openEditBookmarkForm(bookmark) {
     bookmarkGroupInput.value = bookmark.groupName || "";
   }
 
+  document.querySelector("#bookmarkFormTitle").textContent = "즐겨찾기 수정";
   document.querySelector("#saveBookmarkButton").textContent = "수정 완료";
-  bookmarkForm.hidden = false;
-  bookmarkForm.classList.remove("hidden");
-  bookmarkTitleInput?.focus();
+
+  bookmarkFormModal.hidden = false;
+  bookmarkFormModal.classList.remove("hidden");
+  bookmarkFormModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  window.setTimeout(() => bookmarkTitleInput?.focus(), 0);
 }
 
 function closeBookmarkForm() {
-  if (!bookmarkForm) {
+  if (!bookmarkForm || !bookmarkFormModal) {
     return;
   }
 
-  bookmarkForm.hidden = true;
-  bookmarkForm.classList.add("hidden");
+  bookmarkFormModal.classList.add("hidden");
+  bookmarkFormModal.hidden = true;
+  bookmarkFormModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("modal-open");
   bookmarkForm.reset();
 
   if (editingBookmarkIdInput) {
@@ -4271,6 +4285,55 @@ function toggleMemoGridView() {
     window.localStorage.setItem("solonote_memo_grid_view", memoGridViewEnabled ? "1" : "0");
   } catch (_) {
     /* 저장 실패는 무시 */
+  }
+}
+
+function applyEditorPanelWidth(width) {
+  const clamped = Math.min(Math.max(width, 420), Math.round(window.innerWidth * 0.8));
+  document.documentElement.style.setProperty("--editor-panel-width", `${clamped}px`);
+  return clamped;
+}
+
+function handleEditorResizeHandlePointerDown(event) {
+  const editorPanel = document.querySelector(".editor-panel");
+
+  if (!editorPanel || !isDesktopLayout()) {
+    return;
+  }
+
+  editorPanelResizing = true;
+  editorPanelResizeStartX = event.clientX;
+  editorPanelResizeStartWidth = editorPanel.getBoundingClientRect().width;
+  document.querySelector("#editorResizeHandle")?.classList.add("active");
+  event.preventDefault();
+}
+
+function handleEditorResizeHandlePointerMove(event) {
+  if (!editorPanelResizing) {
+    return;
+  }
+
+  const deltaX = editorPanelResizeStartX - event.clientX;
+  applyEditorPanelWidth(editorPanelResizeStartWidth + deltaX);
+}
+
+function handleEditorResizeHandlePointerUp() {
+  if (!editorPanelResizing) {
+    return;
+  }
+
+  editorPanelResizing = false;
+  document.querySelector("#editorResizeHandle")?.classList.remove("active");
+
+  const editorPanel = document.querySelector(".editor-panel");
+  const currentWidth = editorPanel?.getBoundingClientRect().width;
+
+  if (currentWidth) {
+    try {
+      window.localStorage.setItem("solonote_editor_panel_width", String(Math.round(currentWidth)));
+    } catch (_) {
+      /* 저장 실패는 무시 */
+    }
   }
 }
 
@@ -4824,12 +4887,21 @@ function bindEvents() {
   openTrashButton?.addEventListener("click", handleOpenTrashClick);
   categoryBrowserList?.addEventListener("click", handleCategoryBrowserClick);
   document.querySelector("#sidebarCollapseToggle")?.addEventListener("click", toggleSidebarCollapse);
+  document.querySelector("#editorResizeHandle")?.addEventListener("pointerdown", handleEditorResizeHandlePointerDown);
+  document.addEventListener("pointermove", handleEditorResizeHandlePointerMove);
+  document.addEventListener("pointerup", handleEditorResizeHandlePointerUp);
   calendarPrevMonthButton?.addEventListener("click", handleCalendarPrevMonth);
   calendarNextMonthButton?.addEventListener("click", handleCalendarNextMonth);
   calendarGrid?.addEventListener("click", handleCalendarGridClick);
   calendarDayList?.addEventListener("click", handleCalendarDayListClick);
   addBookmarkButton?.addEventListener("click", handleAddBookmarkClick);
   cancelBookmarkButton?.addEventListener("click", closeBookmarkForm);
+  document.querySelector("#closeBookmarkFormButton")?.addEventListener("click", closeBookmarkForm);
+  bookmarkFormModal?.addEventListener("click", (event) => {
+    if (event.target.dataset.bookmarkFormClose === "true") {
+      closeBookmarkForm();
+    }
+  });
   bookmarkForm?.addEventListener("submit", (event) => {
     void handleBookmarkFormSubmit(event);
   });
@@ -4992,6 +5064,15 @@ if (appMenuPanel && appMenuBackdrop) {
     memoGridViewEnabled = false;
   }
   applyMemoGridView();
+
+  try {
+    const savedEditorWidth = Number(window.localStorage.getItem("solonote_editor_panel_width"));
+    if (savedEditorWidth) {
+      applyEditorPanelWidth(savedEditorWidth);
+    }
+  } catch (_) {
+    /* 저장된 값 없음 - 기본값 사용 */
+  }
 
   if (isDesktopLayout()) {
     appMenuPanel.setAttribute("aria-hidden", "false");

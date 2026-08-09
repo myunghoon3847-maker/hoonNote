@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=502" rel="manifest"/>
+<link href="./manifest.json?v=503" rel="manifest"/>
 <meta content="#0ea5e9" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
@@ -13,9 +13,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=502" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=502" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=502" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=503" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=503" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=503" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +126,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=502"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=503"/>
 </a>
 </div>
 <div class="header-actions">
@@ -197,12 +197,19 @@
 </div>
 <section aria-hidden="true" class="inline-editor-view" hidden="" id="editorView">
 <section aria-labelledby="editorTitle" class="panel editor-panel collapsed">
+<div class="editor-resize-handle" id="editorResizeHandle"></div>
 <div class="editor-heading">
 <h2 id="editorTitle">새 메모 작성</h2>
+<div class="editor-heading-actions">
 <button class="text-button compact-button hidden" id="resetButton" type="button">
               수정 취소
             </button>
+<button class="primary-button compact-button" form="memoForm" id="saveButton" type="submit">
+              저장하기
+            </button>
 </div>
+</div>
+<div class="editor-scroll">
 <form class="memo-form editor-content" id="memoForm">
 <div aria-live="polite" class="draft-save-status">
 <span aria-hidden="true" class="draft-save-dot"></span>
@@ -284,7 +291,7 @@
 </select>
 </div>
 <button aria-controls="categoryManagerModal" aria-haspopup="dialog" aria-label="카테고리 추가 및 관리" class="secondary-button editor-category-manage-button" id="editorCategoryManagerButton" type="button">
-                  카테고리 추가·관리
+                  추가·관리
                 </button>
 </div>
 <div class="date-field">
@@ -297,11 +304,9 @@
 <input id="importantInput" type="checkbox"/>
 <span>중요 표시</span>
 </label>
-<button class="primary-button" id="saveButton" type="submit">
-                저장하기
-              </button>
 </div>
 </form>
+</div>
 </section>
 </section>
 
@@ -406,14 +411,12 @@
 <div class="app-menu-backdrop" hidden="" id="appMenuBackdrop"></div>
 <aside aria-hidden="true" aria-label="앱 메뉴" class="app-menu-panel" hidden="" id="appMenuPanel">
 <div class="menu-header">
-<div>
-<strong id="menuHeaderTitle"></strong>
-<span class="signed-in-email-row">
-<span class="signed-in-email" id="signedInEmail">로그인됨</span>
 <button aria-label="사이드바 접기" class="sidebar-collapse-toggle" id="sidebarCollapseToggle" type="button">
 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><line x1="4" x2="20" y1="7" y2="7"></line><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="17" y2="17"></line></svg>
 </button>
-</span>
+<div>
+<strong id="menuHeaderTitle"></strong>
+<span class="signed-in-email" id="signedInEmail">로그인됨</span>
 </div>
 <button aria-label="메뉴 목록으로 돌아가기" class="menu-header-back-button" hidden id="menuSettingsBackButton" title="뒤로가기" type="button">
 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"></path></svg>
@@ -433,7 +436,14 @@
       </button>
 </div>
 <div class="bookmark-list" id="bookmarkList"></div>
-<form class="bookmark-form hidden" hidden id="bookmarkForm">
+</section>
+<div aria-hidden="true" aria-labelledby="bookmarkFormTitle" aria-modal="true" class="modal hidden" hidden id="bookmarkFormModal" role="dialog">
+<div class="modal-backdrop" data-bookmark-form-close="true"></div>
+<article class="modal-card link-editor-card">
+<button aria-label="즐겨찾기 편집 닫기" class="close-button" id="closeBookmarkFormButton" type="button">×</button>
+<p class="category-manager-eyebrow">사이드 메뉴</p>
+<h2 id="bookmarkFormTitle">즐겨찾기 추가</h2>
+<form class="bookmark-form" id="bookmarkForm">
 <input id="editingBookmarkId" type="hidden"/>
 <input aria-label="사이트 이름" id="bookmarkTitleInput" maxlength="60" placeholder="사이트 이름" required type="text"/>
 <input aria-label="웹사이트 주소" id="bookmarkUrlInput" placeholder="example.com" required type="text"/>
@@ -444,7 +454,8 @@
 <button class="primary-button compact-button" id="saveBookmarkButton" type="submit">저장</button>
 </div>
 </form>
-</section>
+</article>
+</div>
 <section aria-label="설정" class="menu-section menu-settings-entry-section">
 <button aria-label="설정 열기" class="menu-settings-entry-button" id="openSettingsButton" type="button">
 <svg aria-hidden="true" class="menu-settings-entry-icon" fill="none" focusable="false" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"></path></svg>
@@ -605,7 +616,7 @@
 </div>
 <div class="menu-footer">
 <span>CREATIVE NOTE</span>
-<span class="version-badge">v5.0</span>
+<span class="version-badge">v5.1</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -821,13 +832,13 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=502"></script>
-<script src="./js/feedback.js?v=502"></script>
-<script src="./js/auth.js?v=502"></script>
-<script src="./js/storage.js?v=502"></script>
-<script src="./js/ui.js?v=502"></script>
-<script src="./js/app.js?v=502"></script>
-<script src="./js/account.js?v=502"></script>
-<script src="./js/pwa.js?v=502"></script>
+<script src="./js/config.js?v=503"></script>
+<script src="./js/feedback.js?v=503"></script>
+<script src="./js/auth.js?v=503"></script>
+<script src="./js/storage.js?v=503"></script>
+<script src="./js/ui.js?v=503"></script>
+<script src="./js/app.js?v=503"></script>
+<script src="./js/account.js?v=503"></script>
+<script src="./js/pwa.js?v=503"></script>
 </body>
 </html>
