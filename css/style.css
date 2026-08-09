@@ -624,6 +624,12 @@ button:disabled {
   gap: 11px;
 }
 
+@media (min-width: 640px) {
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .date-field {
   display: grid;
   gap: 6px;
@@ -892,6 +898,7 @@ button:disabled {
   white-space: nowrap;
 }
 
+.bookmark-edit-button,
 .bookmark-delete-button {
   flex: 0 0 auto;
   width: 34px;
@@ -904,10 +911,37 @@ button:disabled {
   font-size: 15px;
 }
 
+.bookmark-edit-button:hover {
+  border-color: var(--primary-line);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
 .bookmark-delete-button:hover {
   border-color: var(--danger);
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+.bookmark-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.bookmark-group + .bookmark-group {
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+.bookmark-group-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 @media (max-width: 720px) {
@@ -1612,9 +1646,8 @@ body.memo-selection-active #editorToggleButton {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  margin-right: auto;
+  width: 18px;
+  height: 18px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
@@ -1624,8 +1657,8 @@ body.memo-selection-active #editorToggleButton {
 }
 
 .sidebar-collapse-toggle svg {
-  width: 15px;
-  height: 15px;
+  width: 10px;
+  height: 10px;
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;
@@ -1644,6 +1677,13 @@ body.memo-selection-active #editorToggleButton {
 
 .menu-header strong {
   font-size: 17px;
+}
+
+.signed-in-email-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
 
 .signed-in-email {
@@ -1675,6 +1715,24 @@ body.memo-selection-active #editorToggleButton {
 }
 
 .menu-scroll::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+}
+
+.inline-editor-view .editor-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.inline-editor-view .editor-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.inline-editor-view .editor-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.inline-editor-view .editor-panel::-webkit-scrollbar-thumb {
   background: var(--line-strong);
   border-radius: 999px;
 }
@@ -2748,6 +2806,17 @@ body {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--surface-soft);
+}
+
+@media (min-width: 640px) {
+  .editor-category-panel {
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+  }
+
+  .editor-category-panel > label {
+    margin-right: 2px;
+  }
 }
 
 .editor-category-panel > label {
@@ -4340,6 +4409,10 @@ button[aria-busy="true"]::after {
   font-weight: 700;
 }
 
+.calendar-day.today .calendar-day-number {
+  color: var(--primary);
+}
+
 .calendar-day.saturday .calendar-day-number {
   color: #2563eb;
 }
@@ -4349,15 +4422,11 @@ button[aria-busy="true"]::after {
   color: #dc2626;
 }
 
-.calendar-day.today .calendar-day-number {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
+.calendar-day-today-mark {
+  width: 4px;
+  height: 4px;
   border-radius: 999px;
   background: var(--primary);
-  color: #ffffff !important;
 }
 
 .calendar-day-holiday-name {
@@ -4448,6 +4517,10 @@ button[aria-busy="true"]::after {
   font-size: 11px;
 }
 
+.calendar-today-preview {
+  display: none;
+}
+
 @media (min-width: 1024px) {
   .calendar-grid {
     gap: 8px;
@@ -4458,6 +4531,26 @@ button[aria-busy="true"]::after {
     align-items: flex-start;
     padding: 8px;
     font-size: 13px;
+  }
+
+  .calendar-today-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  .calendar-today-preview-item {
+    overflow: hidden;
+    padding: 1px 5px;
+    border-radius: 5px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 10px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

@@ -176,6 +176,8 @@ const bookmarkList = document.querySelector("#bookmarkList");
 const bookmarkForm = document.querySelector("#bookmarkForm");
 const bookmarkTitleInput = document.querySelector("#bookmarkTitleInput");
 const bookmarkUrlInput = document.querySelector("#bookmarkUrlInput");
+const bookmarkGroupInput = document.querySelector("#bookmarkGroupInput");
+const editingBookmarkIdInput = document.querySelector("#editingBookmarkId");
 const addBookmarkButton = document.querySelector("#addBookmarkButton");
 const cancelBookmarkButton = document.querySelector("#cancelBookmarkButton");
 const selectionToolbar = document.querySelector("#selectionToolbar");
@@ -230,7 +232,7 @@ let isApplyingAppHistory = false;
 let lastAppliedNavigationState = null;
 
 function createAppNavigationState(view = currentAppView, layer = "base", detail = {}) {
-  const safeView = ["notes", "tasks", "trash"].includes(view) ? view : "notes";
+  const safeView = ["notes", "tasks", "calendar", "trash"].includes(view) ? view : "notes";
   const safeLayer = APP_HISTORY_LAYERS.has(layer) ? layer : "base";
 
   return {
@@ -3874,6 +3876,39 @@ function handleAddBookmarkClick() {
     return;
   }
 
+  if (editingBookmarkIdInput) {
+    editingBookmarkIdInput.value = "";
+  }
+
+  bookmarkForm.reset();
+  document.querySelector("#saveBookmarkButton").textContent = "저장";
+  bookmarkForm.hidden = false;
+  bookmarkForm.classList.remove("hidden");
+  bookmarkTitleInput?.focus();
+}
+
+function openEditBookmarkForm(bookmark) {
+  if (!bookmarkForm || !bookmark) {
+    return;
+  }
+
+  if (editingBookmarkIdInput) {
+    editingBookmarkIdInput.value = bookmark.id;
+  }
+
+  if (bookmarkTitleInput) {
+    bookmarkTitleInput.value = bookmark.title || "";
+  }
+
+  if (bookmarkUrlInput) {
+    bookmarkUrlInput.value = bookmark.url || "";
+  }
+
+  if (bookmarkGroupInput) {
+    bookmarkGroupInput.value = bookmark.groupName || "";
+  }
+
+  document.querySelector("#saveBookmarkButton").textContent = "수정 완료";
   bookmarkForm.hidden = false;
   bookmarkForm.classList.remove("hidden");
   bookmarkTitleInput?.focus();
@@ -3887,6 +3922,10 @@ function closeBookmarkForm() {
   bookmarkForm.hidden = true;
   bookmarkForm.classList.add("hidden");
   bookmarkForm.reset();
+
+  if (editingBookmarkIdInput) {
+    editingBookmarkIdInput.value = "";
+  }
 }
 
 async function handleBookmarkFormSubmit(event) {
@@ -3894,12 +3933,17 @@ async function handleBookmarkFormSubmit(event) {
 
   const title = bookmarkTitleInput?.value || "";
   const url = bookmarkUrlInput?.value || "";
+  const groupName = bookmarkGroupInput?.value || "";
+  const editingId = editingBookmarkIdInput?.value || "";
 
   const result = await runCloudAction(
-    () => addBookmark(title, url),
+    () =>
+      editingId
+        ? updateBookmark(editingId, title, url, groupName)
+        : addBookmark(title, url, groupName),
     {
-      loadingMessage: "즐겨찾기 추가 중",
-      successMessage: "즐겨찾기 추가 완료",
+      loadingMessage: editingId ? "즐겨찾기 수정 중" : "즐겨찾기 추가 중",
+      successMessage: editingId ? "즐겨찾기 수정 완료" : "즐겨찾기 추가 완료",
     }
   );
 
@@ -3998,6 +4042,14 @@ async function confirmAndDeleteBookmark(id) {
 }
 
 async function handleBookmarkListClick(event) {
+  const editButton = event.target.closest(".bookmark-edit-button");
+
+  if (editButton) {
+    const bookmark = getBookmarks().find((item) => item.id === editButton.dataset.id);
+    openEditBookmarkForm(bookmark);
+    return;
+  }
+
   const deleteButton = event.target.closest(".bookmark-delete-button");
 
   if (!deleteButton) {

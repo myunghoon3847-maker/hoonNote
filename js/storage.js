@@ -940,6 +940,7 @@ function normalizeBookmarkRecord(row) {
     id: String(row.id),
     title: row.title,
     url: row.url,
+    groupName: row.group_name || "",
     position: Number.isFinite(Number(row.position)) ? Number(row.position) : 0,
     createdAt: row.created_at || "",
     updatedAt: row.updated_at || row.created_at || "",
@@ -968,7 +969,7 @@ async function loadBookmarksFromCloud() {
   const { client, user } = await getCloudContext();
   const { data, error } = await client
     .from("bookmarks")
-    .select("id, title, url, position, created_at, updated_at")
+    .select("id, title, url, group_name, position, created_at, updated_at")
     .eq("user_id", user.id);
 
   if (error) {
@@ -982,7 +983,7 @@ async function loadBookmarksFromCloud() {
   return getBookmarks();
 }
 
-async function addBookmark(title, url) {
+async function addBookmark(title, url, groupName = "") {
   const normalizedTitle = (title || "").trim();
 
   if (!normalizedTitle) {
@@ -990,6 +991,7 @@ async function addBookmark(title, url) {
   }
 
   const normalizedUrl = normalizeBookmarkUrl(url);
+  const normalizedGroup = (groupName || "").trim().slice(0, 60);
   const { client, user } = await getCloudContext();
   const nextPosition = bookmarkCache.reduce(
     (highestPosition, bookmark) => Math.max(highestPosition, bookmark.position + 1),
@@ -1002,9 +1004,10 @@ async function addBookmark(title, url) {
       user_id: user.id,
       title: normalizedTitle,
       url: normalizedUrl,
+      group_name: normalizedGroup || null,
       position: nextPosition,
     })
-    .select("id, title, url, position, created_at, updated_at")
+    .select("id, title, url, group_name, position, created_at, updated_at")
     .single();
 
   if (error) {
@@ -1017,6 +1020,42 @@ async function addBookmark(title, url) {
   cloudBookmarksLoaded = true;
 
   return { ...newBookmark };
+}
+
+async function updateBookmark(id, title, url, groupName = "") {
+  const normalizedTitle = (title || "").trim();
+
+  if (!normalizedTitle) {
+    throw new Error("사이트 이름을 입력해주세요.");
+  }
+
+  const normalizedUrl = normalizeBookmarkUrl(url);
+  const normalizedGroup = (groupName || "").trim().slice(0, 60);
+  const { client, user } = await getCloudContext();
+
+  const { data, error } = await client
+    .from("bookmarks")
+    .update({
+      title: normalizedTitle,
+      url: normalizedUrl,
+      group_name: normalizedGroup || null,
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select("id, title, url, group_name, position, created_at, updated_at")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  const updatedBookmark = normalizeBookmarkRecord(data);
+  bookmarkCache = bookmarkCache.map((bookmark) =>
+    bookmark.id === id ? updatedBookmark : bookmark
+  );
+  sortBookmarkCache();
+
+  return { ...updatedBookmark };
 }
 
 async function deleteBookmark(id) {

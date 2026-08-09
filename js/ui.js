@@ -627,12 +627,24 @@ function renderCalendar() {
     }
 
     const hasMemo = Boolean(memosByDate[dateKey]);
+    const isToday = dateKey === todayKey;
+
+    let todayPreviewHtml = "";
+
+    if (isToday && hasMemo) {
+      const titles = memosByDate[dateKey]
+        .slice(0, 3)
+        .map((memo) => `<span class="calendar-today-preview-item">${escapeHtml(memo.title || "제목 없음")}</span>`)
+        .join("");
+      todayPreviewHtml = `<span class="calendar-today-preview">${titles}</span>`;
+    }
 
     cells.push(`
       <button type="button" class="${classNames.join(" ")}" data-date="${dateKey}"${holidayName ? ` title="${escapeHtml(holidayName)}"` : ""}>
         <span class="calendar-day-number">${cellDate.getDate()}</span>
         ${holidayName ? `<span class="calendar-day-holiday-name">${escapeHtml(holidayName)}</span>` : ""}
-        ${hasMemo ? '<span class="calendar-day-dot" aria-hidden="true"></span>' : ""}
+        ${hasMemo ? '<span class="calendar-day-dot" aria-hidden="true"></span>' : isToday ? '<span class="calendar-day-today-mark" aria-hidden="true"></span>' : ""}
+        ${todayPreviewHtml}
       </button>
     `);
   }
@@ -727,6 +739,7 @@ function renderCategoryBrowser() {
 
 function renderBookmarkList() {
   const list = document.querySelector("#bookmarkList");
+  const groupDatalist = document.querySelector("#bookmarkGroupList");
 
   if (!list) {
     return;
@@ -734,36 +747,77 @@ function renderBookmarkList() {
 
   const bookmarks = getBookmarks();
 
+  if (groupDatalist) {
+    const groupNames = Array.from(
+      new Set(bookmarks.map((bookmark) => bookmark.groupName).filter(Boolean))
+    );
+    groupDatalist.innerHTML = groupNames
+      .map((name) => `<option value="${escapeHtml(name)}"></option>`)
+      .join("");
+  }
+
   if (bookmarks.length === 0) {
     list.innerHTML = '<p class="bookmark-empty">아직 추가한 사이트가 없습니다.</p>';
     return;
   }
 
-  list.innerHTML = bookmarks
-    .map((bookmark) => {
-      const safeTitle = escapeHtml(bookmark.title);
-      const safeUrl = escapeHtml(bookmark.url);
-      const safeId = escapeHtml(bookmark.id);
-      let domain = "";
+  const groups = new Map();
 
-      try {
-        domain = new URL(bookmark.url).hostname;
-      } catch (_) {}
+  bookmarks.forEach((bookmark) => {
+    const key = bookmark.groupName || "";
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(bookmark);
+  });
 
-      const faviconHtml = domain
-        ? `<img class="bookmark-favicon" src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}" alt="" aria-hidden="true" loading="lazy"/>`
-        : '<span class="bookmark-favicon bookmark-favicon-fallback" aria-hidden="true">🔗</span>';
+  const orderedKeys = Array.from(groups.keys()).sort((a, b) => {
+    if (!a) return 1;
+    if (!b) return -1;
+    return a.localeCompare(b, "ko");
+  });
+
+  function renderBookmarkRow(bookmark) {
+    const safeTitle = escapeHtml(bookmark.title);
+    const safeUrl = escapeHtml(bookmark.url);
+    const safeId = escapeHtml(bookmark.id);
+    let domain = "";
+
+    try {
+      domain = new URL(bookmark.url).hostname;
+    } catch (_) {}
+
+    const faviconHtml = domain
+      ? `<img class="bookmark-favicon" src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}" alt="" aria-hidden="true" loading="lazy"/>`
+      : '<span class="bookmark-favicon bookmark-favicon-fallback" aria-hidden="true">🔗</span>';
+
+    return `
+      <div class="bookmark-row">
+        <a class="bookmark-link" href="${safeUrl}" rel="noopener noreferrer" target="_blank">
+          ${faviconHtml}
+          <span class="bookmark-link-copy">
+            <strong>${safeTitle}</strong>
+            <span>${safeUrl}</span>
+          </span>
+        </a>
+        <button aria-label="${safeTitle} 수정" class="bookmark-edit-button" data-id="${safeId}" type="button">✎</button>
+        <button aria-label="${safeTitle} 삭제" class="bookmark-delete-button" data-id="${safeId}" type="button">×</button>
+      </div>
+    `;
+  }
+
+  list.innerHTML = orderedKeys
+    .map((key) => {
+      const rows = groups.get(key).map(renderBookmarkRow).join("");
+
+      if (!key) {
+        return rows;
+      }
 
       return `
-        <div class="bookmark-row">
-          <a class="bookmark-link" href="${safeUrl}" rel="noopener noreferrer" target="_blank">
-            ${faviconHtml}
-            <span class="bookmark-link-copy">
-              <strong>${safeTitle}</strong>
-              <span>${safeUrl}</span>
-            </span>
-          </a>
-          <button aria-label="${safeTitle} 삭제" class="bookmark-delete-button" data-id="${safeId}" type="button">×</button>
+        <div class="bookmark-group">
+          <div class="bookmark-group-label">${escapeHtml(key)}</div>
+          ${rows}
         </div>
       `;
     })

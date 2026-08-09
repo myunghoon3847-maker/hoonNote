@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=501" rel="manifest"/>
+<link href="./manifest.json?v=502" rel="manifest"/>
 <meta content="#0ea5e9" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
@@ -13,9 +13,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=501" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=501" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=501" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=502" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=502" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=502" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +126,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=501"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=502"/>
 </a>
 </div>
 <div class="header-actions">
@@ -406,12 +406,14 @@
 <div class="app-menu-backdrop" hidden="" id="appMenuBackdrop"></div>
 <aside aria-hidden="true" aria-label="앱 메뉴" class="app-menu-panel" hidden="" id="appMenuPanel">
 <div class="menu-header">
+<div>
+<strong id="menuHeaderTitle"></strong>
+<span class="signed-in-email-row">
+<span class="signed-in-email" id="signedInEmail">로그인됨</span>
 <button aria-label="사이드바 접기" class="sidebar-collapse-toggle" id="sidebarCollapseToggle" type="button">
 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><line x1="4" x2="20" y1="7" y2="7"></line><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="17" y2="17"></line></svg>
 </button>
-<div>
-<strong id="menuHeaderTitle"></strong>
-<span class="signed-in-email" id="signedInEmail">로그인됨</span>
+</span>
 </div>
 <button aria-label="메뉴 목록으로 돌아가기" class="menu-header-back-button" hidden id="menuSettingsBackButton" title="뒤로가기" type="button">
 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"></path></svg>
@@ -432,8 +434,11 @@
 </div>
 <div class="bookmark-list" id="bookmarkList"></div>
 <form class="bookmark-form hidden" hidden id="bookmarkForm">
+<input id="editingBookmarkId" type="hidden"/>
 <input aria-label="사이트 이름" id="bookmarkTitleInput" maxlength="60" placeholder="사이트 이름" required type="text"/>
 <input aria-label="웹사이트 주소" id="bookmarkUrlInput" placeholder="example.com" required type="text"/>
+<input aria-label="그룹(선택)" id="bookmarkGroupInput" list="bookmarkGroupList" maxlength="60" placeholder="그룹 (선택, 예: 업무)" type="text"/>
+<datalist id="bookmarkGroupList"></datalist>
 <div class="bookmark-form-actions">
 <button class="text-button compact-button" id="cancelBookmarkButton" type="button">취소</button>
 <button class="primary-button compact-button" id="saveBookmarkButton" type="submit">저장</button>
@@ -600,7 +605,7 @@
 </div>
 <div class="menu-footer">
 <span>CREATIVE NOTE</span>
-<span class="version-badge">v4.9.11</span>
+<span class="version-badge">v5.0</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -816,13 +821,13 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=501"></script>
-<script src="./js/feedback.js?v=501"></script>
-<script src="./js/auth.js?v=501"></script>
-<script src="./js/storage.js?v=501"></script>
-<script src="./js/ui.js?v=501"></script>
-<script src="./js/app.js?v=501"></script>
-<script src="./js/account.js?v=501"></script>
-<script src="./js/pwa.js?v=501"></script>
+<script src="./js/config.js?v=502"></script>
+<script src="./js/feedback.js?v=502"></script>
+<script src="./js/auth.js?v=502"></script>
+<script src="./js/storage.js?v=502"></script>
+<script src="./js/ui.js?v=502"></script>
+<script src="./js/app.js?v=502"></script>
+<script src="./js/account.js?v=502"></script>
+<script src="./js/pwa.js?v=502"></script>
 </body>
 </html>
