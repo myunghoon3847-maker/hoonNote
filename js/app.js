@@ -16,6 +16,7 @@ let selectedMemoIds = new Set();
 let calendarViewDate = new Date();
 let selectedCalendarDateKey = "";
 let sidebarCollapsed = false;
+let memoGridViewEnabled = false;
 let styledParagraphSourceSelection = null;
 let bookmarkLongPressTimer = null;
 let bookmarkLongPressMoved = false;
@@ -4198,6 +4199,29 @@ function applySidebarCollapsedState() {
   }
 }
 
+function applyMemoGridView() {
+  const memoList = document.querySelector("#memoList");
+  const toggleButton = document.querySelector("#memoViewToggle");
+
+  memoList?.classList.toggle("grid-view", memoGridViewEnabled);
+
+  if (toggleButton) {
+    toggleButton.setAttribute("aria-pressed", String(memoGridViewEnabled));
+    toggleButton.setAttribute("aria-label", memoGridViewEnabled ? "1열로 보기" : "2열로 보기");
+  }
+}
+
+function toggleMemoGridView() {
+  memoGridViewEnabled = !memoGridViewEnabled;
+  applyMemoGridView();
+
+  try {
+    window.localStorage.setItem("solonote_memo_grid_view", memoGridViewEnabled ? "1" : "0");
+  } catch (_) {
+    /* 저장 실패는 무시 */
+  }
+}
+
 function toggleSidebarCollapse() {
   sidebarCollapsed = !sidebarCollapsed;
 
@@ -4706,6 +4730,7 @@ function bindEvents() {
   });
   searchInput.addEventListener("input", handleSearchInput);
   sortOptions?.addEventListener("click", handleSortClick);
+  document.querySelector("#memoViewToggle")?.addEventListener("click", toggleMemoGridView);
 
   document.querySelector("#editorToggleButton").addEventListener("click", toggleEditor);
   document.querySelector("#resetButton").addEventListener("click", handleCancelEditorClick);
@@ -4908,6 +4933,13 @@ if (appMenuPanel && appMenuBackdrop) {
     sidebarCollapsed = false;
   }
   applySidebarCollapsedState();
+
+  try {
+    memoGridViewEnabled = window.localStorage.getItem("solonote_memo_grid_view") === "1";
+  } catch (_) {
+    memoGridViewEnabled = false;
+  }
+  applyMemoGridView();
 
   if (isDesktopLayout()) {
     appMenuPanel.setAttribute("aria-hidden", "false");

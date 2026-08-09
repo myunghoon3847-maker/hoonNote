@@ -273,6 +273,18 @@ button:disabled {
   color: var(--text);
 }
 
+#titleInput,
+#contentInput {
+  border-color: transparent;
+  background: transparent;
+}
+
+#titleInput:focus,
+#contentInput:focus {
+  border-color: transparent;
+  outline: none;
+}
+
 .login-form textarea,
 .memo-form textarea {
   resize: vertical;
@@ -823,7 +835,8 @@ button:disabled {
   gap: 8px;
 }
 
-.bookmark-link {
+.bookmark-link,
+.bookmark-link:visited {
   flex: 1 1 auto;
   display: flex;
   align-items: center;
@@ -837,7 +850,8 @@ button:disabled {
   text-decoration: none;
 }
 
-.bookmark-link:hover {
+.bookmark-link:hover,
+.bookmark-link:visited:hover {
   border-color: var(--primary-line);
   background: var(--primary-soft);
 }
@@ -894,6 +908,12 @@ button:disabled {
   border-color: var(--danger);
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+@media (max-width: 720px) {
+  .bookmark-delete-button {
+    display: none;
+  }
 }
 
 .bookmark-form {
@@ -971,8 +991,55 @@ button:disabled {
   flex-wrap: wrap;
   align-items: center;
   gap: 2px 0;
-  margin: 7px 0 2px;
+  margin: 0;
   color: #94a3b8;
+}
+
+.list-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 7px 0 2px;
+}
+
+.memo-view-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.memo-view-toggle svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+.memo-view-toggle:hover,
+.memo-view-toggle[aria-pressed="true"] {
+  border-color: var(--primary-line);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+#memoList.grid-view {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px 9px;
+}
+
+#memoList.grid-view .memo-card p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .sort-option {
@@ -2063,7 +2130,8 @@ body.memo-selection-active #editorToggleButton {
 
 .detail-modal-header {
   flex: 0 0 auto;
-  padding: 22px 22px 0;
+  padding: 22px 22px 14px;
+  border-bottom: 1px solid var(--line);
 }
 
 .detail-modal-scroll {
@@ -2071,7 +2139,7 @@ body.memo-selection-active #editorToggleButton {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0 22px;
+  padding: 16px 22px;
 }
 
 .detail-modal-card .detail-actions {
@@ -4269,7 +4337,6 @@ button[aria-busy="true"]::after {
 }
 
 .calendar-day.today {
-  color: var(--primary);
   font-weight: 700;
 }
 
@@ -4283,7 +4350,14 @@ button[aria-busy="true"]::after {
 }
 
 .calendar-day.today .calendar-day-number {
-  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #ffffff !important;
 }
 
 .calendar-day-holiday-name {

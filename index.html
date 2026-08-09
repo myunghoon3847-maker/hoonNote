@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=500" rel="manifest"/>
+<link href="./manifest.json?v=501" rel="manifest"/>
 <meta content="#0ea5e9" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
@@ -13,9 +13,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=500" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=500" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=500" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=501" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=501" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=501" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +126,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=500"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=501"/>
 </a>
 </div>
 <div class="header-actions">
@@ -326,6 +326,7 @@
 
 </div>
 </section>
+<div class="list-controls-row">
 <nav aria-label="메모 정렬" class="sort-options" id="sortOptions">
 <button aria-pressed="true" class="sort-option active" data-sort="updatedDesc" type="button">
             최근 수정순
@@ -347,6 +348,10 @@
             제목순
           </button>
 </nav>
+<button aria-label="2열로 보기" aria-pressed="false" class="memo-view-toggle" id="memoViewToggle" type="button">
+<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><rect height="7" rx="1.5" width="7" x="3" y="3"></rect><rect height="7" rx="1.5" width="7" x="14" y="3"></rect><rect height="7" rx="1.5" width="7" x="3" y="14"></rect><rect height="7" rx="1.5" width="7" x="14" y="14"></rect></svg>
+</button>
+</div>
 <div class="memo-list" id="memoList"></div>
 </section>
 <section aria-label="할 일" class="app-view" hidden="" id="tasksView">
@@ -595,7 +600,7 @@
 </div>
 <div class="menu-footer">
 <span>CREATIVE NOTE</span>
-<span class="version-badge">v4.9.10</span>
+<span class="version-badge">v4.9.11</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -811,13 +816,13 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=500"></script>
-<script src="./js/feedback.js?v=500"></script>
-<script src="./js/auth.js?v=500"></script>
-<script src="./js/storage.js?v=500"></script>
-<script src="./js/ui.js?v=500"></script>
-<script src="./js/app.js?v=500"></script>
-<script src="./js/account.js?v=500"></script>
-<script src="./js/pwa.js?v=500"></script>
+<script src="./js/config.js?v=501"></script>
+<script src="./js/feedback.js?v=501"></script>
+<script src="./js/auth.js?v=501"></script>
+<script src="./js/storage.js?v=501"></script>
+<script src="./js/ui.js?v=501"></script>
+<script src="./js/app.js?v=501"></script>
+<script src="./js/account.js?v=501"></script>
+<script src="./js/pwa.js?v=501"></script>
 </body>
 </html>
