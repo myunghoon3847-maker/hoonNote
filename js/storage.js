@@ -395,6 +395,15 @@ function normalizeMemoContentBlocks(blocks, legacyContent = "") {
   return [paragraphBlock, ...normalizedBlocks];
 }
 
+function getMemoExtraBlocksOrdered(memo) {
+  return normalizeMemoContentBlocks(
+    memo && (memo.contentBlocks || memo.content_blocks),
+    memo && memo.content
+  )
+    .filter((block) => block.type !== "paragraph")
+    .map((block, index) => ({ ...block, order: index + 1 }));
+}
+
 function getMemoLinks(memo) {
   return normalizeMemoContentBlocks(
     memo && (memo.contentBlocks || memo.content_blocks),
@@ -988,7 +997,7 @@ async function loadBookmarksFromCloud() {
   return getBookmarks();
 }
 
-async function addBookmark(title, url, groupName = "") {
+async function addBookmark(title, url) {
   const normalizedTitle = (title || "").trim();
 
   if (!normalizedTitle) {
@@ -996,7 +1005,6 @@ async function addBookmark(title, url, groupName = "") {
   }
 
   const normalizedUrl = normalizeBookmarkUrl(url);
-  const normalizedGroup = (groupName || "").trim().slice(0, 60);
   const { client, user } = await getCloudContext();
   const nextPosition = bookmarkCache.reduce(
     (highestPosition, bookmark) => Math.max(highestPosition, bookmark.position + 1),
@@ -1009,7 +1017,6 @@ async function addBookmark(title, url, groupName = "") {
       user_id: user.id,
       title: normalizedTitle,
       url: normalizedUrl,
-      group_name: normalizedGroup || null,
       position: nextPosition,
     })
     .select("id, title, url, group_name, position, created_at, updated_at")
@@ -1027,7 +1034,7 @@ async function addBookmark(title, url, groupName = "") {
   return { ...newBookmark };
 }
 
-async function updateBookmark(id, title, url, groupName = "") {
+async function updateBookmark(id, title, url) {
   const normalizedTitle = (title || "").trim();
 
   if (!normalizedTitle) {
@@ -1035,7 +1042,6 @@ async function updateBookmark(id, title, url, groupName = "") {
   }
 
   const normalizedUrl = normalizeBookmarkUrl(url);
-  const normalizedGroup = (groupName || "").trim().slice(0, 60);
   const { client, user } = await getCloudContext();
 
   const { data, error } = await client
@@ -1043,7 +1049,6 @@ async function updateBookmark(id, title, url, groupName = "") {
     .update({
       title: normalizedTitle,
       url: normalizedUrl,
-      group_name: normalizedGroup || null,
     })
     .eq("id", id)
     .eq("user_id", user.id)

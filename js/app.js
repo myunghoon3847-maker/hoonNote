@@ -8,6 +8,12 @@ let draftLinks = [];
 let draftStyledParagraphs = [];
 let draftTables = [];
 let draftImages = [];
+let nextInsertedBlockOrder = 1;
+
+function claimNextBlockOrder() {
+  nextInsertedBlockOrder += 1;
+  return nextInsertedBlockOrder;
+}
 let tableEditorRows = [];
 let editingTableDraftId = "";
 
@@ -43,9 +49,7 @@ const titleInput = document.querySelector("#titleInput");
 const projectInput = document.querySelector("#projectInput");
 const contentInput = document.querySelector("#contentInput");
 const addLinkButton = document.querySelector("#addLinkButton");
-const linkDraftSection = document.querySelector("#linkDraftSection");
-const linkDraftList = document.querySelector("#linkDraftList");
-const linkCountLabel = document.querySelector("#linkCountLabel");
+const insertedBlocksList = document.querySelector("#insertedBlocksList");
 const linkEditorModal = document.querySelector("#linkEditorModal");
 const linkEditorForm = document.querySelector("#linkEditorForm");
 const editingLinkIdInput = document.querySelector("#editingLinkId");
@@ -56,9 +60,6 @@ const closeLinkEditorButton = document.querySelector("#closeLinkEditorButton");
 const cancelLinkEditorButton = document.querySelector("#cancelLinkEditorButton");
 const saveLinkButton = document.querySelector("#saveLinkButton");
 
-const styledDraftSection = document.querySelector("#styledDraftSection");
-const styledDraftList = document.querySelector("#styledDraftList");
-const styledCountLabel = document.querySelector("#styledCountLabel");
 const styledParagraphModal = document.querySelector("#styledParagraphModal");
 const styledParagraphForm = document.querySelector("#styledParagraphForm");
 const editingStyledIdInput = document.querySelector("#editingStyledId");
@@ -72,9 +73,6 @@ const styledParagraphStatus = document.querySelector("#styledParagraphStatus");
 const closeStyledParagraphButton = document.querySelector("#closeStyledParagraphButton");
 const cancelStyledParagraphButton = document.querySelector("#cancelStyledParagraphButton");
 
-const tableDraftSection = document.querySelector("#tableDraftSection");
-const tableDraftList = document.querySelector("#tableDraftList");
-const tableCountLabel = document.querySelector("#tableCountLabel");
 const tableEditorModal = document.querySelector("#tableEditorModal");
 const tableEditorGrid = document.querySelector("#tableEditorGrid");
 const tableEditorStatus = document.querySelector("#tableEditorStatus");
@@ -87,9 +85,6 @@ const saveTableButton = document.querySelector("#saveTableButton");
 const closeTableEditorButton = document.querySelector("#closeTableEditorButton");
 const cancelTableEditorButton = document.querySelector("#cancelTableEditorButton");
 
-const imageDraftSection = document.querySelector("#imageDraftSection");
-const imageDraftList = document.querySelector("#imageDraftList");
-const imageCountLabel = document.querySelector("#imageCountLabel");
 const imageUploadModal = document.querySelector("#imageUploadModal");
 const imageUploadForm = document.querySelector("#imageUploadForm");
 const imageFileInput = document.querySelector("#imageFileInput");
@@ -180,8 +175,6 @@ const bookmarkForm = document.querySelector("#bookmarkForm");
 const bookmarkFormModal = document.querySelector("#bookmarkFormModal");
 const bookmarkTitleInput = document.querySelector("#bookmarkTitleInput");
 const bookmarkUrlInput = document.querySelector("#bookmarkUrlInput");
-const bookmarkGroupInput = document.querySelector("#bookmarkGroupInput");
-const editingBookmarkIdInput = document.querySelector("#editingBookmarkId");
 const addBookmarkButton = document.querySelector("#addBookmarkButton");
 const cancelBookmarkButton = document.querySelector("#cancelBookmarkButton");
 const selectionToolbar = document.querySelector("#selectionToolbar");
@@ -431,41 +424,166 @@ function getLinkDisplayHost(url) {
   }
 }
 
-function renderDraftLinks() {
-  if (!linkDraftSection || !linkDraftList || !linkCountLabel) {
+function renderInsertedBlocksList() {
+  const section = document.querySelector("#insertedBlocksSection");
+  const list = document.querySelector("#insertedBlocksList");
+  const countLabel = document.querySelector("#insertedBlocksCount");
+
+  if (!section || !list || !countLabel) {
     return;
   }
 
-  linkCountLabel.textContent = `${draftLinks.length}개`;
-  linkDraftSection.hidden = draftLinks.length === 0;
+  const merged = [
+    ...draftLinks.map((item) => ({ ...item, blockType: "link" })),
+    ...draftStyledParagraphs.map((item) => ({ ...item, blockType: "styled" })),
+    ...draftTables.map((item) => ({ ...item, blockType: "table" })),
+    ...draftImages.map((item) => ({ ...item, blockType: "image" })),
+  ].sort((a, b) => (a.order || 0) - (b.order || 0));
 
-  if (draftLinks.length === 0) {
-    linkDraftList.innerHTML = "";
+  countLabel.textContent = `${merged.length}개`;
+  section.hidden = merged.length === 0;
+
+  if (merged.length === 0) {
+    list.innerHTML = "";
     return;
   }
 
-  linkDraftList.innerHTML = draftLinks
-    .map((link) => `
-      <article class="link-draft-item" data-link-id="${escapeHtml(link.id)}">
-        <a class="link-draft-anchor" href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer">
-          <span class="link-draft-icon" aria-hidden="true">↗</span>
-          <span class="link-draft-copy">
-            <strong>${escapeHtml(link.label)}</strong>
-            <small>${escapeHtml(getLinkDisplayHost(link.url))}</small>
-          </span>
-        </a>
-        <div class="link-draft-actions">
-          <button class="text-button compact-button" data-link-action="edit" data-link-id="${escapeHtml(link.id)}" type="button">수정</button>
-          <button class="text-button compact-button danger-text" data-link-action="delete" data-link-id="${escapeHtml(link.id)}" type="button">삭제</button>
-        </div>
-      </article>
-    `)
+  list.innerHTML = merged
+    .map((block, index) => {
+      let icon = "";
+      let title = "";
+      let subtitle = "";
+      let actionsHtml = "";
+      let idAttr = "";
+
+      if (block.blockType === "link") {
+        icon = "↗";
+        title = escapeHtml(block.label);
+        subtitle = escapeHtml(getLinkDisplayHost(block.url));
+        idAttr = `data-link-id="${escapeHtml(block.id)}"`;
+        actionsHtml = `
+          <button class="text-button compact-button" data-link-action="edit" data-link-id="${escapeHtml(block.id)}" type="button">수정</button>
+          <button class="text-button compact-button danger-text" data-link-action="delete" data-link-id="${escapeHtml(block.id)}" type="button">삭제</button>
+        `;
+      } else if (block.blockType === "styled") {
+        icon = "가";
+        title = `${escapeHtml(block.text.slice(0, 40))}${block.text.length > 40 ? "…" : ""}`;
+        subtitle = `${block.bold ? "굵게 · " : ""}${block.size} · ${block.color}`;
+        idAttr = `data-styled-id="${escapeHtml(block.id)}"`;
+        actionsHtml = `
+          <button class="text-button compact-button" data-styled-action="edit" data-styled-id="${escapeHtml(block.id)}" type="button">수정</button>
+          <button class="text-button compact-button danger-text" data-styled-action="delete" data-styled-id="${escapeHtml(block.id)}" type="button">삭제</button>
+        `;
+      } else if (block.blockType === "table") {
+        icon = "▦";
+        title = "표";
+        subtitle = `${block.rows.length}행 × ${(block.rows[0] || []).length}열`;
+        idAttr = `data-table-id="${escapeHtml(block.id)}"`;
+        actionsHtml = `
+          <button class="text-button compact-button" data-table-action="edit" data-table-id="${escapeHtml(block.id)}" type="button">수정</button>
+          <button class="text-button compact-button danger-text" data-table-action="delete" data-table-id="${escapeHtml(block.id)}" type="button">삭제</button>
+        `;
+      } else if (block.blockType === "image") {
+        icon = "🖼";
+        title = escapeHtml(block.alt || "이미지");
+        idAttr = `data-image-id="${escapeHtml(block.id)}"`;
+        actionsHtml = `
+          <button class="text-button compact-button danger-text" data-image-action="delete" data-image-id="${escapeHtml(block.id)}" type="button">삭제</button>
+        `;
+      }
+
+      const isFirst = index === 0;
+      const isLast = index === merged.length - 1;
+      const anchorOpenTag =
+        block.blockType === "link"
+          ? `<a class="link-draft-anchor" href="${escapeHtml(block.url)}" target="_blank" rel="noopener noreferrer">`
+          : `<span class="link-draft-anchor">`;
+      const anchorCloseTag = block.blockType === "link" ? "</a>" : "</span>";
+
+      return `
+        <article class="link-draft-item" ${idAttr}>
+          <div class="block-reorder-controls">
+            <button class="block-reorder-button" data-reorder="up" data-block-type="${block.blockType}" data-block-id="${escapeHtml(block.id)}" type="button" ${isFirst ? "disabled" : ""} aria-label="위로 이동">▲</button>
+            <button class="block-reorder-button" data-reorder="down" data-block-type="${block.blockType}" data-block-id="${escapeHtml(block.id)}" type="button" ${isLast ? "disabled" : ""} aria-label="아래로 이동">▼</button>
+          </div>
+          ${anchorOpenTag}
+            <span class="link-draft-icon" aria-hidden="true">${icon}</span>
+            <span class="link-draft-copy">
+              <strong>${title}</strong>
+              ${subtitle ? `<small>${subtitle}</small>` : ""}
+            </span>
+          ${anchorCloseTag}
+          <div class="link-draft-actions">
+            ${actionsHtml}
+          </div>
+        </article>
+      `;
+    })
     .join("");
+}
+
+function handleInsertedBlockReorderClick(event) {
+  const button = event.target.closest("[data-reorder]");
+
+  if (!button) {
+    return;
+  }
+
+  const direction = button.dataset.reorder;
+  const blockType = button.dataset.blockType;
+  const blockId = button.dataset.blockId;
+
+  const merged = [
+    ...draftLinks.map((item) => ({ ref: item, blockType: "link" })),
+    ...draftStyledParagraphs.map((item) => ({ ref: item, blockType: "styled" })),
+    ...draftTables.map((item) => ({ ref: item, blockType: "table" })),
+    ...draftImages.map((item) => ({ ref: item, blockType: "image" })),
+  ].sort((a, b) => (a.ref.order || 0) - (b.ref.order || 0));
+
+  const currentIndex = merged.findIndex(
+    (entry) => entry.blockType === blockType && entry.ref.id === blockId
+  );
+
+  if (currentIndex === -1) {
+    return;
+  }
+
+  const swapIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+  if (swapIndex < 0 || swapIndex >= merged.length) {
+    return;
+  }
+
+  const currentOrder = merged[currentIndex].ref.order;
+  merged[currentIndex].ref.order = merged[swapIndex].ref.order;
+  merged[swapIndex].ref.order = currentOrder;
+
+  renderInsertedBlocksList();
+  updateEditorDirtyState();
+}
+
+function renderDraftLinks() {
+  renderInsertedBlocksList();
+}
+
+function renderDraftStyledParagraphs() {
+  renderInsertedBlocksList();
+}
+
+function renderDraftTables() {
+  renderInsertedBlocksList();
+}
+
+function renderDraftImages() {
+  renderInsertedBlocksList();
 }
 
 function loadDraftLinks(links) {
   draftLinks = (Array.isArray(links) ? links : [])
-    .map((link) => normalizeMemoLinkBlock(link))
+    .map((link) => {
+      const normalized = normalizeMemoLinkBlock(link);
+      return normalized ? { ...normalized, order: link.order } : null;
+    })
     .filter(Boolean)
     .slice(0, MAX_MEMO_LINK_BLOCKS);
   renderDraftLinks();
@@ -578,10 +696,10 @@ function handleLinkEditorSubmit(event) {
 
   if (existingId) {
     draftLinks = draftLinks.map((link) =>
-      link.id === existingId ? normalizedLink : link
+      link.id === existingId ? { ...normalizedLink, order: link.order } : link
     );
   } else {
-    draftLinks.push(normalizedLink);
+    draftLinks.push({ ...normalizedLink, order: claimNextBlockOrder() });
   }
 
   renderDraftLinks();
@@ -626,38 +744,6 @@ function handleLinkEditorModalClick(event) {
 }
 
 /* ===== 서식 문단 ===== */
-
-function renderDraftStyledParagraphs() {
-  if (!styledDraftSection || !styledDraftList || !styledCountLabel) {
-    return;
-  }
-
-  styledCountLabel.textContent = `${draftStyledParagraphs.length}개`;
-  styledDraftSection.hidden = draftStyledParagraphs.length === 0;
-
-  if (draftStyledParagraphs.length === 0) {
-    styledDraftList.innerHTML = "";
-    return;
-  }
-
-  styledDraftList.innerHTML = draftStyledParagraphs
-    .map((block) => `
-      <article class="link-draft-item" data-styled-id="${escapeHtml(block.id)}">
-        <span class="link-draft-anchor">
-          <span class="link-draft-icon" aria-hidden="true">가</span>
-          <span class="link-draft-copy">
-            <strong>${escapeHtml(block.text.slice(0, 40))}${block.text.length > 40 ? "…" : ""}</strong>
-            <small>${block.bold ? "굵게 · " : ""}${block.size} · ${block.color}</small>
-          </span>
-        </span>
-        <div class="link-draft-actions">
-          <button class="text-button compact-button" data-styled-action="edit" data-styled-id="${escapeHtml(block.id)}" type="button">수정</button>
-          <button class="text-button compact-button danger-text" data-styled-action="delete" data-styled-id="${escapeHtml(block.id)}" type="button">삭제</button>
-        </div>
-      </article>
-    `)
-    .join("");
-}
 
 function loadDraftStyledParagraphs(blocks) {
   draftStyledParagraphs = (Array.isArray(blocks) ? blocks : []).slice(0, MAX_MEMO_STYLED_PARAGRAPH_BLOCKS);
@@ -785,10 +871,10 @@ function handleStyledParagraphSubmit(event) {
 
   if (existingId) {
     draftStyledParagraphs = draftStyledParagraphs.map((item) =>
-      item.id === existingId ? block : item
+      item.id === existingId ? { ...block, order: item.order } : item
     );
   } else {
-    draftStyledParagraphs.push(block);
+    draftStyledParagraphs.push({ ...block, order: claimNextBlockOrder() });
   }
 
   if (!existingId && styledParagraphSourceSelection && contentInput) {
@@ -886,38 +972,6 @@ function readTableEditorGridFromDom() {
       tableEditorRows[rowIndex][colIndex] = input.value;
     }
   });
-}
-
-function renderDraftTables() {
-  if (!tableDraftSection || !tableDraftList || !tableCountLabel) {
-    return;
-  }
-
-  tableCountLabel.textContent = `${draftTables.length}개`;
-  tableDraftSection.hidden = draftTables.length === 0;
-
-  if (draftTables.length === 0) {
-    tableDraftList.innerHTML = "";
-    return;
-  }
-
-  tableDraftList.innerHTML = draftTables
-    .map((block) => `
-      <article class="link-draft-item" data-table-id="${escapeHtml(block.id)}">
-        <span class="link-draft-anchor">
-          <span class="link-draft-icon" aria-hidden="true">▦</span>
-          <span class="link-draft-copy">
-            <strong>표</strong>
-            <small>${block.rows.length}행 × ${(block.rows[0] || []).length}열</small>
-          </span>
-        </span>
-        <div class="link-draft-actions">
-          <button class="text-button compact-button" data-table-action="edit" data-table-id="${escapeHtml(block.id)}" type="button">수정</button>
-          <button class="text-button compact-button danger-text" data-table-action="delete" data-table-id="${escapeHtml(block.id)}" type="button">삭제</button>
-        </div>
-      </article>
-    `)
-    .join("");
 }
 
 function loadDraftTables(blocks) {
@@ -1045,9 +1099,11 @@ function handleSaveTableClick() {
   };
 
   if (editingTableDraftId) {
-    draftTables = draftTables.map((item) => (item.id === editingTableDraftId ? block : item));
+    draftTables = draftTables.map((item) =>
+      item.id === editingTableDraftId ? { ...block, order: item.order } : item
+    );
   } else {
-    draftTables.push(block);
+    draftTables.push({ ...block, order: claimNextBlockOrder() });
   }
 
   renderDraftTables();
@@ -1092,36 +1148,6 @@ function handleTableEditorModalClick(event) {
 }
 
 /* ===== 이미지 ===== */
-
-function renderDraftImages() {
-  if (!imageDraftSection || !imageDraftList || !imageCountLabel) {
-    return;
-  }
-
-  imageCountLabel.textContent = `${draftImages.length}개`;
-  imageDraftSection.hidden = draftImages.length === 0;
-
-  if (draftImages.length === 0) {
-    imageDraftList.innerHTML = "";
-    return;
-  }
-
-  imageDraftList.innerHTML = draftImages
-    .map((block) => `
-      <article class="link-draft-item" data-image-id="${escapeHtml(block.id)}">
-        <span class="link-draft-anchor">
-          <span class="link-draft-icon" aria-hidden="true">🖼</span>
-          <span class="link-draft-copy">
-            <strong>${escapeHtml(block.alt || "이미지")}</strong>
-          </span>
-        </span>
-        <div class="link-draft-actions">
-          <button class="text-button compact-button danger-text" data-image-action="delete" data-image-id="${escapeHtml(block.id)}" type="button">삭제</button>
-        </div>
-      </article>
-    `)
-    .join("");
-}
 
 function loadDraftImages(blocks) {
   draftImages = (Array.isArray(blocks) ? blocks : []).slice(0, MAX_MEMO_IMAGE_BLOCKS);
@@ -1227,7 +1253,7 @@ async function handleImageUploadSubmit(event) {
       alt: String(imageAltInput?.value || "").trim(),
     };
 
-    draftImages.push(block);
+    draftImages.push({ ...block, order: claimNextBlockOrder() });
     renderDraftImages();
     updateEditorDirtyState();
     closeImageUploadModal();
@@ -3614,15 +3640,18 @@ async function handleFormSubmit(event) {
     ? editingUpdatedAtInput.value
     : "";
 
+  const orderedExtraBlocksForSave = [
+    ...draftLinks,
+    ...draftStyledParagraphs,
+    ...draftTables,
+    ...draftImages,
+  ].sort((a, b) => (a.order || 0) - (b.order || 0));
+
   const memoData = {
     title,
     project,
     content,
-    contentBlocks: createMemoContentBlocks(content, draftLinks, [
-      ...draftStyledParagraphs,
-      ...draftTables,
-      ...draftImages,
-    ]),
+    contentBlocks: createMemoContentBlocks(content, [], orderedExtraBlocksForSave),
     category,
     isImportant,
     dueDate,
@@ -3891,44 +3920,7 @@ function handleAddBookmarkClick() {
     return;
   }
 
-  if (editingBookmarkIdInput) {
-    editingBookmarkIdInput.value = "";
-  }
-
   bookmarkForm.reset();
-  document.querySelector("#bookmarkFormTitle").textContent = "즐겨찾기 추가";
-  document.querySelector("#saveBookmarkButton").textContent = "저장";
-
-  bookmarkFormModal.hidden = false;
-  bookmarkFormModal.classList.remove("hidden");
-  bookmarkFormModal.setAttribute("aria-hidden", "false");
-  document.body.classList.add("modal-open");
-  window.setTimeout(() => bookmarkTitleInput?.focus(), 0);
-}
-
-function openEditBookmarkForm(bookmark) {
-  if (!bookmarkForm || !bookmarkFormModal || !bookmark) {
-    return;
-  }
-
-  if (editingBookmarkIdInput) {
-    editingBookmarkIdInput.value = bookmark.id;
-  }
-
-  if (bookmarkTitleInput) {
-    bookmarkTitleInput.value = bookmark.title || "";
-  }
-
-  if (bookmarkUrlInput) {
-    bookmarkUrlInput.value = bookmark.url || "";
-  }
-
-  if (bookmarkGroupInput) {
-    bookmarkGroupInput.value = bookmark.groupName || "";
-  }
-
-  document.querySelector("#bookmarkFormTitle").textContent = "즐겨찾기 수정";
-  document.querySelector("#saveBookmarkButton").textContent = "수정 완료";
 
   bookmarkFormModal.hidden = false;
   bookmarkFormModal.classList.remove("hidden");
@@ -3947,10 +3939,6 @@ function closeBookmarkForm() {
   bookmarkFormModal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
   bookmarkForm.reset();
-
-  if (editingBookmarkIdInput) {
-    editingBookmarkIdInput.value = "";
-  }
 }
 
 async function handleBookmarkFormSubmit(event) {
@@ -3958,17 +3946,12 @@ async function handleBookmarkFormSubmit(event) {
 
   const title = bookmarkTitleInput?.value || "";
   const url = bookmarkUrlInput?.value || "";
-  const groupName = bookmarkGroupInput?.value || "";
-  const editingId = editingBookmarkIdInput?.value || "";
 
   const result = await runCloudAction(
-    () =>
-      editingId
-        ? updateBookmark(editingId, title, url, groupName)
-        : addBookmark(title, url, groupName),
+    () => addBookmark(title, url),
     {
-      loadingMessage: editingId ? "즐겨찾기 수정 중" : "즐겨찾기 추가 중",
-      successMessage: editingId ? "즐겨찾기 수정 완료" : "즐겨찾기 추가 완료",
+      loadingMessage: "즐겨찾기 추가 중",
+      successMessage: "즐겨찾기 추가 완료",
     }
   );
 
@@ -4067,14 +4050,6 @@ async function confirmAndDeleteBookmark(id) {
 }
 
 async function handleBookmarkListClick(event) {
-  const editButton = event.target.closest(".bookmark-edit-button");
-
-  if (editButton) {
-    const bookmark = getBookmarks().find((item) => item.id === editButton.dataset.id);
-    openEditBookmarkForm(bookmark);
-    return;
-  }
-
   const deleteButton = event.target.closest(".bookmark-delete-button");
 
   if (!deleteButton) {
@@ -4839,14 +4814,14 @@ function bindEvents() {
   closeLinkEditorButton?.addEventListener("click", () => closeLinkEditor());
   cancelLinkEditorButton?.addEventListener("click", () => closeLinkEditor());
   linkEditorModal?.addEventListener("click", handleLinkEditorModalClick);
-  linkDraftList?.addEventListener("click", handleLinkDraftListClick);
+  insertedBlocksList?.addEventListener("click", handleLinkDraftListClick);
 
   document.querySelector("#addStyledParagraphButton")?.addEventListener("click", () => openStyledParagraphEditor());
   styledParagraphForm?.addEventListener("submit", handleStyledParagraphSubmit);
   closeStyledParagraphButton?.addEventListener("click", closeStyledParagraphEditor);
   cancelStyledParagraphButton?.addEventListener("click", closeStyledParagraphEditor);
   styledParagraphModal?.addEventListener("click", handleStyledParagraphModalClick);
-  styledDraftList?.addEventListener("click", handleStyledDraftListClick);
+  insertedBlocksList?.addEventListener("click", handleStyledDraftListClick);
   styledSizeOptions?.addEventListener("click", (event) => {
     const chip = event.target.closest("[data-size]");
     if (chip) {
@@ -4864,7 +4839,8 @@ function bindEvents() {
   closeTableEditorButton?.addEventListener("click", closeTableEditor);
   cancelTableEditorButton?.addEventListener("click", closeTableEditor);
   tableEditorModal?.addEventListener("click", handleTableEditorModalClick);
-  tableDraftList?.addEventListener("click", handleTableDraftListClick);
+  insertedBlocksList?.addEventListener("click", handleTableDraftListClick);
+  insertedBlocksList?.addEventListener("click", handleInsertedBlockReorderClick);
   addTableRowButton?.addEventListener("click", handleAddTableRow);
   addTableColButton?.addEventListener("click", handleAddTableCol);
   removeTableRowButton?.addEventListener("click", handleRemoveTableRow);
@@ -4878,7 +4854,7 @@ function bindEvents() {
   closeImageUploadButton?.addEventListener("click", closeImageUploadModal);
   cancelImageUploadButton?.addEventListener("click", closeImageUploadModal);
   imageUploadModal?.addEventListener("click", handleImageUploadModalClick);
-  imageDraftList?.addEventListener("click", handleImageDraftListClick);
+  insertedBlocksList?.addEventListener("click", handleImageDraftListClick);
   imageFileInput?.addEventListener("change", handleImageFileChange);
 
   exportPdfButton?.addEventListener("click", handleExportPdfClick);

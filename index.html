@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=506" rel="manifest"/>
+<link href="./manifest.json?v=510" rel="manifest"/>
 <meta content="#0ea5e9" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
@@ -13,9 +13,9 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=506" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=506" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=506" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=510" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=510" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=510" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +126,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=506"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=510"/>
 </a>
 </div>
 <div class="header-actions">
@@ -245,33 +245,12 @@
 <span>이미지</span>
 </button>
 </div>
-<section aria-label="삽입한 링크" class="link-draft-section" hidden id="linkDraftSection">
+<section aria-label="삽입한 요소" class="link-draft-section" hidden id="insertedBlocksSection">
 <div class="link-draft-section-header">
-<strong>삽입한 링크</strong>
-<span id="linkCountLabel">0개</span>
+<strong>삽입한 요소</strong>
+<span id="insertedBlocksCount">0개</span>
 </div>
-<div class="link-draft-list" id="linkDraftList"></div>
-</section>
-<section aria-label="삽입한 서식 문단" class="link-draft-section" hidden id="styledDraftSection">
-<div class="link-draft-section-header">
-<strong>서식 문단</strong>
-<span id="styledCountLabel">0개</span>
-</div>
-<div class="link-draft-list" id="styledDraftList"></div>
-</section>
-<section aria-label="삽입한 표" class="link-draft-section" hidden id="tableDraftSection">
-<div class="link-draft-section-header">
-<strong>표</strong>
-<span id="tableCountLabel">0개</span>
-</div>
-<div class="link-draft-list" id="tableDraftList"></div>
-</section>
-<section aria-label="삽입한 이미지" class="link-draft-section" hidden id="imageDraftSection">
-<div class="link-draft-section-header">
-<strong>이미지</strong>
-<span id="imageCountLabel">0개</span>
-</div>
-<div class="link-draft-list" id="imageDraftList"></div>
+<div class="link-draft-list" id="insertedBlocksList"></div>
 </section>
 <div class="form-grid">
 <div class="category-field editor-category-panel">
@@ -445,12 +424,12 @@
 <button aria-label="즐겨찾기 편집 닫기" class="close-button" id="closeBookmarkFormButton" type="button">×</button>
 <p class="category-manager-eyebrow">사이드 메뉴</p>
 <h2 id="bookmarkFormTitle">즐겨찾기 추가</h2>
+<p class="category-manager-description">
+        자주 가는 사이트를 이름과 주소로 등록합니다.
+      </p>
 <form class="bookmark-form" id="bookmarkForm">
-<input id="editingBookmarkId" type="hidden"/>
 <input aria-label="사이트 이름" id="bookmarkTitleInput" maxlength="60" placeholder="사이트 이름" required type="text"/>
 <input aria-label="웹사이트 주소" id="bookmarkUrlInput" placeholder="example.com" required type="text"/>
-<input aria-label="그룹(선택)" id="bookmarkGroupInput" list="bookmarkGroupList" maxlength="60" placeholder="그룹 (선택, 예: 업무)" type="text"/>
-<datalist id="bookmarkGroupList"></datalist>
 <div class="bookmark-form-actions">
 <button class="text-button compact-button" id="cancelBookmarkButton" type="button">취소</button>
 <button class="primary-button compact-button" id="saveBookmarkButton" type="submit">저장</button>
@@ -605,7 +584,7 @@
 </div>
 <div class="menu-footer">
 <span>CREATIVE NOTE</span>
-<span class="version-badge">v5.4</span>
+<span class="version-badge">v5.8</span>
 </div>
 </aside>
 <button aria-label="새 메모 작성" class="mobile-new-memo-button" id="mobileNewMemoButton" type="button">
@@ -822,13 +801,13 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=506"></script>
-<script src="./js/feedback.js?v=506"></script>
-<script src="./js/auth.js?v=506"></script>
-<script src="./js/storage.js?v=506"></script>
-<script src="./js/ui.js?v=506"></script>
-<script src="./js/app.js?v=506"></script>
-<script src="./js/account.js?v=506"></script>
-<script src="./js/pwa.js?v=506"></script>
+<script src="./js/config.js?v=510"></script>
+<script src="./js/feedback.js?v=510"></script>
+<script src="./js/auth.js?v=510"></script>
+<script src="./js/storage.js?v=510"></script>
+<script src="./js/ui.js?v=510"></script>
+<script src="./js/app.js?v=510"></script>
+<script src="./js/account.js?v=510"></script>
+<script src="./js/pwa.js?v=510"></script>
 </body>
 </html>

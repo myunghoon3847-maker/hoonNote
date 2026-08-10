@@ -780,7 +780,6 @@ function renderCategoryBrowser() {
 
 function renderBookmarkList() {
   const list = document.querySelector("#bookmarkList");
-  const groupDatalist = document.querySelector("#bookmarkGroupList");
 
   if (!list) {
     return;
@@ -788,77 +787,36 @@ function renderBookmarkList() {
 
   const bookmarks = getBookmarks();
 
-  if (groupDatalist) {
-    const groupNames = Array.from(
-      new Set(bookmarks.map((bookmark) => bookmark.groupName).filter(Boolean))
-    );
-    groupDatalist.innerHTML = groupNames
-      .map((name) => `<option value="${escapeHtml(name)}"></option>`)
-      .join("");
-  }
-
   if (bookmarks.length === 0) {
     list.innerHTML = '<p class="bookmark-empty">아직 추가한 사이트가 없습니다.</p>';
     return;
   }
 
-  const groups = new Map();
+  list.innerHTML = bookmarks
+    .map((bookmark) => {
+      const safeTitle = escapeHtml(bookmark.title);
+      const safeUrl = escapeHtml(bookmark.url);
+      const safeId = escapeHtml(bookmark.id);
+      let domain = "";
 
-  bookmarks.forEach((bookmark) => {
-    const key = bookmark.groupName || "";
-    if (!groups.has(key)) {
-      groups.set(key, []);
-    }
-    groups.get(key).push(bookmark);
-  });
+      try {
+        domain = new URL(bookmark.url).hostname;
+      } catch (_) {}
 
-  const orderedKeys = Array.from(groups.keys()).sort((a, b) => {
-    if (!a) return 1;
-    if (!b) return -1;
-    return a.localeCompare(b, "ko");
-  });
-
-  function renderBookmarkRow(bookmark) {
-    const safeTitle = escapeHtml(bookmark.title);
-    const safeUrl = escapeHtml(bookmark.url);
-    const safeId = escapeHtml(bookmark.id);
-    let domain = "";
-
-    try {
-      domain = new URL(bookmark.url).hostname;
-    } catch (_) {}
-
-    const faviconHtml = domain
-      ? `<img class="bookmark-favicon" src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}" alt="" aria-hidden="true" loading="lazy"/>`
-      : '<span class="bookmark-favicon bookmark-favicon-fallback" aria-hidden="true">🔗</span>';
-
-    return `
-      <div class="bookmark-row">
-        <a class="bookmark-link" href="${safeUrl}" rel="noopener noreferrer" target="_blank">
-          ${faviconHtml}
-          <span class="bookmark-link-copy">
-            <strong>${safeTitle}</strong>
-            <span>${safeUrl}</span>
-          </span>
-        </a>
-        <button aria-label="${safeTitle} 수정" class="bookmark-edit-button" data-id="${safeId}" type="button">✎</button>
-        <button aria-label="${safeTitle} 삭제" class="bookmark-delete-button" data-id="${safeId}" type="button">×</button>
-      </div>
-    `;
-  }
-
-  list.innerHTML = orderedKeys
-    .map((key) => {
-      const rows = groups.get(key).map(renderBookmarkRow).join("");
-
-      if (!key) {
-        return rows;
-      }
+      const faviconHtml = domain
+        ? `<img class="bookmark-favicon" src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}" alt="" aria-hidden="true" loading="lazy"/>`
+        : '<span class="bookmark-favicon bookmark-favicon-fallback" aria-hidden="true">🔗</span>';
 
       return `
-        <div class="bookmark-group">
-          <div class="bookmark-group-label">${escapeHtml(key)}</div>
-          ${rows}
+        <div class="bookmark-row">
+          <a class="bookmark-link" href="${safeUrl}" rel="noopener noreferrer" target="_blank">
+            ${faviconHtml}
+            <span class="bookmark-link-copy">
+              <strong>${safeTitle}</strong>
+              <span>${safeUrl}</span>
+            </span>
+          </a>
+          <button aria-label="${safeTitle} 삭제" class="bookmark-delete-button" data-id="${safeId}" type="button">×</button>
         </div>
       `;
     })
@@ -963,8 +921,7 @@ function toggleEditor() {
           document.querySelector("#editingId")?.value ||
           document.querySelector("#titleInput")?.value.trim() ||
           document.querySelector("#contentInput")?.value.trim() ||
-          document.querySelectorAll("#taskDraftList .task-draft-item").length ||
-          document.querySelectorAll("#linkDraftList .link-draft-item").length
+          document.querySelectorAll("#insertedBlocksList .link-draft-item").length
         );
 
   if (hasChanges) {
@@ -1065,22 +1022,32 @@ function fillFormForEdit(memo) {
     dueDateInput.value = memo.dueDate || "";
   }
 
+  const orderedExtraBlocks =
+    typeof getMemoExtraBlocksOrdered === "function" ? getMemoExtraBlocksOrdered(memo) : [];
+
   if (typeof loadDraftLinks === "function") {
-    loadDraftLinks(typeof getMemoLinks === "function" ? getMemoLinks(memo) : []);
+    loadDraftLinks(orderedExtraBlocks.filter((block) => block.type === "link"));
   }
 
   if (typeof loadDraftStyledParagraphs === "function") {
     loadDraftStyledParagraphs(
-      typeof getMemoStyledParagraphs === "function" ? getMemoStyledParagraphs(memo) : []
+      orderedExtraBlocks.filter((block) => block.type === "styled_paragraph")
     );
   }
 
   if (typeof loadDraftTables === "function") {
-    loadDraftTables(typeof getMemoTables === "function" ? getMemoTables(memo) : []);
+    loadDraftTables(orderedExtraBlocks.filter((block) => block.type === "table"));
   }
 
   if (typeof loadDraftImages === "function") {
-    loadDraftImages(typeof getMemoImages === "function" ? getMemoImages(memo) : []);
+    loadDraftImages(orderedExtraBlocks.filter((block) => block.type === "image"));
+  }
+
+  if (orderedExtraBlocks.length > 0) {
+    nextInsertedBlockOrder = Math.max(
+      nextInsertedBlockOrder,
+      ...orderedExtraBlocks.map((block) => block.order)
+    );
   }
 
   setEditorMode("edit");
