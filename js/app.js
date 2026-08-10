@@ -4916,7 +4916,7 @@ function bindEvents() {
   emptyTrashViewButton?.addEventListener("click", handleEmptyTrashClick);
   resetAllDataButton.addEventListener("click", handleResetAllDataClick);
   cloudRefreshButton.addEventListener("click", handleCloudRefreshClick);
-  migrateLegacyButton.addEventListener("click", handleLegacyMigrationClick);
+  migrateLegacyButton?.addEventListener("click", handleLegacyMigrationClick);
 
   guideToggleButton.addEventListener("click", handleGuideToggleClick);
   dataManagementToggleButton.addEventListener("click", handleDataManagementToggle);
