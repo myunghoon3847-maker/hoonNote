@@ -722,7 +722,7 @@ function renderPinnedStrip() {
   }
 
   const pinned = getMemos()
-    .filter((memo) => memo.isPinned && !memo.isDeleted)
+    .filter((memo) => memo.isPinned && !memo.isDeleted && !memo.dueDate)
     .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))
     .slice(0, 5);
 
@@ -737,11 +737,15 @@ function renderPinnedStrip() {
     .map((memo) => {
       const safeTitle = escapeHtml(memo.title || "제목 없음");
       const safeId = escapeHtml(memo.id);
+      const safePreview = escapeHtml((memo.content || "").trim());
 
       return `
         <button class="pinned-strip-item" data-id="${safeId}" type="button">
-          <span class="pinned-strip-icon" aria-hidden="true">📌</span>
-          <span class="pinned-strip-title">${safeTitle}</span>
+          <span class="pinned-strip-header">
+            <span class="pinned-strip-icon" aria-hidden="true">📌</span>
+            <span class="pinned-strip-title">${safeTitle}</span>
+          </span>
+          ${safePreview ? `<span class="pinned-strip-preview">${safePreview}</span>` : ""}
         </button>
       `;
     })

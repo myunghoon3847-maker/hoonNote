@@ -3217,6 +3217,10 @@ function getFilteredMemos() {
       return false;
     }
 
+    if (memo.dueDate) {
+      return false;
+    }
+
     const isImportantView = currentCategory === "중요";
 
     if (isImportantView && !memo.isImportant) {

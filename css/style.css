@@ -3565,17 +3565,16 @@ body {
 
   .pinned-strip-item {
     flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    max-width: 220px;
-    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    width: 200px;
+    padding: 10px 12px;
     border: 1px solid var(--primary-line);
-    border-radius: 999px;
+    border-radius: 12px;
     background: var(--primary-soft);
-    color: var(--primary);
-    font-size: 12px;
-    font-weight: 700;
+    text-align: left;
     cursor: pointer;
   }
 
@@ -3583,10 +3582,32 @@ body {
     background: #e0f2fe;
   }
 
+  .pinned-strip-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
   .pinned-strip-title {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .pinned-strip-preview {
+    display: -webkit-box;
+    overflow: hidden;
+    width: 100%;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    color: var(--muted);
+    font-size: 10.5px;
+    font-weight: 400;
+    line-height: 1.4;
   }
 }
 
@@ -4510,6 +4531,7 @@ button[aria-busy="true"]::after {
   color: var(--text);
   cursor: pointer;
   font-size: 12px;
+  text-align: left;
 }
 
 .calendar-day:hover {
@@ -4646,7 +4668,7 @@ button[aria-busy="true"]::after {
   }
 
   .calendar-day {
-    min-height: 84px;
+    min-height: 108px;
     align-items: flex-start;
     padding: 8px;
     font-size: 13px;
