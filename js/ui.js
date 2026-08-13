@@ -438,12 +438,6 @@ function openDetailModal(memo, options = {}) {
   document.querySelector("#detailDate").textContent = formatDate(memo.updatedAt || memo.createdAt);
   document.querySelector("#detailTitle").textContent = memo.title;
 
-  if (typeof renderMemoDetailContent === "function") {
-    renderMemoDetailContent(memo);
-  } else {
-    document.querySelector("#detailContent").textContent = memo.content;
-  }
-
   if (linksContainer) {
     const linksHtml = renderMemoLinksHtml(memo);
     linksContainer.innerHTML = linksHtml;
@@ -495,6 +489,12 @@ function openDetailModal(memo, options = {}) {
   modal.classList.remove("hidden");
   modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("modal-open");
+
+  if (typeof renderMemoDetailContent === "function") {
+    renderMemoDetailContent(memo);
+  } else {
+    document.querySelector("#detailContent").textContent = memo.content;
+  }
 
   if (!options.skipHistory) {
     window.solonoteNavigation?.openLayer("detail", {
