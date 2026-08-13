@@ -175,6 +175,7 @@ const bookmarkForm = document.querySelector("#bookmarkForm");
 const bookmarkFormModal = document.querySelector("#bookmarkFormModal");
 const bookmarkTitleInput = document.querySelector("#bookmarkTitleInput");
 const bookmarkUrlInput = document.querySelector("#bookmarkUrlInput");
+const editingBookmarkIdInput = document.querySelector("#editingBookmarkId");
 const addBookmarkButton = document.querySelector("#addBookmarkButton");
 const cancelBookmarkButton = document.querySelector("#cancelBookmarkButton");
 const selectionToolbar = document.querySelector("#selectionToolbar");
@@ -3924,7 +3925,40 @@ function handleAddBookmarkClick() {
     return;
   }
 
+  if (editingBookmarkIdInput) {
+    editingBookmarkIdInput.value = "";
+  }
+
   bookmarkForm.reset();
+  document.querySelector("#bookmarkFormTitle").textContent = "즐겨찾기 추가";
+  document.querySelector("#saveBookmarkButton").textContent = "저장";
+
+  bookmarkFormModal.hidden = false;
+  bookmarkFormModal.classList.remove("hidden");
+  bookmarkFormModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  window.setTimeout(() => bookmarkTitleInput?.focus(), 0);
+}
+
+function openEditBookmarkForm(bookmark) {
+  if (!bookmarkForm || !bookmarkFormModal || !bookmark) {
+    return;
+  }
+
+  if (editingBookmarkIdInput) {
+    editingBookmarkIdInput.value = bookmark.id;
+  }
+
+  if (bookmarkTitleInput) {
+    bookmarkTitleInput.value = bookmark.title || "";
+  }
+
+  if (bookmarkUrlInput) {
+    bookmarkUrlInput.value = bookmark.url || "";
+  }
+
+  document.querySelector("#bookmarkFormTitle").textContent = "즐겨찾기 수정";
+  document.querySelector("#saveBookmarkButton").textContent = "수정 완료";
 
   bookmarkFormModal.hidden = false;
   bookmarkFormModal.classList.remove("hidden");
@@ -3943,6 +3977,10 @@ function closeBookmarkForm() {
   bookmarkFormModal.setAttribute("aria-hidden", "true");
   document.body.classList.remove("modal-open");
   bookmarkForm.reset();
+
+  if (editingBookmarkIdInput) {
+    editingBookmarkIdInput.value = "";
+  }
 }
 
 async function handleBookmarkFormSubmit(event) {
@@ -3950,12 +3988,16 @@ async function handleBookmarkFormSubmit(event) {
 
   const title = bookmarkTitleInput?.value || "";
   const url = bookmarkUrlInput?.value || "";
+  const editingId = editingBookmarkIdInput?.value || "";
 
   const result = await runCloudAction(
-    () => addBookmark(title, url),
+    () =>
+      editingId
+        ? updateBookmark(editingId, title, url)
+        : addBookmark(title, url),
     {
-      loadingMessage: "즐겨찾기 추가 중",
-      successMessage: "즐겨찾기 추가 완료",
+      loadingMessage: editingId ? "즐겨찾기 수정 중" : "즐겨찾기 추가 중",
+      successMessage: editingId ? "즐겨찾기 수정 완료" : "즐겨찾기 추가 완료",
     }
   );
 
@@ -4054,6 +4096,14 @@ async function confirmAndDeleteBookmark(id) {
 }
 
 async function handleBookmarkListClick(event) {
+  const editButton = event.target.closest(".bookmark-edit-button");
+
+  if (editButton) {
+    const bookmark = getBookmarks().find((item) => item.id === editButton.dataset.id);
+    openEditBookmarkForm(bookmark);
+    return;
+  }
+
   const deleteButton = event.target.closest(".bookmark-delete-button");
 
   if (!deleteButton) {

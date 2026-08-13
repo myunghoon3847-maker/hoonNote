@@ -760,7 +760,7 @@ function renderCategoryBrowser() {
   }
 
   const names = getManagedMemoCategoryNames();
-  const activeMemos = getMemos().filter((memo) => !memo.isDeleted);
+  const activeMemos = getMemos().filter((memo) => !memo.isDeleted && !memo.dueDate);
 
   if (names.length === 0) {
     list.innerHTML = '<p class="category-browser-empty">카테고리가 없습니다.</p>';
@@ -820,6 +820,7 @@ function renderBookmarkList() {
               <span>${safeUrl}</span>
             </span>
           </a>
+          <button aria-label="${safeTitle} 수정" class="bookmark-edit-button" data-id="${safeId}" type="button">✎</button>
           <button aria-label="${safeTitle} 삭제" class="bookmark-delete-button" data-id="${safeId}" type="button">×</button>
         </div>
       `;
