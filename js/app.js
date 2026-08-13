@@ -4425,6 +4425,53 @@ function renderMemoDetailContent(memo) {
   detailQuill.setContents(memo.contentDelta);
 }
 
+async function handleContentImageInsert() {
+  if (!contentQuill) {
+    return;
+  }
+
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = "image/*";
+
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const range = contentQuill.getSelection(true) || {
+      index: contentQuill.getLength(),
+      length: 0,
+    };
+
+    contentQuill.enable(false);
+    showAppNotice("이미지를 업로드하는 중입니다...", "info", { title: "업로드 중" });
+
+    try {
+      const url = await uploadMemoImage(file);
+      contentQuill.insertEmbed(range.index, "image", url, "user");
+      contentQuill.setSelection(range.index + 1, 0, "user");
+      syncContentInputFromQuill();
+      updateEditorDirtyState();
+    } catch (error) {
+      console.error(error);
+      showAppNotice(
+        typeof translateCloudError === "function"
+          ? translateCloudError(error)
+          : "이미지 업로드에 실패했습니다.",
+        "error",
+        { title: "업로드 실패" }
+      );
+    } finally {
+      contentQuill.enable(true);
+    }
+  });
+
+  fileInput.click();
+}
+
 function initContentEditor() {
   if (contentQuill || typeof Quill === "undefined") {
     return;
@@ -4440,7 +4487,12 @@ function initContentEditor() {
     theme: "snow",
     placeholder: "내용을 입력하세요.",
     modules: {
-      toolbar: "#contentToolbar",
+      toolbar: {
+        container: "#contentToolbar",
+        handlers: {
+          image: handleContentImageInsert,
+        },
+      },
     },
   });
 

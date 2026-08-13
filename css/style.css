@@ -2106,6 +2106,12 @@ body.memo-selection-active #editorToggleButton {
   line-height: 1.7;
 }
 
+#detailContentRich .ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
 .detail-checklist {
   display: grid;
   gap: 9px;
@@ -4109,7 +4115,8 @@ button[aria-busy="true"]::after {
   white-space: nowrap;
 }
 
-#addStyledParagraphButton {
+#addStyledParagraphButton,
+#addImageButton {
   display: none;
 }
 
@@ -4157,6 +4164,12 @@ button[aria-busy="true"]::after {
   left: 0;
   color: var(--muted);
   font-style: normal;
+}
+
+#contentEditor .ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
 
 .memo-insert-toolbar {
@@ -4975,6 +4988,13 @@ button[aria-busy="true"]::after {
   #detailModal .detail-modal-header,
   #detailModal .detail-modal-scroll {
     position: static !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  #detailContentRich.ql-container,
+  #detailContentRich .ql-editor {
     height: auto !important;
     max-height: none !important;
     overflow: visible !important;
