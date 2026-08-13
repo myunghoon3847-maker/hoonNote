@@ -512,6 +512,12 @@ function normalizeMemo(memo) {
     id: memo && memo.id ? String(memo.id) : createSafeId("memo"),
     title: memo && typeof memo.title === "string" ? memo.title : "제목 없음",
     content: memo && typeof memo.content === "string" ? memo.content : "",
+    contentDelta:
+      memo && memo.contentDelta && Array.isArray(memo.contentDelta.ops)
+        ? memo.contentDelta
+        : memo && memo.content_delta && Array.isArray(memo.content_delta.ops)
+          ? memo.content_delta
+          : null,
     contentBlocks: normalizeMemoContentBlocks(
       memo && (memo.contentBlocks || memo.content_blocks),
       memo && memo.content
@@ -551,6 +557,7 @@ function mapDatabaseRowToMemo(row) {
     id: row.id,
     title: row.title,
     content: row.content,
+    contentDelta: row.content_delta,
     contentBlocks: row.content_blocks,
     contentFormatVersion: row.content_format_version,
     category: row.category,
@@ -1220,6 +1227,10 @@ function toDatabasePayload(memoData, userId) {
     user_id: userId,
     title: typeof memoData.title === "string" ? memoData.title : "",
     content: typeof memoData.content === "string" ? memoData.content : "",
+    content_delta:
+      memoData.contentDelta && Array.isArray(memoData.contentDelta.ops)
+        ? memoData.contentDelta
+        : null,
     content_blocks: createMemoContentBlocks(memoData.content, memoData.contentBlocks),
     content_format_version: CONTENT_FORMAT_VERSION,
     category: normalizeCategory(memoData.category),

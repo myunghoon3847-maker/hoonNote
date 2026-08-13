@@ -437,7 +437,12 @@ function openDetailModal(memo, options = {}) {
   document.querySelector("#detailCategory").textContent = detailParts.join(" · ");
   document.querySelector("#detailDate").textContent = formatDate(memo.updatedAt || memo.createdAt);
   document.querySelector("#detailTitle").textContent = memo.title;
-  document.querySelector("#detailContent").textContent = memo.content;
+
+  if (typeof renderMemoDetailContent === "function") {
+    renderMemoDetailContent(memo);
+  } else {
+    document.querySelector("#detailContent").textContent = memo.content;
+  }
 
   if (linksContainer) {
     const linksHtml = renderMemoLinksHtml(memo);
@@ -970,6 +975,10 @@ function resetForm() {
   document.querySelector("#categoryInput")?.dispatchEvent(new Event("change", { bubbles: true }));
   document.querySelector("#editingId").value = "";
 
+  if (typeof resetContentEditor === "function") {
+    resetContentEditor();
+  }
+
   const editingUpdatedAt = document.querySelector("#editingUpdatedAt");
   if (editingUpdatedAt) {
     editingUpdatedAt.value = "";
@@ -1017,7 +1026,13 @@ function fillFormForEdit(memo) {
 
   document.querySelector("#titleInput").value = memo.title;
   document.querySelector("#projectInput").value = memo.project || "";
-  document.querySelector("#contentInput").value = memo.content;
+
+  if (typeof setContentEditorFromMemo === "function") {
+    setContentEditorFromMemo(memo);
+  } else {
+    document.querySelector("#contentInput").value = memo.content;
+  }
+
   document.querySelector("#categoryInput").value = memo.category;
   document.querySelector("#categoryInput").dispatchEvent(new Event("change", { bubbles: true }));
   document.querySelector("#importantInput").checked = Boolean(memo.isImportant);

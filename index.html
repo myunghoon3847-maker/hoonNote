@@ -5,7 +5,7 @@
 <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" name="viewport"/>
 <title>Creative Note - 메모·아이디어 노트</title>
 <meta content="메모, 아이디어와 할 일을 클라우드에 안전하게 기록하는 Creative Note" name="description"/>
-<link href="./manifest.json?v=515" rel="manifest"/>
+<link href="./manifest.json?v=516" rel="manifest"/>
 <meta content="#0ea5e9" name="theme-color"/>
 <meta content="Creative Note" name="application-name"/>
 <meta content="Creative Note" name="apple-mobile-web-app-title"/>
@@ -13,9 +13,10 @@
 <meta content="default" name="apple-mobile-web-app-status-bar-style"/>
 <meta content="yes" name="mobile-web-app-capable"/>
 <meta content="telephone=no" name="format-detection"/>
-<link href="./icons/apple-touch-icon.png?v=515" rel="apple-touch-icon"/>
-<link href="./icons/logo-mark.svg?v=515" rel="icon" type="image/svg+xml"/>
-<link href="./css/style.css?v=515" rel="stylesheet"/>
+<link href="./icons/apple-touch-icon.png?v=516" rel="apple-touch-icon"/>
+<link href="./icons/logo-mark.svg?v=516" rel="icon" type="image/svg+xml"/>
+<link href="./css/style.css?v=516" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet"/>
 </head>
 <body class="auth-pending auth-logged-out">
 <section aria-labelledby="authTitle" class="auth-screen" id="authScreen">
@@ -126,7 +127,7 @@
 <div class="header-inner">
 <div class="brand-block">
 <a aria-label="Creative Note 홈으로 이동" class="brand-home-button" href="./" id="homeLogoButton" title="홈으로 이동">
-<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=515"/>
+<img alt="CREATIVE NOTE" class="brand-wordmark" src="./icons/brand-wordmark.svg?v=516"/>
 </a>
 </div>
 <div class="header-actions">
@@ -222,10 +223,26 @@
 <input autocomplete="off" id="titleInput" maxlength="300" placeholder="메모 제목" type="text"/>
 <hr class="editor-divider"/>
 <div class="memo-content-heading-row">
-<label for="contentInput">내용</label>
-<span class="editor-format-badge">블록 편집기 미리보기</span>
+<label for="contentEditor">내용</label>
 </div>
-<textarea id="contentInput" maxlength="200000" placeholder="내용을 입력하세요." rows="11"></textarea>
+<div class="quill-toolbar-wrapper" id="contentToolbar">
+<span class="ql-formats">
+<button class="ql-bold" type="button"></button>
+</span>
+<span class="ql-formats">
+<select class="ql-size">
+<option value="small"></option>
+<option selected=""></option>
+<option value="large"></option>
+<option value="huge"></option>
+</select>
+</span>
+<span class="ql-formats">
+<select class="ql-color"></select>
+</span>
+</div>
+<div aria-label="내용" id="contentEditor" role="textbox"></div>
+<textarea class="hidden" hidden="" id="contentInput" maxlength="200000"></textarea>
 <div aria-label="메모 요소 삽입" class="memo-insert-toolbar">
 <span class="memo-insert-label">삽입</span>
 <button aria-haspopup="dialog" aria-label="링크 삽입" class="secondary-button compact-button memo-insert-button" id="addLinkButton" type="button">
@@ -573,7 +590,7 @@
 </div>
 <div class="menu-footer">
 <span>CREATIVE NOTE</span>
-<span class="version-badge">v5.13</span>
+<span class="version-badge">v5.14</span>
 </div>
 </aside>
 <div aria-hidden="true" aria-labelledby="bookmarkFormTitle" aria-modal="true" class="modal hidden" hidden id="bookmarkFormModal" role="dialog">
@@ -795,6 +812,7 @@
 </div>
 <div class="detail-modal-scroll">
 <p id="detailContent"></p>
+<div hidden id="detailContentRich"></div>
 <div aria-label="메모 링크" class="detail-links" hidden id="detailLinks"></div>
 <div id="detailStyledParagraphs"></div>
 <div id="detailTables"></div>
@@ -810,13 +828,14 @@
 </article>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.8"></script>
-<script src="./js/config.js?v=515"></script>
-<script src="./js/feedback.js?v=515"></script>
-<script src="./js/auth.js?v=515"></script>
-<script src="./js/storage.js?v=515"></script>
-<script src="./js/ui.js?v=515"></script>
-<script src="./js/app.js?v=515"></script>
-<script src="./js/account.js?v=515"></script>
-<script src="./js/pwa.js?v=515"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script src="./js/config.js?v=516"></script>
+<script src="./js/feedback.js?v=516"></script>
+<script src="./js/auth.js?v=516"></script>
+<script src="./js/storage.js?v=516"></script>
+<script src="./js/ui.js?v=516"></script>
+<script src="./js/app.js?v=516"></script>
+<script src="./js/account.js?v=516"></script>
+<script src="./js/pwa.js?v=516"></script>
 </body>
 </html>

@@ -1565,7 +1565,13 @@ function restoreLocalEditorDraft() {
 
   titleInput.value = draft.title || "";
   projectInput.value = draft.project || "";
-  contentInput.value = draft.content || "";
+
+  if (typeof setContentEditorFromPlainText === "function") {
+    setContentEditorFromPlainText(draft.content || "");
+  } else {
+    contentInput.value = draft.content || "";
+  }
+
   categoryInput.value = draft.category || "업무";
 
   if (!categoryInput.value) {
@@ -1616,7 +1622,11 @@ function restoreLocalEditorDraft() {
   });
 
   window.setTimeout(() => {
-    (titleInput.value.trim() ? contentInput : titleInput)?.focus();
+    if (titleInput.value.trim()) {
+      focusContentEditor();
+    } else {
+      titleInput?.focus();
+    }
   }, 250);
 }
 
@@ -3625,7 +3635,7 @@ async function handleFormSubmit(event) {
 
   if (!content && draftTasks.length === 0 && draftLinks.length === 0) {
     showAppNotice("내용, 링크 또는 체크리스트 항목을 한 개 이상 추가하세요.", "warning", { title: "저장 전 확인" });
-    contentInput.focus();
+    focusContentEditor();
     return;
   }
 
@@ -3656,6 +3666,7 @@ async function handleFormSubmit(event) {
     title,
     project,
     content,
+    contentDelta: typeof getContentDeltaJson === "function" ? getContentDeltaJson() : null,
     contentBlocks: createMemoContentBlocks(content, [], orderedExtraBlocksForSave),
     category,
     isImportant,
@@ -4375,6 +4386,118 @@ function handleEditorResizeHandlePointerUp() {
       /* 저장 실패는 무시 */
     }
   }
+}
+
+let contentQuill = null;
+
+let detailQuill = null;
+
+function renderMemoDetailContent(memo) {
+  const plainContainer = document.querySelector("#detailContent");
+  const richContainer = document.querySelector("#detailContentRich");
+
+  if (!plainContainer || !richContainer) {
+    return;
+  }
+
+  const hasDelta = memo && memo.contentDelta && Array.isArray(memo.contentDelta.ops);
+
+  if (!hasDelta || typeof Quill === "undefined") {
+    plainContainer.hidden = false;
+    plainContainer.textContent = (memo && memo.content) || "";
+    richContainer.hidden = true;
+    richContainer.innerHTML = "";
+    return;
+  }
+
+  plainContainer.hidden = true;
+  plainContainer.textContent = "";
+  richContainer.hidden = false;
+
+  if (!detailQuill) {
+    detailQuill = new Quill(richContainer, {
+      theme: "snow",
+      readOnly: true,
+      modules: { toolbar: false },
+    });
+  }
+
+  detailQuill.setContents(memo.contentDelta);
+}
+
+function initContentEditor() {
+  if (contentQuill || typeof Quill === "undefined") {
+    return;
+  }
+
+  const editorElement = document.querySelector("#contentEditor");
+
+  if (!editorElement) {
+    return;
+  }
+
+  contentQuill = new Quill("#contentEditor", {
+    theme: "snow",
+    placeholder: "내용을 입력하세요.",
+    modules: {
+      toolbar: "#contentToolbar",
+    },
+  });
+
+  contentQuill.on("text-change", () => {
+    syncContentInputFromQuill();
+    if (typeof updateEditorDirtyState === "function") {
+      updateEditorDirtyState();
+    }
+  });
+}
+
+function syncContentInputFromQuill() {
+  if (!contentQuill || !contentInput) {
+    return;
+  }
+
+  contentInput.value = contentQuill.getText().replace(/\n$/, "");
+}
+
+function getContentDeltaJson() {
+  return contentQuill ? contentQuill.getContents() : null;
+}
+
+function setContentEditorFromMemo(memo) {
+  if (!contentQuill) {
+    return;
+  }
+
+  if (memo && memo.contentDelta && Array.isArray(memo.contentDelta.ops)) {
+    contentQuill.setContents(memo.contentDelta);
+  } else {
+    contentQuill.setText((memo && memo.content) || "");
+  }
+
+  syncContentInputFromQuill();
+}
+
+function setContentEditorFromPlainText(text) {
+  if (!contentQuill) {
+    return;
+  }
+
+  contentQuill.setText(text || "");
+  syncContentInputFromQuill();
+}
+
+function resetContentEditor() {
+  if (!contentQuill) {
+    return;
+  }
+
+  contentQuill.setText("");
+  syncContentInputFromQuill();
+}
+
+function focusContentEditor() {
+  contentQuill?.focus();
 }
 
 function toggleSidebarCollapse() {
@@ -5119,6 +5242,7 @@ initializeAppNavigation();
 })();
 
 bindEvents();
+initContentEditor();
 renderTaskDraftList();
 markEditorClean();
 setDraftSaveStatus(
