@@ -722,7 +722,7 @@ function renderPinnedStrip() {
   }
 
   const pinned = getMemos()
-    .filter((memo) => memo.isPinned && !memo.isDeleted && !memo.dueDate)
+    .filter((memo) => memo.isPinned && !memo.isDeleted)
     .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))
     .slice(0, 5);
 
