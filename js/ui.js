@@ -847,6 +847,10 @@ function openEditor(options = {}) {
   editorView.hidden = false;
   editorView.setAttribute("aria-hidden", "false");
 
+  if (typeof initContentEditor === "function") {
+    initContentEditor();
+  }
+
   if (toggleButton) {
     toggleButton.textContent = "작성 닫기";
     toggleButton.classList.remove("primary-button");
@@ -1027,12 +1031,6 @@ function fillFormForEdit(memo) {
   document.querySelector("#titleInput").value = memo.title;
   document.querySelector("#projectInput").value = memo.project || "";
 
-  if (typeof setContentEditorFromMemo === "function") {
-    setContentEditorFromMemo(memo);
-  } else {
-    document.querySelector("#contentInput").value = memo.content;
-  }
-
   document.querySelector("#categoryInput").value = memo.category;
   document.querySelector("#categoryInput").dispatchEvent(new Event("change", { bubbles: true }));
   document.querySelector("#importantInput").checked = Boolean(memo.isImportant);
@@ -1073,6 +1071,12 @@ function fillFormForEdit(memo) {
   setEditorMode("edit");
   openEditor();
   closeDetailModal();
+
+  if (typeof setContentEditorFromMemo === "function") {
+    setContentEditorFromMemo(memo);
+  } else {
+    document.querySelector("#contentInput").value = memo.content;
+  }
 
   window.scrollTo({ top: 0, behavior: "auto" });
 }

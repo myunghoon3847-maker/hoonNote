@@ -1566,12 +1566,6 @@ function restoreLocalEditorDraft() {
   titleInput.value = draft.title || "";
   projectInput.value = draft.project || "";
 
-  if (typeof setContentEditorFromPlainText === "function") {
-    setContentEditorFromPlainText(draft.content || "");
-  } else {
-    contentInput.value = draft.content || "";
-  }
-
   categoryInput.value = draft.category || "업무";
 
   if (!categoryInput.value) {
@@ -1606,6 +1600,12 @@ function restoreLocalEditorDraft() {
   setEditorMode(editingIdInput.value ? "edit" : "create");
   openEditor();
   hideDraftRecoveryBanner();
+
+  if (typeof setContentEditorFromPlainText === "function") {
+    setContentEditorFromPlainText(draft.content || "");
+  } else {
+    contentInput.value = draft.content || "";
+  }
 
   editorCleanSnapshot = "";
   updateEditorDirtyState();
@@ -4425,17 +4425,22 @@ function renderMemoDetailContent(memo) {
   detailQuill.setContents(memo.contentDelta);
 }
 
+let isUploadingContentImage = false;
+
 async function handleContentImageInsert() {
-  if (!contentQuill) {
+  if (!contentQuill || isUploadingContentImage) {
     return;
   }
 
   const fileInput = document.createElement("input");
   fileInput.type = "file";
   fileInput.accept = "image/*";
+  fileInput.style.display = "none";
+  document.body.appendChild(fileInput);
 
   fileInput.addEventListener("change", async () => {
     const file = fileInput.files?.[0];
+    fileInput.remove();
 
     if (!file) {
       return;
@@ -4446,7 +4451,7 @@ async function handleContentImageInsert() {
       length: 0,
     };
 
-    contentQuill.enable(false);
+    isUploadingContentImage = true;
     showAppNotice("이미지를 업로드하는 중입니다...", "info", { title: "업로드 중" });
 
     try {
@@ -4455,6 +4460,7 @@ async function handleContentImageInsert() {
       contentQuill.setSelection(range.index + 1, 0, "user");
       syncContentInputFromQuill();
       updateEditorDirtyState();
+      showAppNotice("이미지를 추가했습니다.", "success", { title: "업로드 완료" });
     } catch (error) {
       console.error(error);
       showAppNotice(
@@ -4465,7 +4471,7 @@ async function handleContentImageInsert() {
         { title: "업로드 실패" }
       );
     } finally {
-      contentQuill.enable(true);
+      isUploadingContentImage = false;
     }
   });
 
@@ -5294,7 +5300,6 @@ initializeAppNavigation();
 })();
 
 bindEvents();
-initContentEditor();
 renderTaskDraftList();
 markEditorClean();
 setDraftSaveStatus(
