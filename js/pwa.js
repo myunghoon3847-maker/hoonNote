@@ -192,6 +192,16 @@
       return;
     }
 
+    if (typeof hasUnsavedEditorChanges === "function" && hasUnsavedEditorChanges()) {
+      const shouldProceed = window.confirm(
+        "저장하지 않은 메모 내용이 있습니다. 업데이트를 적용하면 새로고침되어 내용이 사라질 수 있습니다. 그래도 업데이트할까요?"
+      );
+
+      if (!shouldProceed) {
+        return;
+      }
+    }
+
     isApplyingUpdate = true;
 
     feedback?.setButtonBusy?.(
