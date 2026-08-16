@@ -4415,6 +4415,7 @@ function renderMemoDetailContent(memo) {
   richContainer.hidden = false;
 
   if (!detailQuill) {
+    registerContentTableModule();
     detailQuill = new Quill(richContainer, {
       theme: "snow",
       readOnly: true,
@@ -4422,7 +4423,8 @@ function renderMemoDetailContent(memo) {
     });
   }
 
-  detailQuill.setContents(memo.contentDelta);
+  detailQuill.setContents([], "silent");
+  detailQuill.updateContents(memo.contentDelta, "silent");
 }
 
 let isUploadingContentImage = false;
@@ -4478,6 +4480,18 @@ async function handleContentImageInsert() {
   fileInput.click();
 }
 
+function registerContentTableModule() {
+  if (typeof Quill === "undefined" || typeof window.QuillTableBetter === "undefined") {
+    return false;
+  }
+
+  if (!Quill.imports["modules/table-better"]) {
+    Quill.register({ "modules/table-better": window.QuillTableBetter }, true);
+  }
+
+  return true;
+}
+
 function initContentEditor() {
   if (contentQuill || typeof Quill === "undefined") {
     return;
@@ -4489,25 +4503,103 @@ function initContentEditor() {
     return;
   }
 
+  const hasTableModule = registerContentTableModule();
+
+  const editorModules = {
+    toolbar: {
+      container: "#contentToolbar",
+      handlers: {
+        image: handleContentImageInsert,
+      },
+    },
+  };
+
+  if (hasTableModule) {
+    editorModules.table = false;
+    editorModules["table-better"] = {
+      language: "en_US",
+      menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
+      toolbarTable: true,
+    };
+    editorModules.keyboard = {
+      bindings: window.QuillTableBetter.keyboardBindings,
+    };
+  }
+
   contentQuill = new Quill("#contentEditor", {
     theme: "snow",
     placeholder: "내용을 입력하세요.",
-    modules: {
-      toolbar: {
-        container: "#contentToolbar",
-        handlers: {
-          image: handleContentImageInsert,
-        },
-      },
-    },
+    modules: editorModules,
   });
 
-  contentQuill.on("text-change", () => {
+  contentQuill.on("text-change", (delta) => {
     syncContentInputFromQuill();
+    handleContentAutoLink(delta);
     if (typeof updateEditorDirtyState === "function") {
       updateEditorDirtyState();
     }
   });
+}
+
+function handleContentAutoLink(delta) {
+  if (!contentQuill) {
+    return;
+  }
+
+  const ops = Array.isArray(delta?.ops) ? delta.ops : [];
+  const lastOp = ops[ops.length - 1];
+  const insertedText = typeof lastOp?.insert === "string" ? lastOp.insert : "";
+
+  if (!insertedText) {
+    return;
+  }
+
+  const selection = contentQuill.getSelection();
+
+  if (!selection) {
+    return;
+  }
+
+  const cursorIndex = selection.index;
+  const normalizeUrl = typeof normalizeHttpUrl === "function" ? normalizeHttpUrl : () => "";
+
+  const trimmedInserted = insertedText.trim();
+
+  if (trimmedInserted === insertedText && trimmedInserted.length > 0) {
+    const pasteStart = cursorIndex - insertedText.length;
+    const normalizedPasted = normalizeUrl(trimmedInserted);
+
+    if (normalizedPasted && !contentQuill.getFormat(pasteStart, insertedText.length).link) {
+      contentQuill.formatText(pasteStart, insertedText.length, "link", normalizedPasted, "user");
+      return;
+    }
+  }
+
+  if (!/[ \n]$/.test(insertedText)) {
+    return;
+  }
+
+  const textBeforeCursor = contentQuill.getText(0, cursorIndex);
+  const match = textBeforeCursor.match(/(\S+)[ \n]$/);
+
+  if (!match) {
+    return;
+  }
+
+  const candidateWord = match[1];
+  const wordStart = cursorIndex - 1 - candidateWord.length;
+
+  if (contentQuill.getFormat(wordStart, candidateWord.length).link) {
+    return;
+  }
+
+  const normalizedTyped = normalizeUrl(candidateWord);
+
+  if (!normalizedTyped) {
+    return;
+  }
+
+  contentQuill.formatText(wordStart, candidateWord.length, "link", normalizedTyped, "user");
 }
 
 function syncContentInputFromQuill() {
@@ -4527,8 +4619,10 @@ function setContentEditorFromMemo(memo) {
     return;
   }
 
+  contentQuill.setText("");
+
   if (memo && memo.contentDelta && Array.isArray(memo.contentDelta.ops)) {
-    contentQuill.setContents(memo.contentDelta);
+    contentQuill.updateContents(memo.contentDelta, "silent");
   } else {
     contentQuill.setText((memo && memo.content) || "");
   }
