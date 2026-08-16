@@ -4492,6 +4492,23 @@ function registerContentTableModule() {
   return true;
 }
 
+function insertContentTable() {
+  if (!contentQuill) {
+    return;
+  }
+
+  const tableModule = contentQuill.getModule("table-better");
+
+  if (!tableModule) {
+    showAppNotice("표 기능을 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.", "warning", {
+      title: "표 삽입 실패",
+    });
+    return;
+  }
+
+  tableModule.insertTable(3, 3);
+}
+
 function initContentEditor() {
   if (contentQuill || typeof Quill === "undefined") {
     return;
@@ -4519,7 +4536,7 @@ function initContentEditor() {
     editorModules["table-better"] = {
       language: "en_US",
       menus: ["column", "row", "merge", "table", "cell", "wrap", "copy", "delete"],
-      toolbarTable: true,
+      toolbarTable: false,
     };
     editorModules.keyboard = {
       bindings: window.QuillTableBetter.keyboardBindings,
@@ -4531,6 +4548,8 @@ function initContentEditor() {
     placeholder: "내용을 입력하세요.",
     modules: editorModules,
   });
+
+  document.querySelector("#contentTableButton")?.addEventListener("click", insertContentTable);
 
   contentQuill.on("text-change", (delta) => {
     syncContentInputFromQuill();

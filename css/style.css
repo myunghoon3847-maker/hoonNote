@@ -4201,6 +4201,10 @@ button[aria-busy="true"]::after {
   padding: 10px 0 2px;
 }
 
+.memo-insert-toolbar {
+  display: none;
+}
+
 .memo-insert-label {
   color: #64748b;
   font-size: 12px;
