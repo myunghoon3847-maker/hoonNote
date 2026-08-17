@@ -412,6 +412,33 @@ function renderMemoImagesHtml(memo) {
     .join("");
 }
 
+function renderMemoAttachmentsHtml(memo) {
+  const attachments = Array.isArray(memo && memo.attachments) ? memo.attachments : [];
+
+  if (attachments.length === 0) {
+    return "";
+  }
+
+  const sizeLabel =
+    typeof formatAttachmentFileSize === "function" ? formatAttachmentFileSize : (bytes) => `${bytes || 0}B`;
+
+  const items = attachments
+    .map(
+      (item) => `
+        <a class="detail-attachment-item" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" download="${escapeHtml(item.name)}">
+          <span class="detail-attachment-icon" aria-hidden="true">📎</span>
+          <span class="detail-attachment-copy">
+            <strong>${escapeHtml(item.name)}</strong>
+            <small>${sizeLabel(item.size)}</small>
+          </span>
+        </a>
+      `
+    )
+    .join("");
+
+  return `<div class="detail-attachment-list">${items}</div>`;
+}
+
 function openDetailModal(memo, options = {}) {
   const modal = document.querySelector("#detailModal");
   const editButton = document.querySelector("#editMemoButton");
@@ -457,6 +484,11 @@ function openDetailModal(memo, options = {}) {
   const imagesContainer = document.querySelector("#detailImages");
   if (imagesContainer) {
     imagesContainer.innerHTML = renderMemoImagesHtml(memo);
+  }
+
+  const attachmentsContainer = document.querySelector("#detailAttachments");
+  if (attachmentsContainer) {
+    attachmentsContainer.innerHTML = renderMemoAttachmentsHtml(memo);
   }
 
   if (checklistContainer) {
@@ -1008,6 +1040,10 @@ function resetForm() {
     resetDraftImages();
   }
 
+  if (typeof resetDraftAttachments === "function") {
+    resetDraftAttachments();
+  }
+
   setEditorMode("create");
 
   if (typeof markEditorClean === "function") {
@@ -1059,6 +1095,10 @@ function fillFormForEdit(memo) {
 
   if (typeof loadDraftImages === "function") {
     loadDraftImages(orderedExtraBlocks.filter((block) => block.type === "image"));
+  }
+
+  if (typeof loadDraftAttachments === "function") {
+    loadDraftAttachments(memo.attachments);
   }
 
   if (orderedExtraBlocks.length > 0) {

@@ -263,6 +263,9 @@ function normalizeMemoTableBlock(block) {
 
 const MEMO_IMAGE_BUCKET = "memo-images";
 const MAX_MEMO_IMAGE_FILE_SIZE = 8 * 1024 * 1024;
+const MEMO_FILE_BUCKET = "memo-files";
+const MAX_MEMO_FILE_SIZE = 20 * 1024 * 1024;
+const MAX_MEMO_ATTACHMENTS = 5;
 
 async function uploadMemoImage(file) {
   if (!file || typeof file !== "object") {
@@ -303,6 +306,54 @@ async function uploadMemoImage(file) {
   }
 
   return data.publicUrl;
+}
+
+async function uploadMemoFile(file) {
+  if (!file || typeof file !== "object") {
+    throw new Error("첨부할 파일을 선택해주세요.");
+  }
+
+  if (file.size > MAX_MEMO_FILE_SIZE) {
+    throw new Error("파일 용량은 20MB 이하만 업로드할 수 있습니다.");
+  }
+
+  const { client, user } = await getCloudContext();
+  const extension = (file.name && file.name.includes(".")
+    ? file.name.split(".").pop()
+    : ""
+  )
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, 8);
+
+  const storedFileName = `${createSafeId("file")}${extension ? `.${extension}` : ""}`;
+  const filePath = `${user.id}/${storedFileName}`;
+
+  const { error: uploadError } = await client.storage
+    .from(MEMO_FILE_BUCKET)
+    .upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: file.type || undefined,
+    });
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { data } = client.storage.from(MEMO_FILE_BUCKET).getPublicUrl(filePath);
+
+  if (!data || !data.publicUrl) {
+    throw new Error("파일 주소를 가져오지 못했습니다.");
+  }
+
+  return {
+    id: createSafeId("attachment"),
+    name: (file.name || "첨부파일").slice(0, 200),
+    url: data.publicUrl,
+    size: file.size,
+    type: file.type || "",
+  };
 }
 
 function normalizeMemoImageBlock(block) {
@@ -549,6 +600,7 @@ function normalizeMemo(memo) {
         : Boolean(memo && memo.is_pinned),
     dueDate: normalizeDueDate(memo && (memo.dueDate ?? memo.due_date)),
     tasks: normalizeTasks(memo && memo.tasks),
+    attachments: Array.isArray(memo && memo.attachments) ? memo.attachments : [],
   };
 }
 
@@ -567,6 +619,7 @@ function mapDatabaseRowToMemo(row) {
     isDeleted: row.is_deleted,
     dueDate: row.due_date,
     tasks: row.tasks,
+    attachments: row.attachments,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });
@@ -1240,6 +1293,7 @@ function toDatabasePayload(memoData, userId) {
     is_deleted: Boolean(memoData.isDeleted),
     due_date: normalizeDueDate(memoData.dueDate),
     tasks: normalizeTasks(memoData.tasks),
+    attachments: Array.isArray(memoData.attachments) ? memoData.attachments.slice(0, MAX_MEMO_ATTACHMENTS) : [],
   };
 }
 

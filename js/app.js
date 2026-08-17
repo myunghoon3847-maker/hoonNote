@@ -8,6 +8,7 @@ let draftLinks = [];
 let draftStyledParagraphs = [];
 let draftTables = [];
 let draftImages = [];
+let draftAttachments = [];
 let nextInsertedBlockOrder = 1;
 
 function claimNextBlockOrder() {
@@ -25,6 +26,9 @@ let sidebarCollapsed = false;
 let editorPanelResizing = false;
 let editorPanelResizeStartX = 0;
 let editorPanelResizeStartWidth = 0;
+let detailPanelResizing = false;
+let detailPanelResizeStartX = 0;
+let detailPanelResizeStartWidth = 0;
 let memoGridViewEnabled = false;
 let styledParagraphSourceSelection = null;
 let bookmarkLongPressTimer = null;
@@ -1231,6 +1235,118 @@ function handleImageFileChange() {
   reader.readAsDataURL(file);
 }
 
+function formatAttachmentFileSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return "0KB";
+  }
+
+  if (bytes < 1024 * 1024) {
+    return `${Math.max(1, Math.round(bytes / 1024))}KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+function renderAttachmentList() {
+  const section = document.querySelector("#attachmentSection");
+  const list = document.querySelector("#attachmentList");
+  const countLabel = document.querySelector("#attachmentCount");
+
+  if (!section || !list || !countLabel) {
+    return;
+  }
+
+  countLabel.textContent = `${draftAttachments.length}개`;
+  section.hidden = draftAttachments.length === 0;
+
+  if (draftAttachments.length === 0) {
+    list.innerHTML = "";
+    return;
+  }
+
+  list.innerHTML = draftAttachments
+    .map(
+      (item) => `
+      <article class="link-draft-item" data-attachment-id="${escapeHtml(item.id)}">
+        <a class="link-draft-anchor" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" download="${escapeHtml(item.name)}">
+          <span class="link-draft-icon" aria-hidden="true">📎</span>
+          <span class="link-draft-copy">
+            <strong>${escapeHtml(item.name)}</strong>
+            <small>${formatAttachmentFileSize(item.size)}</small>
+          </span>
+        </a>
+        <div class="link-draft-actions">
+          <button class="text-button compact-button danger-text" data-attachment-action="delete" data-attachment-id="${escapeHtml(item.id)}" type="button">삭제</button>
+        </div>
+      </article>
+    `
+    )
+    .join("");
+}
+
+function handleAddAttachmentClick() {
+  if (draftAttachments.length >= MAX_MEMO_ATTACHMENTS) {
+    showAppNotice(`첨부파일은 메모 하나에 ${MAX_MEMO_ATTACHMENTS}개까지 추가할 수 있습니다.`, "warning", {
+      title: "첨부 제한",
+    });
+    return;
+  }
+
+  document.querySelector("#attachmentFileInput")?.click();
+}
+
+async function handleAttachmentFileSelected(event) {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+
+  if (!file) {
+    return;
+  }
+
+  const addButton = document.querySelector("#addAttachmentButton");
+  setActionButtonBusy(addButton, true, "업로드 중...", "파일 첨부");
+
+  try {
+    const attachment = await uploadMemoFile(file);
+    draftAttachments.push(attachment);
+    renderAttachmentList();
+    updateEditorDirtyState();
+    showAppNotice("파일을 첨부했습니다.", "success", { title: "첨부 완료" });
+  } catch (error) {
+    console.error(error);
+    showAppNotice(
+      typeof translateCloudError === "function" ? translateCloudError(error) : "파일 업로드에 실패했습니다.",
+      "error",
+      { title: "첨부 실패" }
+    );
+  } finally {
+    setActionButtonBusy(addButton, false, "업로드 중...", "파일 첨부");
+  }
+}
+
+function handleAttachmentListClick(event) {
+  const deleteButton = event.target.closest('[data-attachment-action="delete"]');
+
+  if (!deleteButton) {
+    return;
+  }
+
+  const attachmentId = deleteButton.dataset.attachmentId;
+  draftAttachments = draftAttachments.filter((item) => item.id !== attachmentId);
+  renderAttachmentList();
+  updateEditorDirtyState();
+}
+
+function loadDraftAttachments(attachments) {
+  draftAttachments = (Array.isArray(attachments) ? attachments : []).slice(0, MAX_MEMO_ATTACHMENTS);
+  renderAttachmentList();
+}
+
+function resetDraftAttachments() {
+  draftAttachments = [];
+  renderAttachmentList();
+}
+
 async function handleImageUploadSubmit(event) {
   event.preventDefault();
 
@@ -1313,6 +1429,7 @@ function getEditorSnapshot() {
       url: link.url,
       label: link.label,
     })),
+    attachments: draftAttachments.map((item) => item.id),
   });
 }
 
@@ -1369,6 +1486,7 @@ function buildLocalEditorDraft() {
       url: link.url,
       label: link.label,
     })),
+    attachments: draftAttachments.map((item) => ({ ...item })),
   };
 }
 
@@ -1596,6 +1714,10 @@ function restoreLocalEditorDraft() {
   );
 
   loadDraftLinks(Array.isArray(draft.links) ? draft.links : []);
+
+  if (typeof loadDraftAttachments === "function") {
+    loadDraftAttachments(draft.attachments);
+  }
 
   setEditorMode(editingIdInput.value ? "edit" : "create");
   openEditor();
@@ -3672,6 +3794,7 @@ async function handleFormSubmit(event) {
     isImportant,
     dueDate,
     tasks: draftTasks.map((task) => ({ ...task })),
+    attachments: draftAttachments.map((item) => ({ ...item })),
   };
 
   setActionButtonBusy(
@@ -4382,6 +4505,55 @@ function handleEditorResizeHandlePointerUp() {
   if (currentWidth) {
     try {
       window.localStorage.setItem("solonote_editor_panel_width", String(Math.round(currentWidth)));
+    } catch (_) {
+      /* 저장 실패는 무시 */
+    }
+  }
+}
+
+function applyDetailPanelWidth(width) {
+  const clamped = Math.min(Math.max(width, 340), Math.round(window.innerWidth * 0.8));
+  document.documentElement.style.setProperty("--detail-panel-width", `${clamped}px`);
+  return clamped;
+}
+
+function handleDetailResizeHandlePointerDown(event) {
+  const detailPanel = document.querySelector("#detailModal .modal-card");
+
+  if (!detailPanel || !isDesktopLayout()) {
+    return;
+  }
+
+  detailPanelResizing = true;
+  detailPanelResizeStartX = event.clientX;
+  detailPanelResizeStartWidth = detailPanel.getBoundingClientRect().width;
+  document.querySelector("#detailResizeHandle")?.classList.add("active");
+  event.preventDefault();
+}
+
+function handleDetailResizeHandlePointerMove(event) {
+  if (!detailPanelResizing) {
+    return;
+  }
+
+  const deltaX = detailPanelResizeStartX - event.clientX;
+  applyDetailPanelWidth(detailPanelResizeStartWidth + deltaX);
+}
+
+function handleDetailResizeHandlePointerUp() {
+  if (!detailPanelResizing) {
+    return;
+  }
+
+  detailPanelResizing = false;
+  document.querySelector("#detailResizeHandle")?.classList.remove("active");
+
+  const detailPanel = document.querySelector("#detailModal .modal-card");
+  const currentWidth = detailPanel?.getBoundingClientRect().width;
+
+  if (currentWidth) {
+    try {
+      window.localStorage.setItem("solonote_detail_panel_width", String(Math.round(currentWidth)));
     } catch (_) {
       /* 저장 실패는 무시 */
     }
@@ -5232,6 +5404,11 @@ function bindEvents() {
   saveTableButton?.addEventListener("click", handleSaveTableClick);
 
   document.querySelector("#addImageButton")?.addEventListener("click", openImageUploadModal);
+  document.querySelector("#addAttachmentButton")?.addEventListener("click", handleAddAttachmentClick);
+  document.querySelector("#attachmentFileInput")?.addEventListener("change", (event) => {
+    void handleAttachmentFileSelected(event);
+  });
+  document.querySelector("#attachmentList")?.addEventListener("click", handleAttachmentListClick);
   imageUploadForm?.addEventListener("submit", (event) => {
     void handleImageUploadSubmit(event);
   });
@@ -5319,6 +5496,9 @@ function bindEvents() {
   document.querySelector("#editorResizeHandle")?.addEventListener("pointerdown", handleEditorResizeHandlePointerDown);
   document.addEventListener("pointermove", handleEditorResizeHandlePointerMove);
   document.addEventListener("pointerup", handleEditorResizeHandlePointerUp);
+  document.querySelector("#detailResizeHandle")?.addEventListener("pointerdown", handleDetailResizeHandlePointerDown);
+  document.addEventListener("pointermove", handleDetailResizeHandlePointerMove);
+  document.addEventListener("pointerup", handleDetailResizeHandlePointerUp);
   calendarPrevMonthButton?.addEventListener("click", handleCalendarPrevMonth);
   calendarNextMonthButton?.addEventListener("click", handleCalendarNextMonth);
   calendarGrid?.addEventListener("click", handleCalendarGridClick);
@@ -5498,6 +5678,15 @@ if (appMenuPanel && appMenuBackdrop) {
     const savedEditorWidth = Number(window.localStorage.getItem("solonote_editor_panel_width"));
     if (savedEditorWidth) {
       applyEditorPanelWidth(savedEditorWidth);
+    }
+  } catch (_) {
+    /* 저장된 값 없음 - 기본값 사용 */
+  }
+
+  try {
+    const savedDetailWidth = Number(window.localStorage.getItem("solonote_detail_panel_width"));
+    if (savedDetailWidth) {
+      applyDetailPanelWidth(savedDetailWidth);
     }
   } catch (_) {
     /* 저장된 값 없음 - 기본값 사용 */
