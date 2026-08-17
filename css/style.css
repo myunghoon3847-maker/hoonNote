@@ -4150,15 +4150,7 @@ button[aria-busy="true"]::after {
 }
 
 #contentTableButton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 24px;
-  padding: 3px 5px;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
+  display: none;
 }
 
 #contentEditor.ql-container.ql-snow {

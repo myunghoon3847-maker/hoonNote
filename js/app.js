@@ -4410,34 +4410,42 @@ function renderMemoDetailContent(memo) {
     return;
   }
 
-  plainContainer.hidden = true;
-  plainContainer.textContent = "";
-  richContainer.hidden = false;
+  try {
+    plainContainer.hidden = true;
+    plainContainer.textContent = "";
+    richContainer.hidden = false;
 
-  if (!detailQuill) {
-    const hasTableModule = registerContentTableModule();
-    const detailModules = { toolbar: false };
+    if (!detailQuill) {
+      const hasTableModule = registerContentTableModule();
+      const detailModules = { toolbar: false };
 
-    if (hasTableModule) {
-      detailModules.table = false;
-      detailModules["table-better"] = {
-        language: "en_US",
-        toolbarTable: false,
-      };
-      detailModules.keyboard = {
-        bindings: window.QuillTableBetter.keyboardBindings,
-      };
+      if (hasTableModule) {
+        detailModules.table = false;
+        detailModules["table-better"] = {
+          language: "en_US",
+          toolbarTable: false,
+        };
+        detailModules.keyboard = {
+          bindings: window.QuillTableBetter.keyboardBindings,
+        };
+      }
+
+      detailQuill = new Quill(richContainer, {
+        theme: "snow",
+        readOnly: true,
+        modules: detailModules,
+      });
     }
 
-    detailQuill = new Quill(richContainer, {
-      theme: "snow",
-      readOnly: true,
-      modules: detailModules,
-    });
+    detailQuill.setContents([], "silent");
+    detailQuill.updateContents(memo.contentDelta, "silent");
+  } catch (error) {
+    console.error("리치 콘텐츠 렌더링 실패, 평문으로 대체합니다.", error);
+    richContainer.hidden = true;
+    richContainer.innerHTML = "";
+    plainContainer.hidden = false;
+    plainContainer.textContent = memo.content || "";
   }
-
-  detailQuill.setContents([], "silent");
-  detailQuill.updateContents(memo.contentDelta, "silent");
 }
 
 let isUploadingContentImage = false;
@@ -4663,9 +4671,14 @@ function setContentEditorFromMemo(memo) {
 
   contentQuill.setText("");
 
-  if (memo && memo.contentDelta && Array.isArray(memo.contentDelta.ops)) {
-    contentQuill.updateContents(memo.contentDelta, "silent");
-  } else {
+  try {
+    if (memo && memo.contentDelta && Array.isArray(memo.contentDelta.ops)) {
+      contentQuill.updateContents(memo.contentDelta, "silent");
+    } else {
+      contentQuill.setText((memo && memo.content) || "");
+    }
+  } catch (error) {
+    console.error("리치 콘텐츠 로드 실패, 평문으로 대체합니다.", error);
     contentQuill.setText((memo && memo.content) || "");
   }
 
