@@ -4630,7 +4630,17 @@ function syncContentInputFromQuill() {
 }
 
 function getContentDeltaJson() {
-  return contentQuill ? contentQuill.getContents() : null;
+  if (!contentQuill) {
+    return null;
+  }
+
+  const tableModule = contentQuill.getModule("table-better");
+
+  if (tableModule && typeof tableModule.hideTools === "function") {
+    tableModule.hideTools();
+  }
+
+  return contentQuill.getContents();
 }
 
 function setContentEditorFromMemo(memo) {
