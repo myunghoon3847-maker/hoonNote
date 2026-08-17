@@ -4415,11 +4415,24 @@ function renderMemoDetailContent(memo) {
   richContainer.hidden = false;
 
   if (!detailQuill) {
-    registerContentTableModule();
+    const hasTableModule = registerContentTableModule();
+    const detailModules = { toolbar: false };
+
+    if (hasTableModule) {
+      detailModules.table = false;
+      detailModules["table-better"] = {
+        language: "en_US",
+        toolbarTable: false,
+      };
+      detailModules.keyboard = {
+        bindings: window.QuillTableBetter.keyboardBindings,
+      };
+    }
+
     detailQuill = new Quill(richContainer, {
       theme: "snow",
       readOnly: true,
-      modules: { toolbar: false },
+      modules: detailModules,
     });
   }
 
