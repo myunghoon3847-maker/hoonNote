@@ -4744,25 +4744,21 @@ function initContentEditor() {
 
   document.querySelector("#contentTableButton")?.addEventListener("click", insertContentTable);
 
-  contentQuill.on("text-change", (delta) => {
+  contentQuill.on("text-change", (delta, oldContents, source) => {
     syncContentInputFromQuill();
-    handleContentAutoLink(delta);
+
+    if (source === "user") {
+      handleContentAutoLink(delta, oldContents);
+    }
+
     if (typeof updateEditorDirtyState === "function") {
       updateEditorDirtyState();
     }
   });
 }
 
-function handleContentAutoLink(delta) {
+function handleContentAutoLink(delta, oldContents) {
   if (!contentQuill) {
-    return;
-  }
-
-  const ops = Array.isArray(delta?.ops) ? delta.ops : [];
-  const lastOp = ops[ops.length - 1];
-  const insertedText = typeof lastOp?.insert === "string" ? lastOp.insert : "";
-
-  if (!insertedText) {
     return;
   }
 
@@ -4773,21 +4769,32 @@ function handleContentAutoLink(delta) {
   }
 
   const cursorIndex = selection.index;
+  const oldLength = typeof oldContents?.length === "function" ? oldContents.length() : null;
+  const newLength = contentQuill.getLength();
+  const addedLength = oldLength === null ? 0 : newLength - oldLength;
   const normalizeUrl = typeof normalizeHttpUrl === "function" ? normalizeHttpUrl : () => "";
 
-  const trimmedInserted = insertedText.trim();
+  if (addedLength > 1) {
+    const insertStart = cursorIndex - addedLength;
 
-  if (trimmedInserted === insertedText && trimmedInserted.length > 0) {
-    const pasteStart = cursorIndex - insertedText.length;
-    const normalizedPasted = normalizeUrl(trimmedInserted);
+    if (insertStart >= 0) {
+      const insertedText = contentQuill.getText(insertStart, addedLength);
+      const trimmed = insertedText.trim();
 
-    if (normalizedPasted && !contentQuill.getFormat(pasteStart, insertedText.length).link) {
-      contentQuill.formatText(pasteStart, insertedText.length, "link", normalizedPasted, "user");
-      return;
+      if (trimmed === insertedText && trimmed.length > 0) {
+        const normalizedPasted = normalizeUrl(trimmed);
+
+        if (normalizedPasted && !contentQuill.getFormat(insertStart, addedLength).link) {
+          contentQuill.formatText(insertStart, addedLength, "link", normalizedPasted, "silent");
+          return;
+        }
+      }
     }
   }
 
-  if (!/[ \n]$/.test(insertedText)) {
+  const lastChar = cursorIndex > 0 ? contentQuill.getText(cursorIndex - 1, 1) : "";
+
+  if (lastChar !== " " && lastChar !== "\n") {
     return;
   }
 
@@ -4811,7 +4818,7 @@ function handleContentAutoLink(delta) {
     return;
   }
 
-  contentQuill.formatText(wordStart, candidateWord.length, "link", normalizedTyped, "user");
+  contentQuill.formatText(wordStart, candidateWord.length, "link", normalizedTyped, "silent");
 }
 
 function syncContentInputFromQuill() {
