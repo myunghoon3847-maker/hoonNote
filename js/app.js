@@ -4582,6 +4582,21 @@ function renderMemoDetailContent(memo) {
   }
 
   const hasDelta = memo && memo.contentDelta && Array.isArray(memo.contentDelta.ops);
+  const imageOpsIn = hasDelta
+    ? memo.contentDelta.ops.filter(
+        (op) => op && typeof op.insert === "object" && op.insert !== null && "image" in op.insert
+      )
+    : [];
+  console.log(
+    "[진단] renderMemoDetailContent - memo.id:",
+    memo?.id,
+    "/ hasDelta:",
+    hasDelta,
+    "/ 전체 op 개수:",
+    memo?.contentDelta?.ops?.length,
+    "/ 이미지 op 개수:",
+    imageOpsIn.length
+  );
 
   if (!hasDelta || typeof Quill === "undefined") {
     plainContainer.hidden = false;
@@ -4620,8 +4635,9 @@ function renderMemoDetailContent(memo) {
 
     detailQuill.setContents([], "silent");
     detailQuill.updateContents(memo.contentDelta, "silent");
+    console.log("[진단] renderMemoDetailContent - updateContents 성공, detailQuill 현재 길이:", detailQuill.getLength());
   } catch (error) {
-    console.error("리치 콘텐츠 렌더링 실패, 평문으로 대체합니다.", error);
+    console.error("[진단] 리치 콘텐츠 렌더링 실패, 평문으로 대체합니다.", error);
     richContainer.hidden = true;
     richContainer.innerHTML = "";
     plainContainer.hidden = false;
@@ -4843,13 +4859,20 @@ function getContentDeltaJson() {
     return null;
   }
 
-  const tableModule = contentQuill.getModule("table-better");
+  const delta = contentQuill.getContents();
+  const imageOps = (delta?.ops || []).filter(
+    (op) => op && typeof op.insert === "object" && op.insert !== null && "image" in op.insert
+  );
+  console.log(
+    "[진단] getContentDeltaJson - 전체 op 개수:",
+    delta?.ops?.length,
+    "/ 이미지 op 개수:",
+    imageOps.length,
+    "/ 이미지 op 내용:",
+    imageOps
+  );
 
-  if (tableModule && typeof tableModule.hideTools === "function") {
-    tableModule.hideTools();
-  }
-
-  return contentQuill.getContents();
+  return delta;
 }
 
 function setContentEditorFromMemo(memo) {
