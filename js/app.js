@@ -2662,6 +2662,10 @@ function setOfflineStatus() {
 }
 
 function refreshOpenDetailFromCache() {
+  if (isEditingFromDetailView) {
+    return;
+  }
+
   const modal = document.querySelector("#detailModal");
   const editButton = document.querySelector("#editMemoButton");
 
