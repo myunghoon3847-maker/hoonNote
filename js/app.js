@@ -26,9 +26,6 @@ let sidebarCollapsed = false;
 let editorPanelResizing = false;
 let editorPanelResizeStartX = 0;
 let editorPanelResizeStartWidth = 0;
-let detailPanelResizing = false;
-let detailPanelResizeStartX = 0;
-let detailPanelResizeStartWidth = 0;
 let memoGridViewEnabled = false;
 let styledParagraphSourceSelection = null;
 let bookmarkLongPressTimer = null;
@@ -4520,53 +4517,37 @@ function handleEditorResizeHandlePointerUp() {
   }
 }
 
-function applyDetailPanelWidth(width) {
-  const clamped = Math.min(Math.max(width, 340), Math.round(window.innerWidth * 0.8));
-  document.documentElement.style.setProperty("--detail-panel-width", `${clamped}px`);
-  return clamped;
+const DETAIL_PANEL_WIDTH_STAGES = {
+  narrow: 360,
+  normal: 460,
+  wide: 620,
+};
+
+function applyDetailPanelWidthStage(stage) {
+  const resolvedStage = DETAIL_PANEL_WIDTH_STAGES[stage] ? stage : "normal";
+  const width = DETAIL_PANEL_WIDTH_STAGES[resolvedStage];
+
+  document.documentElement.style.setProperty("--detail-panel-width", `${width}px`);
+
+  document.querySelectorAll("#detailWidthStages [data-width-stage]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.widthStage === resolvedStage);
+  });
+
+  try {
+    window.localStorage.setItem("solonote_detail_panel_width_stage", resolvedStage);
+  } catch (_) {
+    /* 저장 실패는 무시 */
+  }
 }
 
-function handleDetailResizeHandlePointerDown(event) {
-  const detailPanel = document.querySelector("#detailModal .modal-card");
+function handleDetailWidthStageClick(event) {
+  const button = event.target.closest("[data-width-stage]");
 
-  if (!detailPanel || !isDesktopLayout()) {
+  if (!button) {
     return;
   }
 
-  detailPanelResizing = true;
-  detailPanelResizeStartX = event.clientX;
-  detailPanelResizeStartWidth = detailPanel.getBoundingClientRect().width;
-  document.querySelector("#detailResizeHandle")?.classList.add("active");
-  event.preventDefault();
-}
-
-function handleDetailResizeHandlePointerMove(event) {
-  if (!detailPanelResizing) {
-    return;
-  }
-
-  const deltaX = detailPanelResizeStartX - event.clientX;
-  applyDetailPanelWidth(detailPanelResizeStartWidth + deltaX);
-}
-
-function handleDetailResizeHandlePointerUp() {
-  if (!detailPanelResizing) {
-    return;
-  }
-
-  detailPanelResizing = false;
-  document.querySelector("#detailResizeHandle")?.classList.remove("active");
-
-  const detailPanel = document.querySelector("#detailModal .modal-card");
-  const currentWidth = detailPanel?.getBoundingClientRect().width;
-
-  if (currentWidth) {
-    try {
-      window.localStorage.setItem("solonote_detail_panel_width", String(Math.round(currentWidth)));
-    } catch (_) {
-      /* 저장 실패는 무시 */
-    }
-  }
+  applyDetailPanelWidthStage(button.dataset.widthStage);
 }
 
 let contentQuill = null;
@@ -5492,9 +5473,7 @@ function bindEvents() {
   document.querySelector("#editorResizeHandle")?.addEventListener("pointerdown", handleEditorResizeHandlePointerDown);
   document.addEventListener("pointermove", handleEditorResizeHandlePointerMove);
   document.addEventListener("pointerup", handleEditorResizeHandlePointerUp);
-  document.querySelector("#detailResizeHandle")?.addEventListener("pointerdown", handleDetailResizeHandlePointerDown);
-  document.addEventListener("pointermove", handleDetailResizeHandlePointerMove);
-  document.addEventListener("pointerup", handleDetailResizeHandlePointerUp);
+  document.querySelector("#detailWidthStages")?.addEventListener("click", handleDetailWidthStageClick);
   calendarPrevMonthButton?.addEventListener("click", handleCalendarPrevMonth);
   calendarNextMonthButton?.addEventListener("click", handleCalendarNextMonth);
   calendarGrid?.addEventListener("click", handleCalendarGridClick);
@@ -5680,12 +5659,10 @@ if (appMenuPanel && appMenuBackdrop) {
   }
 
   try {
-    const savedDetailWidth = Number(window.localStorage.getItem("solonote_detail_panel_width"));
-    if (savedDetailWidth) {
-      applyDetailPanelWidth(savedDetailWidth);
-    }
+    const savedDetailStage = window.localStorage.getItem("solonote_detail_panel_width_stage");
+    applyDetailPanelWidthStage(savedDetailStage || "normal");
   } catch (_) {
-    /* 저장된 값 없음 - 기본값 사용 */
+    applyDetailPanelWidthStage("normal");
   }
 
   if (isDesktopLayout()) {
