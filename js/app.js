@@ -1265,11 +1265,16 @@ function renderAttachmentList() {
   }
 
   list.innerHTML = draftAttachments
-    .map(
-      (item) => `
+    .map((item) => {
+      const isImage = typeof item.type === "string" && item.type.startsWith("image/");
+      const iconHtml = isImage
+        ? `<img alt="" aria-hidden="true" class="link-draft-thumb" src="${escapeHtml(item.url)}"/>`
+        : `<span class="link-draft-icon" aria-hidden="true">📎</span>`;
+
+      return `
       <article class="link-draft-item" data-attachment-id="${escapeHtml(item.id)}">
         <a class="link-draft-anchor" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" download="${escapeHtml(item.name)}">
-          <span class="link-draft-icon" aria-hidden="true">📎</span>
+          ${iconHtml}
           <span class="link-draft-copy">
             <strong>${escapeHtml(item.name)}</strong>
             <small>${formatAttachmentFileSize(item.size)}</small>
@@ -1279,8 +1284,8 @@ function renderAttachmentList() {
           <button class="text-button compact-button danger-text" data-attachment-action="delete" data-attachment-id="${escapeHtml(item.id)}" type="button">삭제</button>
         </div>
       </article>
-    `
-    )
+    `;
+    })
     .join("");
 }
 

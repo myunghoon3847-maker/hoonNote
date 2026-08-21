@@ -4330,6 +4330,14 @@ button[aria-busy="true"]::after {
   font-weight: 900;
 }
 
+.link-draft-thumb {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
 .link-draft-copy,
 .detail-link-copy {
   display: grid;
@@ -5006,6 +5014,27 @@ button[aria-busy="true"]::after {
 .detail-attachment-copy small {
   color: var(--muted);
   font-size: 11px;
+}
+
+.detail-attachment-image-link {
+  display: block;
+  margin: 12px 0;
+  text-decoration: none;
+}
+
+.detail-attachment-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+.detail-attachment-image-caption {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .memo-extra-chip {

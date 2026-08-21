@@ -423,8 +423,19 @@ function renderMemoAttachmentsHtml(memo) {
     typeof formatAttachmentFileSize === "function" ? formatAttachmentFileSize : (bytes) => `${bytes || 0}B`;
 
   const items = attachments
-    .map(
-      (item) => `
+    .map((item) => {
+      const isImage = typeof item.type === "string" && item.type.startsWith("image/");
+
+      if (isImage) {
+        return `
+          <a class="detail-attachment-image-link" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">
+            <img alt="${escapeHtml(item.name)}" class="detail-attachment-image" loading="lazy" src="${escapeHtml(item.url)}"/>
+            <span class="detail-attachment-image-caption">${escapeHtml(item.name)} · ${sizeLabel(item.size)}</span>
+          </a>
+        `;
+      }
+
+      return `
         <a class="detail-attachment-item" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" download="${escapeHtml(item.name)}">
           <span class="detail-attachment-icon" aria-hidden="true">📎</span>
           <span class="detail-attachment-copy">
@@ -432,8 +443,8 @@ function renderMemoAttachmentsHtml(memo) {
             <small>${sizeLabel(item.size)}</small>
           </span>
         </a>
-      `
-    )
+      `;
+    })
     .join("");
 
   return `<div class="detail-attachment-list">${items}</div>`;
