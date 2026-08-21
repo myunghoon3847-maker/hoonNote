@@ -1622,7 +1622,7 @@ body.memo-selection-active #editorToggleButton {
   height: 100dvh;
   border-left: 1px solid var(--line);
   background: var(--surface);
-  box-shadow: -20px 0 55px rgba(15, 23, 42, 0.18);
+  box-shadow: none;
   opacity: 0.98;
   transform: translateX(100%);
   transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
@@ -2095,11 +2095,15 @@ body.memo-selection-active #editorToggleButton {
 
 #detailContentRich.ql-container.ql-snow {
   border: 0;
+  height: auto;
+  overflow: visible;
   font-family: inherit;
   font-size: 15px;
 }
 
 #detailContentRich .ql-editor {
+  height: auto;
+  overflow: visible;
   overflow-wrap: anywhere;
   padding: 0;
   color: #334155;
@@ -2194,6 +2198,10 @@ body.memo-selection-active #editorToggleButton {
   margin-top: 20px;
 }
 
+.detail-width-stages {
+  display: none;
+}
+
 /* 상세보기: 제목 상단 고정, 액션 버튼 하단 고정, 본문만 스크롤 */
 .detail-modal-card {
   display: flex;
@@ -2209,11 +2217,27 @@ body.memo-selection-active #editorToggleButton {
 }
 
 .detail-modal-scroll {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 16px 22px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.detail-modal-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.detail-modal-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.detail-modal-scroll::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
 }
 
 .detail-modal-card .detail-actions {
@@ -4572,37 +4596,61 @@ button[aria-busy="true"]::after {
   }
 
   #detailModal .modal-card {
-    width: var(--detail-panel-width, 460px);
+    width: var(--detail-panel-width, 580px);
     max-height: 100%;
     height: 100%;
     border-radius: 0;
     box-shadow: -18px 0 40px rgba(15, 23, 42, 0.12);
   }
 
-  .detail-width-stages {
-    display: flex;
+  .detail-resize-handle {
+    display: block;
     position: absolute;
-    top: 18px;
-    right: 56px;
+    top: 0;
+    left: -4px;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 2;
+  }
+
+  .detail-resize-handle:hover,
+  .detail-resize-handle.active {
+    background: var(--primary-line);
+  }
+
+  #detailModal .detail-modal-scroll {
+    padding-bottom: 52px;
+  }
+
+  .detail-width-stages {
+    display: inline-flex;
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
     gap: 2px;
-    padding: 2px;
-    border-radius: 999px;
-    background: var(--surface-soft);
+    padding: 3px;
+    border-radius: 10px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
   }
 
   .detail-width-stage-button {
-    padding: 5px 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
     border: 0;
-    border-radius: 999px;
+    border-radius: 7px;
     background: transparent;
     color: var(--muted);
-    font-size: 11px;
-    font-weight: 700;
     cursor: pointer;
   }
 
   .detail-width-stage-button:hover {
-    color: var(--text);
+    color: var(--primary);
   }
 
   .detail-width-stage-button.active {
@@ -4610,9 +4658,9 @@ button[aria-busy="true"]::after {
     color: #fff;
   }
 
-  #detailModal .detail-meta {
-    padding-right: 200px;
-    flex-wrap: wrap;
+  .detail-width-stage-button svg {
+    width: 14px;
+    height: 14px;
   }
 
   /* 사이드바 접힘 상태 - 펼치기 버튼 외 모든 하위 메뉴 숨김 */
@@ -5034,6 +5082,30 @@ button[aria-busy="true"]::after {
 .detail-attachment-copy small {
   color: var(--muted);
   font-size: 11px;
+}
+
+.detail-action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.detail-action-button svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.detail-actions.compact .detail-action-button {
+  justify-content: center;
+  padding: 0;
+  width: 38px;
+  gap: 0;
+}
+
+.detail-actions.compact .detail-action-label {
+  display: none;
 }
 
 .detail-attachment-image-link {

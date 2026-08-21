@@ -26,6 +26,9 @@ let sidebarCollapsed = false;
 let editorPanelResizing = false;
 let editorPanelResizeStartX = 0;
 let editorPanelResizeStartWidth = 0;
+let detailPanelResizing = false;
+let detailPanelResizeStartX = 0;
+let detailPanelResizeStartWidth = 0;
 let memoGridViewEnabled = false;
 let styledParagraphSourceSelection = null;
 let bookmarkLongPressTimer = null;
@@ -3798,6 +3801,7 @@ async function handleFormSubmit(event) {
     contentBlocks: createMemoContentBlocks(content, [], orderedExtraBlocksForSave),
     category,
     isImportant,
+    isPinned: editingId ? Boolean(findMemoById(editingId)?.isPinned) : false,
     dueDate,
     tasks: draftTasks.map((task) => ({ ...task })),
     attachments: draftAttachments.map((item) => ({ ...item })),
@@ -4518,26 +4522,33 @@ function handleEditorResizeHandlePointerUp() {
 }
 
 const DETAIL_PANEL_WIDTH_STAGES = {
-  narrow: 360,
-  normal: 460,
-  wide: 620,
+  wide: 720,
+  normal: 580,
+  narrow: 460,
 };
 
-function applyDetailPanelWidthStage(stage) {
-  const resolvedStage = DETAIL_PANEL_WIDTH_STAGES[stage] ? stage : "normal";
-  const width = DETAIL_PANEL_WIDTH_STAGES[resolvedStage];
+function applyDetailPanelWidth(width, options = {}) {
+  const { persist = true } = options;
+  const clamped = Math.round(Math.min(Math.max(width, 340), window.innerWidth * 0.85));
 
-  document.documentElement.style.setProperty("--detail-panel-width", `${width}px`);
+  document.documentElement.style.setProperty("--detail-panel-width", `${clamped}px`);
 
   document.querySelectorAll("#detailWidthStages [data-width-stage]").forEach((button) => {
-    button.classList.toggle("active", button.dataset.widthStage === resolvedStage);
+    const stageWidth = DETAIL_PANEL_WIDTH_STAGES[button.dataset.widthStage];
+    button.classList.toggle("active", stageWidth === clamped);
   });
 
-  try {
-    window.localStorage.setItem("solonote_detail_panel_width_stage", resolvedStage);
-  } catch (_) {
-    /* 저장 실패는 무시 */
+  document.querySelector("#detailModal .detail-actions")?.classList.toggle("compact", clamped < 520);
+
+  if (persist) {
+    try {
+      window.localStorage.setItem("solonote_detail_panel_width", String(clamped));
+    } catch (_) {
+      /* 저장 실패는 무시 */
+    }
   }
+
+  return clamped;
 }
 
 function handleDetailWidthStageClick(event) {
@@ -4547,7 +4558,50 @@ function handleDetailWidthStageClick(event) {
     return;
   }
 
-  applyDetailPanelWidthStage(button.dataset.widthStage);
+  const width = DETAIL_PANEL_WIDTH_STAGES[button.dataset.widthStage];
+
+  if (width) {
+    applyDetailPanelWidth(width);
+  }
+}
+
+function handleDetailResizeHandlePointerDown(event) {
+  const detailPanel = document.querySelector("#detailModal .modal-card");
+
+  if (!detailPanel || !isDesktopLayout()) {
+    return;
+  }
+
+  detailPanelResizing = true;
+  detailPanelResizeStartX = event.clientX;
+  detailPanelResizeStartWidth = detailPanel.getBoundingClientRect().width;
+  document.querySelector("#detailResizeHandle")?.classList.add("active");
+  event.preventDefault();
+}
+
+function handleDetailResizeHandlePointerMove(event) {
+  if (!detailPanelResizing) {
+    return;
+  }
+
+  const deltaX = detailPanelResizeStartX - event.clientX;
+  applyDetailPanelWidth(detailPanelResizeStartWidth + deltaX, { persist: false });
+}
+
+function handleDetailResizeHandlePointerUp() {
+  if (!detailPanelResizing) {
+    return;
+  }
+
+  detailPanelResizing = false;
+  document.querySelector("#detailResizeHandle")?.classList.remove("active");
+
+  const detailPanel = document.querySelector("#detailModal .modal-card");
+  const currentWidth = detailPanel?.getBoundingClientRect().width;
+
+  if (currentWidth) {
+    applyDetailPanelWidth(currentWidth);
+  }
 }
 
 let contentQuill = null;
@@ -4910,7 +4964,14 @@ async function handleTogglePin(memoId) {
 
   const pinButton = document.querySelector("#pinMemoButton");
   if (pinButton) {
-    pinButton.textContent = result.isPinned ? "고정 해제" : "고정하기";
+    const pinLabel = pinButton.querySelector(".detail-action-label");
+    const pinText = result.isPinned ? "고정 해제" : "고정하기";
+
+    if (pinLabel) {
+      pinLabel.textContent = pinText;
+    } else {
+      pinButton.textContent = pinText;
+    }
   }
 
   renderPinnedStrip();
@@ -5474,6 +5535,9 @@ function bindEvents() {
   document.addEventListener("pointermove", handleEditorResizeHandlePointerMove);
   document.addEventListener("pointerup", handleEditorResizeHandlePointerUp);
   document.querySelector("#detailWidthStages")?.addEventListener("click", handleDetailWidthStageClick);
+  document.querySelector("#detailResizeHandle")?.addEventListener("pointerdown", handleDetailResizeHandlePointerDown);
+  document.addEventListener("pointermove", handleDetailResizeHandlePointerMove);
+  document.addEventListener("pointerup", handleDetailResizeHandlePointerUp);
   calendarPrevMonthButton?.addEventListener("click", handleCalendarPrevMonth);
   calendarNextMonthButton?.addEventListener("click", handleCalendarNextMonth);
   calendarGrid?.addEventListener("click", handleCalendarGridClick);
@@ -5659,10 +5723,10 @@ if (appMenuPanel && appMenuBackdrop) {
   }
 
   try {
-    const savedDetailStage = window.localStorage.getItem("solonote_detail_panel_width_stage");
-    applyDetailPanelWidthStage(savedDetailStage || "normal");
+    const savedDetailWidth = Number(window.localStorage.getItem("solonote_detail_panel_width"));
+    applyDetailPanelWidth(savedDetailWidth || DETAIL_PANEL_WIDTH_STAGES.normal, { persist: false });
   } catch (_) {
-    applyDetailPanelWidthStage("normal");
+    applyDetailPanelWidth(DETAIL_PANEL_WIDTH_STAGES.normal, { persist: false });
   }
 
   if (isDesktopLayout()) {

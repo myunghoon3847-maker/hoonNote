@@ -461,7 +461,14 @@ function openDetailModal(memo, options = {}) {
   if (pinButton) {
     pinButton.hidden = Boolean(memo.isDeleted);
     pinButton.dataset.id = memo.id;
-    pinButton.textContent = memo.isPinned ? "고정 해제" : "고정하기";
+    const pinLabel = pinButton.querySelector(".detail-action-label");
+    const pinText = memo.isPinned ? "고정 해제" : "고정하기";
+
+    if (pinLabel) {
+      pinLabel.textContent = pinText;
+    } else {
+      pinButton.textContent = pinText;
+    }
   }
 
   const detailParts = [];
