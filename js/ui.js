@@ -856,7 +856,7 @@ function renderBookmarkList() {
       } catch (_) {}
 
       const faviconHtml = domain
-        ? `<img class="bookmark-favicon" src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}" alt="" aria-hidden="true" loading="lazy"/>`
+        ? `<img class="bookmark-favicon" src="https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}" alt="" aria-hidden="true" loading="lazy" onerror="this.outerHTML='&lt;span class=&quot;bookmark-favicon bookmark-favicon-fallback&quot; aria-hidden=&quot;true&quot;&gt;🔗&lt;/span&gt;'"/>`
         : '<span class="bookmark-favicon bookmark-favicon-fallback" aria-hidden="true">🔗</span>';
 
       return `
